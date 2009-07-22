@@ -1,0 +1,14 @@
+#domain_list {
+  position: relative;
+  max-width: 50em;
+}
+
+#domain_list table {
+  max-width: 40em;
+}
+#add_domain {
+  position: absolute;
+  bottom: 1em;
+  right: 1em;
+}
+

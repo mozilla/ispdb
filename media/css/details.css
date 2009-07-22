@@ -1,0 +1,55 @@
+#server_data {
+}
+
+#incoming_data {
+  display: inline;
+}
+
+#outgoing_data {
+  float: right;
+}
+
+#other_data {
+}
+
+#domains {
+  padding: 1em;
+}
+
+.domain {
+  -moz-border-radius: 3px;
+  border: 1px solid grey;
+  background: #FFEFAF;
+  padding: 1ex;
+  margin-right: 0.2ex;
+  margin-bottom: 1ex;
+  display: inline-block;
+}
+
+.comment {
+    margin-left: 1em;
+    padding-bottom: 1em;
+    padding-top: 1em;
+    border-top: 1px solid lightgrey;
+}
+
+.comment:first-child {
+    border-top: 1px solid transparent;
+}
+
+.comment_author {
+    font-weight: bold;
+}
+
+.configstatus  {
+  padding: 1.5em;
+  margin: 1.5em;
+}
+
+.approved {
+  border: 1px solid green;
+}
+
+.pending {
+  border: 1px solid orange;
+}

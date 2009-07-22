@@ -1,0 +1,94 @@
+{% extends "config/base.html" %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.validate.min.js"></script>
+{% endblock %}
+
+{% block title %}Mozilla ISP Database{% endblock %}
+
+{% block bodystart %}
+
+<script type="text/javascript">
+function isFilterValid(domain) {
+  if (!/^[a-zA-Z0-9\-\.%]*$/.test(domain))
+    return false;
+  parts = domain.split('.');
+  if (parts.length < 2 || parts[0] == '' || parts[1] == '' )
+    return false
+  return true;
+}
+
+
+$(document).ready(function() {
+  // hide the domain matches
+  $("#domain").keyup(function () {
+      var filter = $(this).val(), count = 0;
+      if (filter.length < 2) {
+        // don't bother
+          $("#foundsome").hide();
+      } else {
+        $(".filtered").each(function () {
+            if ($(this).text().search(new RegExp(filter, "i")) < 0) {
+                $(this).addClass("hidden");
+            } else {
+                $(this).removeClass("hidden");
+                count++;
+            }
+        });
+        if (count == 0) {
+          $("#foundsome").hide();
+        } else {
+          $("#foundsome").show();
+        }
+        if (isFilterValid(filter)) {
+          if (count == 0) {
+            $("#submit").attr('href', 'add/' + filter);
+            $("#submit").show();
+          } else {
+            $("#submit").hide();
+          }
+        } else {
+          $("#submit").hide();
+        }
+      }
+  });
+  
+});
+</script>
+{% endblock %}
+
+{% block heading %}Welcome to Mozilla's ISP database site{% endblock %}
+
+{% block content %}
+
+<p>This site lets you contribute data to Mozilla's database of
+ISP email configuration files.  These files will be used by
+Thunderbird 3 to facilitate account configuration.
+</p>
+
+<h3>Check whether your email domain is registered</h3>
+
+<form id="domainform">
+<p><input id="domain" name="filter"></input></p>
+</form>
+
+<div id="foundsome" class="hidden">
+  We have:
+  <ul>
+    {% for domain in domains %}
+    <li class="domain filtered hidden">
+      <a href="details/{{domain.config.id}}">{{domain}}</a> ({{domain.config.display_name}})
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div id="submit" class="hidden">
+<em>Your domain can't be found - <a href="add">submit it!</a></em>
+</div>
+
+<h3>Browse our database</h3>
+
+<p><a href="list">Show all configurations</a></p>
+
+{% endblock %}

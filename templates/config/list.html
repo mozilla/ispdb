@@ -1,0 +1,38 @@
+{% extends "config/base.html" %}
+
+{% block title %}Show known ISP configurations{% endblock %}
+{% block bodystart %}
+<script type="text/javascript">
+$(document).ready(function() {
+});
+</script>
+{% endblock %}
+{% block heading %}ISP Configurations: All configurations{% endblock %}
+
+{% block content %}
+
+<h1>Approved configurations</h1>
+  {% for config in configs %}
+    {% if config.approved %}
+    <div class="config">
+      <h3>{{config.display_name}} ({{ config.incoming_type }})</h3>
+      {% for domain in config.domains.all %}
+      <div class="domain"><a href="details/{{domain.config.id}}">{{ domain }}</a></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+
+<h1>Configurations pending review</h1>
+  {% for config in configs %}
+    {% if not config.approved and not config.invalid %}
+    <div class="config">
+      <h3>{{config.display_name}} ({{ config.incoming_type }})</h3>
+      {% for domain in config.domains.all %}
+      <div class="domain"><a href="details/{{domain.config.id}}">{{ domain }}</a></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+
+{% endblock %}
