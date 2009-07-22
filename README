@@ -1,0 +1,23 @@
+
+experimental django front-end to figure out workflow of ISP database info
+for the Thunderbird autoconfig database
+
+Step 0: Prerequisites
+    easy_install django-openid-auth
+    easy_install python-openid
+
+Step 1:
+   python manage.py syncdb
+
+
+Step 2:
+  convert existing XML data to the DB:
+  # have http://svn.mozilla.org/mozillamessaging.com/sites/autoconfig.mozillamessaging.com/trunk checked out at ../autoconfig_data
+  # if autoconfig_data is somewhere else, you can set the env't var AUTOCONFIG_DATA to  point to it
+  echo 'import convert' | python manage.py shell
+
+
+Step 3:
+   python manage.py runserver
+
+then hit localhost:8000

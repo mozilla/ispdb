@@ -1,0 +1,37 @@
+{% extends "config/base.html" %}
+{% block scripts %}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/enter_config.css/"/>
+<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.validate.min.js"></script>
+{% endblock %}
+
+
+{% block title %}ISP Configuration Review Queue{% endblock %}
+{% block heading %}Mozilla Messaging ISP Configuration Management: Review Queue{% endblock %}
+
+{% block bodystart %}
+<script type="text/javascript">
+$(document).ready(function() {
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Configurations pending approval</h2>
+
+{% for config in pending_configs %}
+<div><a href="{% url ispdb_details id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
+{% endfor %}
+
+<h2>Most asked for domains</h2>
+
+{% for domain in domains %}
+<div>{{ domain.name }} ({{domain.votes}} vote{{domain.votes|pluralize}})</div>
+{% endfor %}
+
+<h2>Configurations that were marked invalid </h2>
+
+{% for config in invalid_configs %}
+<div><a href="{% url ispdb_details id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
+{% endfor %}
+
+{% endblock %}
+

@@ -1,0 +1,31 @@
+Work:
+
+P1
+* new config entry
+  * validation: domain already in the DB?  config wrong?
+  * correct models (e.g. authentication types, etc.)
+  * language list for popup
+* remove buttons for +1 and -1
+* command line script to export XML files w/ some sane convention
+* in review process, allow choice when marking invalid
+  - "not available from our domain"
+  - "incorrect data"
+  - "other"
+  (in addition to textfield)
+
+P2
+* allow reviewer-only comments: not visible to non reviewers
+* review process: have backend script to do telnet/ssh call to the ports,
+  detect IMAP settinsgs, etc.
+* annotate results of backend script to the configuration
+* think about how to indicate when a record is out of date, the new record is in the db, but the old one is still being published (link to actual http:// data)
+* settings page language detection?
+* allow addition of domains to existing configurations
+
+Quality:
+* test convert -> export compare w/ original data
+* test suite
+
+Prettier:vi
+* CSS: make comment form prettier
+* django/ajax: fix comment submission (ajax baby!)
