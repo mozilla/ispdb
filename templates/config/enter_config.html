@@ -1,0 +1,112 @@
+{% extends "config/base.html" %}
+{% block scripts %}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/enter_config.css"/>
+<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.validate.min.js"></script>
+{% endblock %}
+
+
+{% block title %}Add a new ISP configuration{% endblock %}
+{% block heading %}Mozilla Messaging ISP Configuration Management{% endblock %}
+
+{% block bodystart %}
+<script type="text/javascript">
+$(document).ready(function() {
+    var i = 1;
+    var template = jQuery.format($("#template").val());
+    function addRow() {
+      $(template(i++)).appendTo("#domain_list table");
+      $("#id_form-TOTAL_FORMS").val(i);
+    }
+    
+    $("#add_domain").click(function() {
+      addRow();
+    });
+    
+    {% if config_form.errors %}
+      $("#configform").show();
+      $("#add_domain").show();
+      $("#submit").show();
+      $("#question").hide();
+      $("#encouragement").hide();
+      $("#problem").show();
+    {% endif %}
+    $("#yes").click(function(event) {
+      // the yes button is in a form, and we want to stop the
+      // click from being processed by the form object
+      event.preventDefault(); 
+      $("#question").hide();
+      $("#submit").show();
+      $("#voteforit").hide();
+      $("#dataful").val('adding');
+      $("#configform").show("fast");
+      $("#add_domain").show();
+    });
+
+    $("#no").click(function(event) {
+      // the yes button is in a form, and we want to stop the
+      // click from being processed by the form object
+      event.preventDefault();
+      $("#question").hide();
+      $("#submit").show();
+      $("#dataful").val('asking');
+      console.log($("#dataful"));
+      $("#configform").hide();
+      $("#voteforit").show("fast");
+    });
+  }
+);
+</script>
+{% endblock %}
+
+{% block content %}
+<textarea style="display:none" id="template">
+  <tr>
+    <th>
+      <label for="id_form-{0}-name">Email domain:</label>
+    </th>
+    <td><input id="id_form-{0}-name" type="text" name="form-{0}-name" maxlength="100" />
+    </td>
+  </tr>
+</textarea>
+
+<h1>Submit a new configuration</h1>
+<div>Thanks for submitting a configuration for us to review.  By doing so, you're
+going to make it easier for all users of the ISP to get their Thunderbird
+configured correctly and quickly.</div>
+
+<form action="{% url ispdb_add %}" method="POST">
+
+<input id="dataful" name="asking_or_adding" type="hidden"></input>
+
+<div id="domain_list">
+  <table>
+    {{ formset }}
+  </table>
+  <div id="add_domain" class="hidden"><a class="link">add another domain</a></div>
+</div>
+
+<div id="question">
+<p>Do you know the configuration settings for the above domain?<p>
+
+<p><button id="yes">I think so</button> <button id="no">I wish!</button></p>
+</div>
+
+<div id="configform" class="hidden">
+  <h3 id="encouragement">Great! Please fill in this form:</h3>
+  <h3 class="hidden" id="problem">There are missing or incorrect values in the form, please fix them:</h3>
+    <table>
+      {{ config_form }}
+    </table>
+</div>
+
+<div id="voteforit" class="hidden">
+  <h3>We'll still take your vote!</h3>
+  <p>If you submit the request, someone else may be able to find the
+  configuration settings.</p>
+</div>
+
+<input id="submit" type="submit" value="Submit" class="hidden"/>
+</form>
+
+{% endblock %}
+

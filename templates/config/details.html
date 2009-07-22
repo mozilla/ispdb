@@ -1,0 +1,180 @@
+{% extends "config/base.html" %}
+{% block scripts %}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/details.css"/>
+{% endblock %}
+
+{% block title %}Mozilla ISP Database{% endblock %}
+{% block bodystart %}
+<script type="text/javascript">
+$(document).ready(function() {
+  $("#show").click(function() {
+    $(this).hide();
+    $(this).parent().children('.comment_list').show('fast');
+  })
+  $("#add").click(function() {
+    $(this).hide();
+    $(this).parent().children('.comment_form').show('fast');
+  })
+
+  {% if perms.config.can_approve %}
+  // We want to make sure reviewers can see the comments
+  $(".comment_list").show();
+  $("#show").hide();
+  {% endif %}
+
+});
+</script>
+{% endblock %}
+
+{% block heading %}Configuration: {{config.display_short_name}} {% endblock %}
+
+{% block content %}
+
+<h1>{{config.display_name}}
+{% ifnotequal config.display_name config.display_short_name %} ({{config.display_short_name}} for short) {% endifnotequal %}
+</h1>
+
+<div class="configstatus {% if config.approved %} approved {% else %} pending {% endif %}">
+  {% if config.approved %}
+  <div>This configuration is APPROVED.</div>
+      {% if perms.config.can_approve %}
+        <div>Is there a reason it shouldn't be?</div>
+        <form action="{% url ispdb_approve id=config.id %}" method="POST">
+          <div>
+            <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
+          </div>
+          <div>
+            <input type="submit" value="mark invalid" name="denied"></input>
+          </div>
+        </form>
+      {% endif %}
+  {% else %}
+    {% if config.invalid %}
+    <div>
+      This configuration has been determined INVALID.  We've looked at the
+      data, and either it's not correct, or it can't be verified from outside
+      the ISP's firewall, or the ISP has asked not to publish it.
+    </div>
+      {% if perms.config.can_approve %}
+        <div>Is there a reason it shouldn't be?</div>
+        <form action="{% url ispdb_approve id=config.id %}" method="POST">
+          <div>
+            <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
+          </div>
+          <div>
+            <input type="submit" value="mark valid" name="approved"></input>
+          </div>
+        </form>
+      {% endif %}
+    {% else %}
+      {% if perms.config.can_approve %}
+        Can you confirm that this is a good configuration according to our <a href="{% url ispdb_policy %}">policies</a>?
+        <form action="{% url ispdb_approve id=config.id %}" method="POST">
+          <div>
+            <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
+          </div>
+          <div>
+            <input type="submit" value="yes, checks out ok" name="approved"></input>
+            <input type="submit" value="no, there's a problem" name="denied"></input>
+          </div>
+        </form>
+      {% else %}
+        This configuration is PENDING REVIEW.  Our team of crack volunteers will review
+        it, and assuming the data checks out, we'll publish it.
+      {% endif %}
+    {% endif %}
+  {% endif %}
+</div>
+
+<h4>Domains Served</h4>
+<div id="domains">
+  {% for domain in config.domains.all %}
+    <div class="domain">{{domain}}</div>
+  {% endfor %}
+</div>
+
+<div id="server_data">
+  <table>
+    <tr>
+      <td>
+  <div id="incoming_data">
+    <h4>Incoming Server</h4>
+    <table>
+      {% for field in incoming %}
+      <tr>
+        <td>{{ field.verbose_name|capfirst }}:</td><td>{{field.value}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+      </td>
+      <td>
+  
+  <div id="outoing_data">
+    <h4>Outgoing Server</h4>
+    <table>
+      {% for field in outgoing %}
+      <tr>
+        <td>{{ field.verbose_name|capfirst }}:</td>
+        <td>{{field.value}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+    </td>
+    </tr>
+  </table>
+
+</div>
+
+<div id="other_data">
+  <h4>Other Fields</h4>
+  <table>
+    {% for field in other_fields %}
+    <tr>
+      <td>{{ field.verbose_name|capfirst }}:</td><td>{{field.value}}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+</td>
+<td>
+
+<h4>View XML data</h4>
+
+<p>See <a href="{% url ispdb_export_xml id=config.id %}">XML version</a> (used by Thunderbird).</p>
+
+{% if not perms.config.can_approve %}
+<h3>Accurate?</h3>
+
+<p>If you know the data above is not accurate, do let us know: <button name="XXX">these
+parameters are out of date!</button>
+</p>
+{% endif %}
+
+<h3>Comments</h3>
+
+{% load comments %}
+
+{% get_comment_list for config as comment_list %}
+{% if comment_list %}
+<div id="previous_comments">
+  <div id="show"><a>Show {{ comment_list|length }} existing comment{{comment_list|length|pluralize}}</a></div>
+  <div class="comment_list hidden">
+  {% for comment in comment_list %}
+    <div class="comment">
+      <span class="comment_author">{{comment.user_name}}</span> said: <span class="comment_contents">{{comment.comment}}</span>
+    </div>
+  {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div id="add_a_comment">
+  <div id="add"><a class="link">Add a comment</a></div>
+  <div class="comment_form hidden">
+    {% render_comment_form for config %}
+  </div>
+</div>
+
+{% endblock %}
