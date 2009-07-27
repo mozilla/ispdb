@@ -171,8 +171,8 @@ class ConfigAdmin(admin.ModelAdmin):
     ]
     radio_fields = {"incoming_type": admin.VERTICAL}
 
-admin.site.register(Config, ConfigAdmin)
-admin.site.register(UnclaimedDomain, UnclaimedDomainAdmin)
+#admin.site.register(Config, ConfigAdmin)
+#admin.site.register(UnclaimedDomain, UnclaimedDomainAdmin)
 
 class ConfigForm(ModelForm):
     class Meta:
