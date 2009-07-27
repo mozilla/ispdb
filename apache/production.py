@@ -1,5 +1,11 @@
 # Django settings for ispdb project.
 
+#Calculate the path based on the location of the WSGI script.
+import os
+apache_configuration = os.path.dirname(__file__)
+project = os.path.dirname(apache_configuration)
+workspace = os.path.dirname(project)
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -10,7 +16,8 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = '/var/www/ispdb/ispdb.sqlite'
+#DATABASE_NAME = "%s/ispdb.sqlite" % project
+DATABASE_NAME = '/var/ispdb/staging/ispdb.sqlite'
 DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -40,12 +47,12 @@ MEDIA_ROOT = '/var/www/ispdb/media'
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/ispdb/media/'
+MEDIA_URL = '/media/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/ispdb/admin_media/'
+ADMIN_MEDIA_PREFIX = '/admin_media/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '02$7gj$t@dtd7um)d#3zlfg7ommedl#*ekt@@*ysy_fns(lp9+'
@@ -70,7 +77,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    "/var/www/ispdb/templates",
+    "%s/templates" %  project,
 )
 
 INSTALLED_APPS = (
@@ -99,4 +106,4 @@ DOCS_ROOT="/Users/davida/src/django/docs/"
 LOCAL_DEVELOPMENT = True
 USE_I18N = False
 
-ROOT = '/ispdb'
+ROOT = '/'
