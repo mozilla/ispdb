@@ -1,3 +1,4 @@
+import os
 # Django settings for ispdb project.
 
 DEBUG = True
@@ -15,6 +16,17 @@ DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
+
+
+#Test Runner
+TEST_RUNNER = 'django_nose.run_tests'
+NOSE_ARGS = ['--with-doctest', '--doctest-extension=.doctest']
+
+#Fixtures
+FIXTURE_DIRS = (
+#TODO: Clean this up after eric's patch for local settings
+   os.path.join(os.path.abspath("./"),"fixtures/"),
+)
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -81,7 +93,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.comments',
     'django_openid_auth',
-    'ispdb.config'
+    'ispdb.config',
+    'django_nose',
 )
 
 AUTHENTICATION_BACKENDS = (
