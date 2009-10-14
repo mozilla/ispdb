@@ -4,7 +4,7 @@ from ispdb.config.models import *
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
-import settings
+from django.conf import settings
 
 unclaimed_dict = {
     'queryset': UnclaimedDomain.objects.all(),
