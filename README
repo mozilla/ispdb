@@ -3,8 +3,14 @@ experimental django front-end to figure out workflow of ISP database info
 for the Thunderbird autoconfig database
 
 Step 0: Prerequisites
-    easy_install django-openid-auth
-    easy_install python-openid
+    django-1.1
+    django-openid-auth
+    python-openid
+    django-nose 
+
+    You can install all of the above with:
+    pip install django python-openid django-openid-auth django-nose
+    Note: You may have to do an "easy_install pip" first
 
 Step 1:
    python manage.py syncdb
