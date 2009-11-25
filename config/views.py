@@ -1,12 +1,16 @@
+import StringIO
+import xml.etree.ElementTree as ET
+
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
-from ispdb.config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
+from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.forms.formsets import formset_factory
 from django.forms.models import inlineformset_factory
 from django.contrib.auth import logout
 from django.template import RequestContext
-import sys
+
+from ispdb.config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
 
 def logout_view(request):
     logout(request)
@@ -21,8 +25,24 @@ def intro(request):
     return render_to_response("config/intro.html", {'domains': domains},
                               context_instance=RequestContext(request))
 
-def list(request):
+def list(request, format="html"):
     configs = Config.objects.all()
+    if format == "xml":
+        providers = ET.Element("providers")
+        for config in configs:
+            provider = ET.SubElement(providers, "provider")
+            ET.SubElement(provider, "id").text = str(config.id)
+            ET.SubElement(provider, "export").text = reverse("ispdb_export_xml",
+                                            kwargs={"id": config.id})
+            ET.SubElement(provider, "lastUpdated").text = str(
+                config.last_update_datetime)
+        xml = ET.ElementTree(providers)
+        output = StringIO.StringIO("w")
+        xml.write(output, "UTF-8")
+        response = HttpResponse(mimetype="text/xml")
+        response.write(output.getvalue())
+        output.close()
+        return response
     return render_to_response("config/list.html", {'configs': configs},
                               context_instance=RequestContext(request))
 
@@ -54,13 +74,12 @@ def details(request, id):
 
 
 def export_xml(request, id):
-    from django.core import serializers
     config = Config.objects.filter(id=int(id))[0]
     data = config.as_xml()
     return HttpResponse(data, mimetype='text/xml')
 
 
-def add(request, domain):
+def add(request, domain=None):
     DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10)
     InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
 
