@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+<start>
+<element name="clientConfig">
+    <element name="emailProvider">
+        <attribute name="id">
+            <data type="ID" />
+        </attribute>
+        <oneOrMore>
+            <element name="domain">
+                <text />
+            </element>
+        </oneOrMore>
+        <element name="displayName">
+            <text />
+        </element>
+        <element name="displayShortName">
+            <text />
+        </element>
+        <element name="incomingServer">
+            <attribute name="type">
+                <choice>
+                    <value>imap</value>
+                    <value>pop3</value>
+                </choice>
+            </attribute>
+            <element name="hostname">
+                <text />
+            </element>
+            <element name="port">
+                <data type="unsignedInt" />
+            </element>
+             <element name="socketType">
+                <choice>
+                    <value>plain</value>
+                    <value>SSL</value>
+                    <value>TLS</value>
+                    <value>STARTTLS</value>
+                </choice>
+            </element>
+            <ref name="userform-Content" />
+            <element name="authentication">
+                <choice>
+                    <value></value>
+                    <value>plain</value>
+                    <value>secure</value>
+                </choice>
+            </element>
+            <optional>
+                <element name="pop3">
+                    <element name="leaveMessagesOnServer">
+                        <choice>
+                            <value>true</value>
+                            <value>false</value>
+                        </choice>
+                    </element>
+                </element>
+        </optional>
+        </element>
+
+        <element name="outgoingServer">
+            <attribute name="type">
+                <choice>
+                    <value>smtp</value>
+                </choice>
+            </attribute>
+            <element name="hostname">
+                <text />
+            </element>
+            <element name="port">
+                <text />
+            </element>
+            <element name="socketType">
+                <choice>
+                    <value>plain</value>
+                    <value>TLS</value>
+                    <value>SSL</value>
+                    <value>STARTTLS</value>
+                </choice>
+            </element>
+            <ref name="userform-Content" />
+            <element name="authentication">
+                <choice>
+                    <value></value>
+                    <value>plain</value>
+                    <value>secure</value>
+                    <value>smtp-after-pop</value>
+                </choice>
+            </element>
+            <element name="addThisServer">
+                <choice>
+                    <value>true</value>
+                    <value>false</value>
+                </choice>
+            </element>
+            <element name="useGlobalPreferredServer">
+                <choice>
+                    <value>true</value>
+                    <value>false</value>
+                </choice>
+            </element>
+        </element>
+        <optional>
+            <element name="enableURL">
+                <attribute name="url">
+                    <text/>
+                </attribute>
+                <text />
+            </element>
+        </optional>
+    </element>
+</element>
+</start>
+
+<define name="userform-Content">
+    <element name="username">
+        <text />
+    </element>
+</define>
+
+</grammar>
+
