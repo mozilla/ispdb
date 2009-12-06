@@ -3,6 +3,10 @@ from django.forms import ModelForm, RadioSelect, ChoiceField
 import ispdb.audit as audit
 from django.contrib import admin
 
+import xml.etree.ElementTree as ET
+
+from StringIO import StringIO
+
 class Domain(models.Model):
   name = models.CharField(max_length=100, verbose_name="Email domain",
                           help_text="(e.g. \"gmail.com\")")
@@ -10,9 +14,9 @@ class Domain(models.Model):
                              blank=True) # blank is for requests and rejects
   votes = models.IntegerField(default=1)
   DOMAIN_CHOICES = [
-    ('requested', 'requested for inclusion'),
-    ('configured', 'domain mapped to a configuration'),
-    ('rejected', 'domain can\'t be accepted'),
+    ("requested", "requested for inclusion"),
+    ("configured", "domain mapped to a configuration"),
+    ("rejected", "domain can't be accepted"),
   ]
   status = models.CharField(max_length=20, choices = DOMAIN_CHOICES)
   def __str__(self): return self.name
@@ -29,7 +33,14 @@ class UnclaimedDomain(models.Model):
   status = models.CharField(max_length=20, choices = DOMAIN_CHOICES)
   def __str__(self): return self.name
 
-#admin.site.register(Domain)
+def constructXMLTag(name):
+  if '_' in name:
+    firstword, others = name.split('_', 1)
+    words = others.split('_')
+    xmlfield = firstword + ''.join([word.capitalize() for word in words])
+  else:
+    xmlfield = name
+  return xmlfield
 
 class Config(models.Model):
   """
@@ -46,56 +57,56 @@ class Config(models.Model):
     """
     Return the configuration using the XML document that Thunderbird is expecting.
     """
-    indent = '  '
-    indentLevel = 1
-    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-             '<clientConfig>',
-             indent * indentLevel + '<emailProvider id=\"' + self.email_provider_id +'\">']
-    in_incoming = False
-    in_outgoing = False
+    desiredOutput = {
+      "display_name": "displayName",
+      "display_short_name": "displayShortName",
+      "incoming_hostname": "hostname",
+      "incoming_port": "port",
+      "incoming_socket_type": "socketType",
+      "incoming_username_form": "username",
+      "incoming_authentication": "authentication",
+      "outgoing_hostname": "hostname",
+      "outgoing_port": "port",
+      "outgoing_socket_type": "socketType",
+      "outgoing_username_form": "username",
+      "outgoing_authentication": "authentication",
+      "outgoing_add_this_server": "addThisServer",
+      "outgoing_use_global_preferred_server": "useGlobalPreferredServer",
+    }
+    incoming = None
+    outgoing = None
+    config = ET.Element("clientConfig")
+    emailProvider = ET.SubElement(config,"emailProvider")
+    emailProvider.attrib["id"] = self.email_provider_id
+    for domain in Domain.objects.filter(config=self):
+      ET.SubElement(emailProvider,"domain").text = domain.name
     for field in self._meta.fields:
+      if field.name not in desiredOutput:
+        continue
       if field.name.startswith('incoming'):
-        name = field.name[len('incoming_'):]
-        if in_outgoing:
-          lines.append(indent * indentLevel + '</outgoingServer>')
-          in_outgoing = False
-          indentLevel -= 1
-        if not in_incoming:
-          lines.append(indent * indentLevel + '<incomingServer type="' + self.incoming_type + '\">')
-          in_incoming = True
-          indentLevel += 1
-        if name == "type": continue # handled above
-      elif field.name.startswith('outgoing'):
-        name = field.name[len('outgoing_'):]
-        if in_incoming:
-          lines.append(indent * indentLevel + '</incomingServer>')
-          in_incoming = False
-          indentLevel -= 1
-        if not in_outgoing:
-          lines.append(indent * indentLevel + '<outgoingServer>')
-          in_outgoing = True
-          indentLevel += 1
-      else:
-        if in_incoming:
-          lines.append(indent * indentLevel + '</incomingServer>')
-          in_incoming = False
-          indentLevel -= 1
-        if in_outgoing:
-          lines.append(indent * indentLevel + '</outgoingServer>')
-          in_outgoing = False
-          indentLevel -= 1
+        if incoming is None:
+            incoming = ET.SubElement(emailProvider,"incomingServer")
+            incoming.attrib["type"] = self.incoming_type
         name = field.name
-      if '_' in name:
-        firstword, others = name.split('_', 1)
-        words = others.split('_')
-        xmlfield = firstword + ''.join([word.capitalize() for word in words])
+        currParent = incoming
+      elif field.name.startswith('outgoing'):
+        if outgoing is None:
+            outgoing = ET.SubElement(emailProvider,"outgoingServer")
+            outgoing.attrib["type"] = "smtp"
+        name = field.name
+        currParent = outgoing
       else:
-        xmlfield = name
-      value = str(getattr(self, field.name))
-      lines.append(indent * indentLevel + "<%(xmlfield)s>%(value)s</%(xmlfield)s>" % locals())
-    lines.append(indent * indentLevel + '</emailProvider>')
-    lines.append('</clientConfig>')
-    return '\n'.join(lines)
+        name = field.name
+        currParent = emailProvider
+      name = desiredOutput[name]
+      e = ET.SubElement(currParent,name)
+      e.text = (lambda x: (type(x) is bool) and str(x).lower() or str(x)) (getattr(self,field.name)) #converts True to "true" and False to "false"
+
+    #return ET.tostring(config)
+    retval = StringIO("w")
+    xml = ET.ElementTree(config)
+    xml.write(retval,"UTF-8")
+    return retval.getvalue()
 
   def __str__(self):
     "for use in the admin UI"
