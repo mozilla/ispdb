@@ -87,7 +87,7 @@ def add(request, domain=None):
         # is this a domain request, or a full configuration?
         data = request.POST
         domains = []
-        num_domains = int(data['form-TOTAL_FORMS'][0])
+        num_domains = int(data['form-TOTAL_FORMS'])
         for i in range(num_domains):
             domains.append(data['form-' + str(i) + '-name'])
         # did the user fill in a full form, or are they just asking for some
