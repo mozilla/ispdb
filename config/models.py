@@ -3,7 +3,7 @@ from django.forms import ModelForm, RadioSelect, ChoiceField
 import ispdb.audit as audit
 from django.contrib import admin
 
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 
 from StringIO import StringIO
 
@@ -102,10 +102,9 @@ class Config(models.Model):
       e = ET.SubElement(currParent,name)
       e.text = (lambda x: (type(x) is bool) and str(x).lower() or str(x)) (getattr(self,field.name)) #converts True to "true" and False to "false"
 
-    #return ET.tostring(config)
     retval = StringIO("w")
     xml = ET.ElementTree(config)
-    xml.write(retval,"UTF-8")
+    xml.write(retval, encoding="UTF-8", xml_declaration=True)
     return retval.getvalue()
 
   def __str__(self):
