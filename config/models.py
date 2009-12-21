@@ -127,11 +127,11 @@ class Config(models.Model):
   incoming_hostname = models.CharField(max_length=100)
   incoming_port = models.IntegerField(max_length=5)
   INCOMING_SOCKET_TYPE_CHOICES = (
-    ('SSL', 'SSL'),
-    ('TLS', 'TLS'),
-    ('None', 'None'),
+    ("plain", "No encryption"),
+    ("SSL", "SSL/TLS"),
+    ("STARTTLS", "STARTTLS"),
   )
-  incoming_socket_type = models.CharField(max_length=5, choices=INCOMING_SOCKET_TYPE_CHOICES)
+  incoming_socket_type = models.CharField(max_length=8, choices=INCOMING_SOCKET_TYPE_CHOICES)
   incoming_username_form = models.CharField(max_length=100, verbose_name="Username formula")
   INCOMING_AUTHENTICATION_CHOICES = (
     ('plain', 'Plain (cleartext)'),
@@ -141,11 +141,11 @@ class Config(models.Model):
   outgoing_hostname = models.CharField(max_length=100)
   outgoing_port = models.IntegerField(max_length=5)
   OUTGOING_SOCKET_TYPE_CHOICES = (
-    ('SSL', 'SSL'),
-    ('TLS', 'TLS'),
-    ('None', 'None'),
+    ("plain", "No encryption"),
+    ("SSL", "SSL/TLS"),
+    ("STARTTLS", "STARTTLS"),
   )
-  outgoing_socket_type = models.CharField(max_length=5, choices=OUTGOING_SOCKET_TYPE_CHOICES)
+  outgoing_socket_type = models.CharField(max_length=8, choices=OUTGOING_SOCKET_TYPE_CHOICES)
   outgoing_username_form = models.CharField(max_length=100, verbose_name="Username formula")
   OUTGOING_AUTHENTICATION_CHOICES = (
     ('plain', 'Plain (cleartext)'),
