@@ -1,17 +1,26 @@
 import os, sys
 
-from ispdb.config.models import Domain, Config
-try:
-  import xml.etree.ElementTree as ET
-except ImportError:
-  import elementtree.ElementTree as ET
+from config.models import Domain, Config
+import lxml.etree as ET
+
+def get_username(element):
+    rv = element.find('username')
+    if rv is None:
+        rv = element.find('usernameForm')
+    if rv is None:
+        rv = ""
+    else:
+        rv = rv.text
+    return rv
 
 def main():
   datadir = os.environ.get("AUTOCONFIG_DATA", "../autoconfig_data")
   for fname in os.listdir(datadir):
-    if fname.startswith('.') or fname == "README": continue
+    fullpath = os.path.join(datadir, fname)
+    if fname.startswith('.') or os.path.isdir(fullpath) or fname == "README":
+        continue
     print "PROCESSING", fname
-    et = ET.parse(os.path.join(datadir, fname))
+    et = ET.parse(fullpath)
     root = et.getroot()
     #print root
     incoming = root.find('.//incomingServer')
@@ -20,6 +29,8 @@ def main():
     # if we have one for this id, skip it
     if Config.objects.filter(email_provider_id=id):
       continue
+    incoming_username_form = get_username(incoming)
+    outgoing_username_form = get_username(outgoing)
     c = Config(id=None,
                email_provider_id = id,
                display_name = root.find('.//displayName').text,
@@ -29,12 +40,12 @@ def main():
                incoming_port = int(incoming.find('port').text),
                incoming_socket_type = incoming.find('socketType').text,
                incoming_authentication = incoming.find('authentication').text,
-               incoming_username_form = incoming.find('username').text,
+               incoming_username_form = incoming_username_form,
 
                outgoing_hostname = outgoing.find('hostname').text,
                outgoing_port = int(outgoing.find('port').text),
                outgoing_socket_type = outgoing.find('socketType').text,
-               outgoing_username_form = outgoing.find('username').text,
+               outgoing_username_form = outgoing_username_form,
                outgoing_authentication = outgoing.find('authentication').text,
                outgoing_add_this_server = outgoing.find('addThisServer').text == "true",
                outgoing_use_global_preferred_server = outgoing.find('useGlobalPreferredServer').text == "true",

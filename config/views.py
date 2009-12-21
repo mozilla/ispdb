@@ -1,5 +1,5 @@
 import StringIO
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
@@ -10,7 +10,7 @@ from django.forms.models import inlineformset_factory
 from django.contrib.auth import logout
 from django.template import RequestContext
 
-from ispdb.config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
+from config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
 
 def logout_view(request):
     logout(request)
@@ -38,7 +38,7 @@ def list(request, format="html"):
                 config.last_update_datetime)
         xml = ET.ElementTree(providers)
         output = StringIO.StringIO("w")
-        xml.write(output, "UTF-8")
+        xml.write(output, encoding="UTF-8", xml_declaration=True)
         response = HttpResponse(mimetype="text/xml")
         response.write(output.getvalue())
         output.close()
@@ -73,8 +73,12 @@ def details(request, id):
                               context_instance=RequestContext(request))
 
 
-def export_xml(request, id):
-    config = Config.objects.filter(id=int(id))[0]
+def export_xml(request, id=None, domain=None):
+    config = None
+    if id is not None:
+        config = Config.objects.filter(id=int(id))[0]
+    elif domain is not None:
+        config = Domain.objects.filter(name=domain)[0].config
     data = config.as_xml()
     return HttpResponse(data, mimetype='text/xml')
 
