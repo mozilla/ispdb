@@ -36,7 +36,6 @@
                 <choice>
                     <value>plain</value>
                     <value>SSL</value>
-                    <value>TLS</value>
                     <value>STARTTLS</value>
                 </choice>
             </element>
@@ -75,7 +74,6 @@
             <element name="socketType">
                 <choice>
                     <value>plain</value>
-                    <value>TLS</value>
                     <value>SSL</value>
                     <value>STARTTLS</value>
                 </choice>
