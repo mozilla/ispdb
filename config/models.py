@@ -1,14 +1,20 @@
-from django.db import models
-from django.forms import ModelForm, RadioSelect, ChoiceField
-import ispdb.audit as audit
 from django.contrib import admin
+from django.core.urlresolvers import reverse
+from django.db import models
+from django.forms import ChoiceField
+from django.forms import ModelForm
+from django.forms import RadioSelect
+from django.forms import ValidationError
+from django.utils.safestring import mark_safe
+import ispdb.audit as audit
 
 import lxml.etree as ET
 
 from StringIO import StringIO
 
 class Domain(models.Model):
-  name = models.CharField(max_length=100, verbose_name="Email domain",
+  name = models.CharField(max_length=100, unique=True,
+                          verbose_name="Email domain",
                           help_text="(e.g. \"gmail.com\")")
   config = models.ForeignKey('Config', related_name="domains",
                              blank=True) # blank is for requests and rejects
@@ -48,7 +54,7 @@ class Config(models.Model):
   which apply to it.
 
   """
-  
+
   class Meta:
     permissions = (
       ('can_approve', 'Can approve configurations'),
@@ -124,7 +130,7 @@ class Config(models.Model):
   )
   incoming_type = models.CharField(max_length=100, choices=INCOMING_TYPE_CHOICES)
   incoming_hostname = models.CharField(max_length=100)
-  incoming_port = models.IntegerField(max_length=5)
+  incoming_port = models.PositiveIntegerField()
   INCOMING_SOCKET_TYPE_CHOICES = (
     ("plain", "No encryption"),
     ("SSL", "SSL/TLS"),
@@ -136,9 +142,9 @@ class Config(models.Model):
     ('plain', 'Plain (cleartext)'),
   )
   incoming_authentication = models.CharField(max_length=20, choices=INCOMING_AUTHENTICATION_CHOICES)
-  
+
   outgoing_hostname = models.CharField(max_length=100)
-  outgoing_port = models.IntegerField(max_length=5)
+  outgoing_port = models.PositiveIntegerField()
   OUTGOING_SOCKET_TYPE_CHOICES = (
     ("plain", "No encryption"),
     ("SSL", "SSL/TLS"),
@@ -152,7 +158,7 @@ class Config(models.Model):
   outgoing_authentication = models.CharField(max_length=20, choices=OUTGOING_AUTHENTICATION_CHOICES)
   outgoing_add_this_server = models.BooleanField(verbose_name="Add this server to list???")
   outgoing_use_global_preferred_server = models.BooleanField(verbose_name="Use global server instead")
-  
+
   settings_page_url = models.URLField(verbose_name="URL of the page describing these settings")
   LANGUAGE_CHOICES = (
     ('en', "English"),
@@ -197,8 +203,28 @@ class ConfigForm(ModelForm):
                    'incoming_username_form'
                    ]
     incoming_type = ChoiceField(widget=RadioSelect, choices=Config.INCOMING_TYPE_CHOICES)
-    
+
+    def clean_incoming_port(self):
+        return clean_port(self, "incoming_port")
+    def clean_outgoing_port(self):
+        return clean_port(self, "outgoing_port")
+
 class DomainForm(ModelForm):
     class Meta:
         model = Domain
         fields = ('name',)
+    def clean_name(self):
+        data = self.cleaned_data["name"]
+        dom = Domain.objects.filter(name=data)
+        if dom:
+            msg = 'Domain configuration already exists \
+            <a href="%s">here</a>.' % \
+            reverse("ispdb_details", kwargs={"id" : dom[0].config.id})
+            raise ValidationError(mark_safe(msg))
+        return data
+
+def clean_port(self,field):
+    data = self.cleaned_data[field]
+    if data > 65535:
+        raise ValidationError("Port number cannot be larger than 65535")
+    return data

@@ -17,6 +17,14 @@ $(document).ready(function() {
       $(template(i++)).appendTo("#domain_list table");
       $("#id_form-TOTAL_FORMS").val(i);
     }
+    function showForm() {
+      $("#question").hide();
+      $("#submit").show();
+      $("#voteforit").hide();
+      $("#dataful").val('adding');
+      $("#configform").show("fast");
+      $("#add_domain").show();
+    }
 
     $("#add_domain").click(function() {
       addRow();
@@ -34,16 +42,35 @@ $(document).ready(function() {
       // the yes button is in a form, and we want to stop the
       // click from being processed by the form object
       event.preventDefault();
-      $("#question").hide();
-      $("#submit").show();
-      $("#voteforit").hide();
-      $("#dataful").val('adding');
-      $("#configform").show("fast");
-      $("#add_domain").show();
+      $("#yes,#no").attr("disabled", "disabled");
+      $.ajax({
+        url: "{%url ispdb_check_domain%}/" + $("#id_form-0-name").val(),
+        type: "GET",
+        dataType: 'json',
+        success: function(data) {
+          // no error messages
+          if(!data.name) {
+            $(".errorlist").remove();
+            showForm();
+          }
+          else {
+            $(".errorlist").remove();
+            list = $("<ul class='errorlist'></ul>");
+            list.append("<li>" + data.name + "</li>");
+            $("#domain_list td").prepend(list);
+          }
+        },
+        error: function(a) {
+          showForm();
+        },
+        complete: function() {
+          $("#yes,#no").removeAttr("disabled");
+        }
+      });
     });
 
     $("#no").click(function(event) {
-      // the yes button is in a form, and we want to stop the
+      // the no button is in a form, and we want to stop the
       // click from being processed by the form object
       event.preventDefault();
       $("#question").hide();

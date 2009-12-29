@@ -9,6 +9,7 @@ from django.forms.formsets import formset_factory
 from django.forms.models import inlineformset_factory
 from django.contrib.auth import logout
 from django.template import RequestContext
+from django.utils import simplejson
 
 from config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
 
@@ -52,7 +53,7 @@ def details(request, id):
     other_fields = []
     incoming = []
     outgoing = []
-    
+
     for field in config._meta.fields:
         data = {'name': field.name,
                 'verbose_name': field.verbose_name,
@@ -82,6 +83,14 @@ def export_xml(request, id=None, domain=None):
     data = config.as_xml()
     return HttpResponse(data, mimetype='text/xml')
 
+def check_domain(request, name):
+    """
+    Tests if the given domain name is valid and that it's not already in the db.
+    """
+    dom_form = DomainForm({'name':name})
+    dom_form.is_valid()
+    json = simplejson.dumps(dom_form.errors)
+    return HttpResponse(json,mimetype='application/json')
 
 def add(request, domain=None):
     DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10)
@@ -100,34 +109,41 @@ def add(request, domain=None):
             # we'll create (unclaimed) domains if they don't exist, otherwise
             # register the vote
             for domain in domains:
-                exists = Domain.objects.filter(name=domain) or UnclaimedDomain.objects.filter(name=domain)
+                exists = Domain.objects.filter(name=domain) or \
+                         UnclaimedDomain.objects.filter(name=domain)
                 if exists:
                     d = exists[0]
                     d.votes += 1
                 else:
-                    d = UnclaimedDomain(name=domain, status='requested', votes=1)
+                    d = UnclaimedDomain(name=domain,
+                                        status='requested',
+                                        votes=1)
                 d.save()
             return HttpResponseRedirect('/') # Redirect after POST
         else:
             config = Config()
-            config_form = ConfigForm(request.POST, request.FILES, instance=config) # A form bound to the POST data
-            if config_form.is_valid(): # All validation rules pass
+            # A form bound to the POST data
+            config_form = ConfigForm(request.POST,
+                                     request.FILES,
+                                     instance=config)
+            formset = DomainFormSet(request.POST,request.FILES)
+            # All validation rules pass
+            if config_form.is_valid() and formset.is_valid():
                 config_form.save()
                 created_domains = []
                 for domain in domains:
                     unclaimed = UnclaimedDomain.objects.filter(name=domain)
                     if unclaimed:
                         d = unclaimed[0]
-                        claimed = Domain(name=domain, votes=d.votes, config=config)
+                        claimed = Domain(name=domain,
+                                         votes=d.votes,
+                                         config=config)
                         d.delete()
                     else:
                         claimed = Domain(name=domain, votes=1, config=config)
                     claimed.save()
                 return HttpResponseRedirect('/add/') # Redirect after POST
-            initials = []
-            for domain in domains:
-                initials.append({'name': domain})
-            formset = DomainFormSet(initial=initials)
+
     else:
         config_form = ConfigForm()
         formset = DomainFormSet(initial=[{'name': domain}])
