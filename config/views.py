@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import StringIO
 import lxml.etree as ET
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render_to_response
@@ -12,6 +14,7 @@ from django.template import RequestContext
 from django.utils import simplejson
 
 from config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
+from config import serializers
 
 def logout_view(request):
     logout(request)
@@ -32,10 +35,10 @@ def list(request, format="html"):
         providers = ET.Element("providers")
         for config in configs:
             provider = ET.SubElement(providers, "provider")
-            ET.SubElement(provider, "id").text = str(config.id)
+            ET.SubElement(provider, "id").text = unicode(config.id)
             ET.SubElement(provider, "export").text = reverse("ispdb_export_xml",
                                             kwargs={"id": config.id})
-            ET.SubElement(provider, "lastUpdated").text = str(
+            ET.SubElement(provider, "lastUpdated").text = unicode(
                 config.last_update_datetime)
         xml = ET.ElementTree(providers)
         output = StringIO.StringIO("w")
@@ -74,13 +77,16 @@ def details(request, id):
                               context_instance=RequestContext(request))
 
 
-def export_xml(request, id=None, domain=None):
+def export_xml(request, version=None, id=None, domain=None):
     config = None
     if id is not None:
         config = Config.objects.filter(id=int(id))[0]
     elif domain is not None:
         config = Domain.objects.filter(name=domain)[0].config
-    data = config.as_xml()
+    serialize = serializers.get(version)
+    if serialize is None:
+        raise Http404
+    data = serialize(config)
     return HttpResponse(data, mimetype='text/xml')
 
 def check_domain(request, name):
@@ -102,7 +108,7 @@ def add(request, domain=None):
         domains = []
         num_domains = int(data['form-TOTAL_FORMS'])
         for i in range(num_domains):
-            domains.append(data['form-' + str(i) + '-name'])
+            domains.append(data['form-' + unicode(i) + '-name'])
         # did the user fill in a full form, or are they just asking for some
         # domains to be registered
         if data['asking_or_adding'] == 'asking':

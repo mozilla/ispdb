@@ -3,7 +3,7 @@
 from cStringIO import StringIO
 import datetime
 import re
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 import zipfile
 
 from django.test import TestCase
@@ -27,12 +27,12 @@ def make_config(value):
             "incoming_hostname":"foo",
             "incoming_port":"22%s" % value,
             "incoming_socket_type":"plain",
-            "incoming_authentication":"plain",
+            "incoming_authentication":"password-cleartext",
             "outgoing_hostname":"bar",
             "outgoing_port":"22%s" % value,
             "outgoing_socket_type":"STARTTLS",
             "outgoing_username_form":"%EMAILLOCALPART%",
-            "outgoing_authentication":"plain",
+            "outgoing_authentication":"password-cleartext",
             "settings_page_url":"google.com",
             "settings_page_language":"en",
             "confirmations":"0",
@@ -118,7 +118,7 @@ class ListTest(TestCase):
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 1)
 
-    def test_two_xml_reponses(self):
+    def test_two_reponses(self):
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         domain = models.Domain.objects.get(name="test2.com")
         response = self.client.post(reverse("ispdb_approve",
