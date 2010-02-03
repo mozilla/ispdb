@@ -4,6 +4,9 @@
 
 <start>
 <element name="clientConfig">
+    <attribute name="version">
+        <text />
+    </attribute>
     <element name="emailProvider">
         <attribute name="id">
             <data type="ID" />
@@ -103,7 +106,7 @@
         <optional>
             <element name="enableURL">
                 <attribute name="url">
-                    <text/>
+                    <text />
                 </attribute>
                 <text />
             </element>

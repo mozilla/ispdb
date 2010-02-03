@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from django.contrib import admin
 from django.core.urlresolvers import reverse
 from django.db import models
@@ -7,10 +9,6 @@ from django.forms import RadioSelect
 from django.forms import ValidationError
 from django.utils.safestring import mark_safe
 import ispdb.audit as audit
-
-import lxml.etree as ET
-
-from StringIO import StringIO
 
 class Domain(models.Model):
   name = models.CharField(max_length=100, unique=True,
@@ -59,59 +57,6 @@ class Config(models.Model):
     permissions = (
       ('can_approve', 'Can approve configurations'),
       )
-  def as_xml(self):
-    """
-    Return the configuration using the XML document that Thunderbird is expecting.
-    """
-    desiredOutput = {
-      "display_name": "displayName",
-      "display_short_name": "displayShortName",
-      "incoming_hostname": "hostname",
-      "incoming_port": "port",
-      "incoming_socket_type": "socketType",
-      "incoming_username_form": "username",
-      "incoming_authentication": "authentication",
-      "outgoing_hostname": "hostname",
-      "outgoing_port": "port",
-      "outgoing_socket_type": "socketType",
-      "outgoing_username_form": "username",
-      "outgoing_authentication": "authentication",
-      "outgoing_add_this_server": "addThisServer",
-      "outgoing_use_global_preferred_server": "useGlobalPreferredServer",
-    }
-    incoming = None
-    outgoing = None
-    config = ET.Element("clientConfig")
-    emailProvider = ET.SubElement(config,"emailProvider")
-    emailProvider.attrib["id"] = self.email_provider_id
-    for domain in Domain.objects.filter(config=self):
-      ET.SubElement(emailProvider,"domain").text = domain.name
-    for field in self._meta.fields:
-      if field.name not in desiredOutput:
-        continue
-      if field.name.startswith('incoming'):
-        if incoming is None:
-            incoming = ET.SubElement(emailProvider,"incomingServer")
-            incoming.attrib["type"] = self.incoming_type
-        name = field.name
-        currParent = incoming
-      elif field.name.startswith('outgoing'):
-        if outgoing is None:
-            outgoing = ET.SubElement(emailProvider,"outgoingServer")
-            outgoing.attrib["type"] = "smtp"
-        name = field.name
-        currParent = outgoing
-      else:
-        name = field.name
-        currParent = emailProvider
-      name = desiredOutput[name]
-      e = ET.SubElement(currParent,name)
-      e.text = (lambda x: (type(x) is bool) and str(x).lower() or str(x)) (getattr(self,field.name)) #converts True to "true" and False to "false"
-
-    retval = StringIO("w")
-    xml = ET.ElementTree(config)
-    xml.write(retval, encoding="UTF-8", xml_declaration=True)
-    return retval.getvalue()
 
   def __str__(self):
     "for use in the admin UI"
@@ -139,10 +84,20 @@ class Config(models.Model):
   incoming_socket_type = models.CharField(max_length=8, choices=INCOMING_SOCKET_TYPE_CHOICES)
   incoming_username_form = models.CharField(max_length=100, verbose_name="Username formula")
   INCOMING_AUTHENTICATION_CHOICES = (
-    ('plain', 'Plain (cleartext)'),
-  )
-  incoming_authentication = models.CharField(max_length=20, choices=INCOMING_AUTHENTICATION_CHOICES)
+    ("password-cleartext", "Unencrypted Password"),
 
+    ("password-encrypted", "Encrypted Password"),
+  )
+  incoming_authentication = models.CharField(max_length = 20,
+    choices = INCOMING_AUTHENTICATION_CHOICES,
+    default = "password-encrypted",
+    help_text = """<strong>Unencrypted Password</strong>: Send password
+        unencrypted in the clear. Dangerous, if SSL isn't used either.
+        PLAIN or LOGIN etc…<br/>
+
+        <strong>Encrypted Password</strong>: Hashed password. Offers
+        minimal protection for passwords.  CRAM-MD5 or DIGEST-MD5. Not
+        NTLM.<br/>""")
   outgoing_hostname = models.CharField(max_length=100)
   outgoing_port = models.PositiveIntegerField()
   OUTGOING_SOCKET_TYPE_CHOICES = (
@@ -153,9 +108,34 @@ class Config(models.Model):
   outgoing_socket_type = models.CharField(max_length=8, choices=OUTGOING_SOCKET_TYPE_CHOICES)
   outgoing_username_form = models.CharField(max_length=100, verbose_name="Username formula")
   OUTGOING_AUTHENTICATION_CHOICES = (
-    ('plain', 'Plain (cleartext)'),
+    ("password-cleartext", "Unencrypted Password"),
+
+    ("password-encrypted", "Encrypted Password"),
+    ("none", "Client IP address"),
+    ("smtp-after-pop", "SMTP-after-POP"),
   )
-  outgoing_authentication = models.CharField(max_length=20, choices=OUTGOING_AUTHENTICATION_CHOICES)
+  outgoing_authentication = models.CharField(max_length = 20,
+    choices = OUTGOING_AUTHENTICATION_CHOICES,
+    default = "password-encrypted",
+    help_text = """<strong>Unencrypted Password</strong>: Send password
+        unencrypted in the clear. Dangerous, if SSL isn't used either.
+        PLAIN or LOGIN etc…<br/>
+
+        <strong>Encrypted Password</strong>: Hashed password. Offers
+        minimal protection for passwords.  CRAM-MD5 or DIGEST-MD5. Not
+        NTLM.<br/>
+
+        <strong>Client IP address</strong>: The server recognizes this user
+        based on the IP address.  No explicit authentication needed, the
+        server will require no username nor password. Warning: This may
+        make the configuration unusable outside the ISP network, when the
+        user is roaming, so please try to find a configuration with
+        authentication.<br>
+
+        <strong>SMTP-after-POP</strong>: Authenticating to the incoming
+        server (POP or IMAP) will clear the user's IP address for the SMTP
+        server as well. Requires that the application gets mail before
+        sending mail.<br/>""")
   outgoing_add_this_server = models.BooleanField(verbose_name="Add this server to list???")
   outgoing_use_global_preferred_server = models.BooleanField(verbose_name="Use global server instead")
 

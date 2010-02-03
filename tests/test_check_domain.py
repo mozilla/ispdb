@@ -23,7 +23,7 @@ class CheckDomainTest(TestCase):
         json = simplejson.loads(response.content)
         # assert there was no errors returned
         assert_false(json)
-        
+
     def test_not_unique(self):
         domain = models.Domain.objects.filter(name="test.com")
         assert_true(domain)
