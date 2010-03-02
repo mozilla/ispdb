@@ -3,7 +3,7 @@
 import lxml.etree as ET
 from StringIO import StringIO
 
-from config.models import Domain
+from ispdb.config.models import Domain
 
 def xmlThreeDotZero(data):
     """
