@@ -13,8 +13,8 @@ from django.contrib.auth import logout
 from django.template import RequestContext
 from django.utils import simplejson
 
-from config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
-from config import serializers
+from ispdb.config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
+from ispdb.config import serializers
 
 def logout_view(request):
     logout(request)
