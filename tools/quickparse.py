@@ -30,16 +30,14 @@ for line in open(sys.argv[1]).readlines():
 
 ip_histogram = {}
 for ip, count in countsperIP.items():
-  if count in ip_histogram:
-    ip_histogram[count] += 1
-  else:
-    ip_histogram[count] = 1
+  ip_histogram[count] = ip_histogram.setdefault(count, 0) + 1
 
 counts = ip_histogram.keys()
 counts.sort()
 for c in counts[:9]:
   print c, ip_histogram[c]
-print counts[9], "and more:", sum([ip_histogram[i] for i in counts[9:]])
+if len(counts) > 9:
+  print counts[9], "and more:", sum([ip_histogram[i] for i in counts[9:]])
 for domain in domains:
   domain['count'] = domain2count[domain['domain']]
 
@@ -70,7 +68,7 @@ misses.sort(rank_by_count)
 print "Top 20 misses:"
 top_20_percent = 0
 for d in misses[:20]:
-  percent = 100.0*d['count']/len(domains)
+  percent = 100.0*d['count']/total_queries
   top_20_percent += percent
   print "  %s (%d hits, aka %3.1f%%)" % (d['domain'], d['count'], percent)
 
@@ -79,7 +77,7 @@ print "adding all 20 would boost our HIT rate by %3.1f%%" % top_20_percent
 print "Next 50 misses:"
 next_50_percent = 0
 for d in misses[20:70]:
-  percent = 100.0*d['count']/len(domains)
+  percent = 100.0*d['count']/total_queries
   next_50_percent += percent
   print "  %s (%d hits, aka %3.1f%%)" % (d['domain'], d['count'], percent)
 
