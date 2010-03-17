@@ -22,7 +22,7 @@ for line in open(sys.argv[1]).readlines():
   else:
     countsperIP[ip] += 1
   if not domain: continue
-  if domain in domain2count:
+  if (domain,code) in domain2count:
     domain2count[(domain,code)] += 1
   else:
     domains.append(dict(domain=domain, code=code))
