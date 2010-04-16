@@ -43,7 +43,6 @@ sub handler {
   my $uri = $r->uri;
 
   if ($r->prev) {
-    warn "Looks like a subrequest";
     my $prev = $r->prev;
     $uri = $prev->uri;
   }
