@@ -30,12 +30,11 @@ import argparse
 import codecs
 import os.path
 import sys
-import xml.dom.minidom
+import xml.etree.ElementTree as ET
 
 
 def read_config(file, convertTime):
-    return (xml.dom.minidom.parse(file),
-            max(os.stat(file).st_mtime, convertTime))
+    return (ET.parse(file), max(os.stat(file).st_mtime, convertTime))
 
 
 def print_config(doc):
@@ -46,56 +45,45 @@ def write_config(outData, time, filename=None):
     if os.path.exists(filename) and os.stat(filename).st_mtime >= time:
         return
 
-    print "Producing %s" % filename
     file = codecs.open(filename, "w")
     file.write(outData)
     file.close()
 
 
 def write_domains(doc, time, output_dir="."):
-    outData = doc.toxml(encoding="UTF-8")
-    for d in doc.getElementsByTagName("domain"):
-        write_config(outData, time, output_dir + "/" + d.childNodes[0].data)
+    outData = ET.tostring(doc.getroot(), encoding="UTF-8") + "\n"
+    for d in doc.findall("//domain"):
+        write_config(outData, time, output_dir + "/" + d.text)
 
 
 def convert_11_to_10(doc):
-    if doc.getElementsByTagName("clientConfig")[0].getAttribute("version"):
-        doc.getElementsByTagName("clientConfig")[0].removeAttribute("version")
+    # Mark that we're writing a 1.0 client config.
+    doc.getroot().attrib["version"] = "1.0"
 
     # Change <authentication>password-cleartext</> to plain and
     # <authentication>password-encrypted</> to secure (from bug 525238).
-    for a in doc.getElementsByTagName("authentication"):
-        if a.childNodes[0].wholeText.find("password-cleartext") != -1:
-            a.replaceChild(doc.createTextNode("plain"),
-                           a.childNodes[0])
-        if a.childNodes[0].wholeText.find("password-encrypted") != -1:
-            a.replaceChild(doc.createTextNode("secure"),
-                           a.childNodes[0])
+    for a in doc.findall("//authentication"):
+        if "password-cleartext" in a.text:
+            a.text = "plain"
+        if "password-encrypted" in a.text:
+            a.text = "secure"
 
-    # Add <addThisServer>true</> and <useGlobalPreferredServer>false</>.
-    a = doc.getElementsByTagName("outgoingServer")
-    if a:
-        a[0].appendChild(doc.createTextNode("  "))
-        addThisServer = doc.createElement("addThisServer")
-        addThisServer.appendChild(doc.createTextNode("true"))
-        a[0].appendChild(addThisServer)
-        a[0].appendChild(doc.createTextNode("\n      "))
-        useServer = doc.createElement("useGlobalPreferredServer")
-        useServer.appendChild(doc.createTextNode("false"))
-        a[0].appendChild(useServer)
-        a[0].appendChild(doc.createTextNode("\n    "))
-
-    # Comment out all but the first of the incoming and outgoing servers.
-    def commentRest(tagname):
+    # Remove all but the first of the incoming and outgoing servers.
+    def removeRest(parent, tagname):
         first = True
-        for a in doc.getElementsByTagName(tagname):
+        for a in parent.findall(tagname):
             if first:
                 first = False
             else:
-                a.parentNode.replaceChild(doc.createComment(
-                    "\n    " + a.toxml().replace("--", "- -") + "\n    "), a)
-    commentRest("incomingServer")
-    commentRest("outgoingServer")
+                parent.remove(a)
+    parent = doc.find("//emailProvider")
+    removeRest(parent, "incomingServer")
+    removeRest(parent, "outgoingServer")
+    outgoingServer = parent.find("outgoingServer")
+    for a in outgoingServer.findall("restriction"):
+        outgoingServer.remove(a)
+    for a in parent.findall("documentation"):
+        parent.remove(a)
 
 
 def main():
@@ -114,6 +102,7 @@ def main():
     # process arguments
     convertTime = os.stat(sys.argv[0]).st_mtime
     for f in args.file:
+        print "Processing %s" % f
         doc, time = read_config(f, convertTime)
 
         if args.v == "1.0":
@@ -132,8 +121,6 @@ def main():
             write_config(doc, time, args.d + "/" + os.path.basename(f))
         else:
             print_config(doc)
-
-        doc.unlink()
 
 
 if __name__ == "__main__":
