@@ -33,7 +33,6 @@ import stat
 import sys
 import xml.etree.ElementTree as ET
 
-
 def read_config(file, convertTime):
     return (ET.parse(file), max(os.stat(file).st_mtime, convertTime))
 
@@ -45,7 +44,7 @@ def print_config(doc):
 def write_config(outData, time, filename=None):
     if os.path.exists(filename) and os.stat(filename).st_mtime >= time:
         return
-
+    print "Writing %s" % filename
     file = codecs.open(filename, "w")
     file.write(outData)
     file.close()
@@ -105,8 +104,6 @@ def main():
     is_dir = stat.S_ISDIR
 
     for f in args.file:
-        print "Processing %s" % f
-
         if is_dir(os.stat(f).st_mode):
             continue 
         
