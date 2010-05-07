@@ -31,7 +31,7 @@ import codecs
 import os.path
 import stat
 import sys
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 
 def read_config(file, convertTime):
     return (ET.parse(file), max(os.stat(file).st_mtime, convertTime))
