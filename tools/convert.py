@@ -29,6 +29,7 @@
 import argparse
 import codecs
 import os.path
+import stat
 import sys
 import xml.etree.ElementTree as ET
 
@@ -101,8 +102,17 @@ def main():
 
     # process arguments
     convertTime = os.stat(sys.argv[0]).st_mtime
+    is_dir = stat.S_ISDIR
+
     for f in args.file:
         print "Processing %s" % f
+
+        if is_dir(os.stat(f).st_mode):
+            continue 
+        
+        if f == "README":
+            continue
+
         doc, time = read_config(f, convertTime)
 
         if args.v == "1.0":
