@@ -5,8 +5,10 @@ import lxml.etree as ET
 
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404
+from django.shortcuts import render_to_response
 from django.forms.formsets import formset_factory
 from django.forms.models import inlineformset_factory
 from django.contrib.auth import logout
@@ -176,6 +178,7 @@ def policy(request):
     return render_to_response('config/policy.html', {},
                               context_instance=RequestContext(request))
 
+@permission_required("config.can_approve")
 def approve(request, id):
     config = Config.objects.filter(id=id)[0]
     if request.method == 'POST': # If the form has been submitted...
