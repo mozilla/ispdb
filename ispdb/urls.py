@@ -1,6 +1,8 @@
 from django.conf.urls.defaults import *
 from ispdb.config.models import *
 
+from django.http import HttpResponse
+
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
@@ -10,8 +12,8 @@ unclaimed_dict = {
     'queryset': UnclaimedDomain.objects.all(),
 }
 
-
 urlpatterns = patterns('',
+    (r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: /", mimetype="text/plain")),
     (r'^admin/(.*)', admin.site.root),
     (r'^comments/', include('django.contrib.comments.urls')),
     (r'^openid/', include('django_openid_auth.urls')),
