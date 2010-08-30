@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+from datetime import date, timedelta
+import DNS
+import etld # <http://www.stillhq.com/python/etld/etld.py>
 from optparse import OptionParser
 import os
 import pickle
@@ -9,33 +13,32 @@ import sys
 
 # Constants.
 
-ASSIGNED_DOMAINS = {
-  "mail.ru": 493758,
-  "yandex.ru": 493758,
-  "rambler.ru": 493758,
-}
-
-
 # Utility functions.
 
 def readPrevious(pickleName):
   """Read the previous data from the specified pickle."""
   prevHits = None
   prevMisses = None
+  mxs = {}
   if os.path.exists(pickleName):
     data = open(pickleName)
     prevHits = pickle.load(data)
     prevMisses = pickle.load(data)
-  return prevHits, prevMisses
+    try:
+      mxs = pickle.load(data)
+    except EOFError:
+      pass
+  return prevHits, prevMisses, mxs
 
-def writeNext(pickleName, hits, misses):
+def writeNext(pickleName, hits, misses, mxs):
   """Write the current data to the specified pickle."""
   out = open(pickleName, "w")
   pickle.dump(hits, out, -1)
   pickle.dump(misses, out, -1)
+  pickle.dump(mxs, out, -1)
   out.close()
 
-def gatherData(files):
+def gatherData(files, mxs):
   """Gather all the data."""
   domains = []
   domain2count = {}
@@ -59,14 +62,26 @@ def gatherData(files):
         domain2count[(domain,code)] = 1
     for domain in domains:
       domain["count"] = domain2count[(domain["domain"],domain["code"])]
-  ip_histogram = {}
 
+  # So, now we've got all the lines, but some of the failures will actually
+  # be hits on the MX, so let's try to remove those.
+  domainsDict = dictify(domains)
+  mx_hits = [];
+  for domain in domains:
+    if domain["code"] == "404":
+      # We've got a missing domain, so let's check for the MX record.
+      mx = getMX(mxs, domain["domain"])
+      if mx and domainsDict.has_key(mx):
+        mx_hits.append(domain["count"])
+        domains.remove(domain)
+
+  ip_histogram = {}
   for ip, count in countsperIP.items():
     ip_histogram[count] = ip_histogram.setdefault(count, 0) + 1
 
   counts = ip_histogram.keys()
   counts.sort()
-  return domains, counts, ip_histogram
+  return domains, counts, mx_hits, ip_histogram
 
 def dictify(data):
   """Change a list of domains, counts, and codes into a dict of the same."""
@@ -100,6 +115,35 @@ def calculateDiffs(prevData, data):
   retval.sort(rank_by_count)
   return retval
 
+etldService = etld.etld()
+
+def getSLD(domain):
+  """Get the "second level domain", e.g. "mozilla.org" or "bbc.co.uk" """
+  try:
+    sp = etldService.parse(domain) # returns ("5.4.bbc", "co.uk")
+    sld = sp[0].rsplit(".", 1)[-1]
+    tld = sp[1]
+    return sld + "." + tld
+  except etld.EtldException:
+    return domain
+
+
+def getMX(mxs, name):
+  """ You pass in domain |name| and it returns the hostname of the MX server.
+  It either uses the cache |mxs| or does a lookup via DNS over the Internet
+  (and populates the cache)."""
+  if name not in mxs:
+    possible_mxs = []
+    try:
+      possible_mxs = DNS.mxlookup(name.encode("utf-8"))
+    except DNS.DNSError:
+      pass
+    except UnicodeError:
+      pass
+    if len(possible_mxs) < 1:
+      possible_mxs = [None]
+    mxs[name] = possible_mxs[0]
+  return mxs[name]
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -112,48 +156,63 @@ def main(argv=None):
   if argv is None:
     argv = sys.argv
 
-  parser = OptionParser()
+  usage = """%prog [options] logfile [...]
+  logfile               Apache logfile"""
+  parser = OptionParser(usage=usage)
   parser.add_option("-p", "--previous", dest="previous",
-                    default="./quickparse.pickle",
-                    help="Where to get the previous data.  "
-                         "%default by default.")
+                    default=None, #set below
+                    help="Where to get the cache data of the previous run"
+                         "of this script esp. DNS MX lookups, which can"
+                         "take hours.  <filename-1>.pickle by default.")
   parser.add_option("-n", "--next", dest="next",
-                    default=None,
-                    help="Where to write the new data.  "
-                         "<filename>.pickle by default.")
-  (options, args) = parser.parse_args()
+                    default=None, # set below
+                    help="Where to write the new cache data of this run of"
+                         "this script.  <filename>.pickle by default.")
+  (options, logfiles) = parser.parse_args()
+
+  if len(logfiles) < 1:
+    parser.print_usage()
+    exit(1)
+
   if not options.next:
-    options.next = os.path.splitext(args[0])[0]+".pickle"
+    options.next = os.path.splitext(logfiles[0])[0]+".pickle"
+  if not options.previous:
+    try:
+      name = os.path.splitext(logfiles[0])[0]
+      d = date(int(name[0:4]), int(name[4:6]), int(name[6:8]))
+      d -= timedelta(days=1)
+      name = d.strftime("%Y%m%d")
+      options.previous = name+".pickle"
+    except:
+      options.previous = options.next
 
-  prevHits, prevMisses = readPrevious(options.previous)
+  prevHits, prevMisses, mxs = readPrevious(options.previous)
 
-  domains, counts, ip_histogram = gatherData(args)
+  domains, counts, mx_hits, ip_histogram = gatherData(logfiles, mxs)
 
+  print "# of requests per single IP:"
   for c in counts[:9]:
-    print c, ip_histogram[c]
+    print "%4d %d" %(c, ip_histogram[c])
   if len(counts) > 9:
-    print counts[9], "and more:", sum([ip_histogram[i] for i in counts[9:]])
+    print "%3d+" %(counts[9],), sum([ip_histogram[i] for i in counts[9:]])
 
   hits = dictify(d for d in domains if d["code"] in ("200","304"))
-  misses = dictify(d for d in domains if d["code"] == "404"
-                                      and d["domain"] not in ASSIGNED_DOMAINS)
-  pending = dictify(d for d in domains if d["code"] == "404"
-                                       and d["domain"] in ASSIGNED_DOMAINS)
+  misses = dictify(d for d in domains if d["code"] == "404")
   weirdos = sorted(d for d in domains if d["code"] not in ("200","304","404"))
 
   miss_total = sum(misses.values())
-  pending_total = sum(pending.values())
   weirdo_total = sum(x["count"] for x in weirdos)
   hit_total = sum(hits.values())
-  total_queries = miss_total + hit_total + pending_total + weirdo_total
+  mx_total = sum(mx_hits)
+  total_queries = miss_total + hit_total + weirdo_total
   if total_queries != sum([d["count"] for d in domains]):
     print "Error: total_queries (%d) != sum of domain counts (%d)." % (
       total_queries, sum([d["count"] for d in domains]))
 
 
   print "HITS: %d domains, accounting for %d successes, or %3.1f%% success rate" % (len(hits), hit_total, 100.*hit_total/total_queries)
+  print "  MX: %d domains, accounting for %d hits." % (len(mx_hits), mx_total)
   print "MISSES: %d domains, accounting for %d failures, or %3.1f%% fail rate" % (len(misses), miss_total, 100.*miss_total/total_queries)
-  print "PENDING: %d domains, accounting for %d failures, or %3.1f%% fail rate" % (len(pending), pending_total, 100.*pending_total/total_queries)
   print "WEIRDOS: %d domains, accounting for %d oddities, or %3.1f%% strangeness rate" % (len(weirdos), weirdo_total, 100.*weirdo_total/total_queries)
   print "\n".join("  %(domain)s (%(count)s hits, returned %(code)s)" % x for x in weirdos)
   print
@@ -193,7 +252,7 @@ def main(argv=None):
     printDetails(prevMisses[:10], total_queries, "+")
     print
 
-  writeNext(options.next, hits, misses)
+  writeNext(options.next, hits, misses, mxs)
   return 0
 
 if __name__ == "__main__":
