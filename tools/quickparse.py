@@ -55,6 +55,7 @@ def gatherData(files, mxs):
       else:
         countsperIP[ip] += 1
       if not domain: continue
+      domain = domain.split("?")[0]
       if (domain,code) in domain2count:
         domain2count[(domain,code)] += 1
       else:
@@ -70,8 +71,13 @@ def gatherData(files, mxs):
   for domain in domains:
     if domain["code"] == "404":
       # We've got a missing domain, so let's check for the MX record.
-      mx = getMX(mxs, domain["domain"])
-      if mx and domainsDict.has_key(mx):
+      values = domain["domain"].split("/")
+      prefix = ""
+      name = values[-1]
+      if len(values) > 1:
+        prefix = values[-2]
+      mx = getMX(mxs, name)
+      if mx and (mx in domainsDict or (prefix + "/" + mx) in domainsDict):
         mx_hits.append(domain["count"])
         domains.remove(domain)
 
@@ -128,21 +134,30 @@ def getSLD(domain):
     return domain
 
 
+mx_queries = 0
+mx_cache_hit = 0
+
 def getMX(mxs, name):
   """ You pass in domain |name| and it returns the hostname of the MX server.
   It either uses the cache |mxs| or does a lookup via DNS over the Internet
   (and populates the cache)."""
+  global mx_queries
+  global mx_cache_hit
   if name not in mxs:
     possible_mxs = []
     try:
       possible_mxs = DNS.mxlookup(name.encode("utf-8"))
+      mx_queries += 1
     except DNS.DNSError:
       pass
     except UnicodeError:
       pass
     if len(possible_mxs) < 1:
-      possible_mxs = [None]
-    mxs[name] = possible_mxs[0]
+      possible_mxs = [(0, "")]
+    mxs[name] = getSLD(possible_mxs[0][1])
+  else:
+    mx_cache_hit += 1 
+
   return mxs[name]
 
 class Usage(Exception):
@@ -195,6 +210,8 @@ def main(argv=None):
     print "%4d %d" %(c, ip_histogram[c])
   if len(counts) > 9:
     print "%3d+" %(counts[9],), sum([ip_histogram[i] for i in counts[9:]])
+
+  print ""
 
   hits = dictify(d for d in domains if d["code"] in ("200","304"))
   misses = dictify(d for d in domains if d["code"] == "404")
@@ -252,6 +269,10 @@ def main(argv=None):
     printDetails(prevMisses[:10], total_queries, "+")
     print
 
+  print "# DNS Statistics lookups/cached (hit ratio)"
+  dns_ratio = 100.0 * mx_cache_hit / (mx_queries + mx_cache_hit)
+  print "%d/%d (%3.1f%%)" % (mx_queries, mx_cache_hit, dns_ratio)
+ 
   writeNext(options.next, hits, misses, mxs)
   return 0
 
