@@ -77,6 +77,8 @@ def gatherData(files, mxs):
       if len(values) > 1:
         prefix = values[-2]
       mx = getMX(mxs, name)
+      if domain["domain"] == mx or domain["domain"] == (prefix + "/" + mx):
+        continue
       if mx and (mx in domainsDict or (prefix + "/" + mx) in domainsDict):
         mx_hits.append(domain["count"])
         domains.remove(domain)
