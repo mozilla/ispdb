@@ -104,6 +104,7 @@ def add(request, domain=None):
     DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10)
     InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
 
+    #from nose.tools import set_trace;set_trace()
     if request.method == 'POST': # If the form has been submitted...
         # is this a domain request, or a full configuration?
         data = request.POST

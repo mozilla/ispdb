@@ -142,7 +142,7 @@ $(document).ready(function() {
 
 <h4>View XML data</h4>
 
-<p>See <a href="{% url ispdb_export_xml id=config.id %}">XML version</a> (used by Thunderbird).</p>
+<p>See <a href="{% url ispdb_export_xml version=1.1 id=config.id %}">XML version</a> (used by Thunderbird).</p>
 
 {% if not perms.config.can_approve %}
 <h3>Accurate?</h3>
