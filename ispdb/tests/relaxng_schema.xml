@@ -5,7 +5,7 @@
 <start>
 <element name="clientConfig">
     <attribute name="version">
-        <text />
+        <value>1.0</value>
     </attribute>
     <element name="emailProvider">
         <attribute name="id">
@@ -117,7 +117,9 @@
 
 <define name="userform-Content">
     <element name="username">
-        <text />
+      <data type="string">
+        <param name="minLength">1</param>
+       </data>
     </element>
 </define>
 

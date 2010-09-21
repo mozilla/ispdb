@@ -7,9 +7,9 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 
+from lxml import etree
 from nose.tools import *
 import nose.tools
-from lxml import etree
 
 from ispdb.config import views,models,serializers
 
@@ -18,7 +18,7 @@ def check_content(config_xml):
         "displayName" : "NetZero Email",
         "displayShortName" : "netzero" }
     expected_incoming = { "hostname" : "hostname_in", "port" : "143",
-        "socketType" : "SSL", "username" : None,
+        "socketType" : "SSL", "username" : "%EMAILLOCALPART%",
         "authentication" : "plain", }
     expected_outgoing = { "hostname" : "hostname_out",
         "port" : "25", "socketType" : "SSL",
@@ -45,17 +45,26 @@ class XMLTest(TestCase):
 
     fixtures = ['xml_testdata']
 
-    def test_validated_export_xml_three_zero(self):
+    def test_validated_export_xml_one_zero(self):
         domain = models.Domain.objects.get(name="test.com")
-        config_xml = serializers.xmlThreeDotZero(domain.config)
+        config_xml = serializers.xmlOneDotZero(domain.config)
+        doc = etree.XML(config_xml)
+
+        xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
+                                                'tests/relaxng_schema.1.0.xml'))
+        xml_schema.assertValid(doc)
+
+    def test_validated_export_xml_one_one(self):
+        domain = models.Domain.objects.get(name="test.com")
+        config_xml = serializers.xmlOneDotOne(domain.config)
         doc = etree.XML(config_xml)
         xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
-                                                    'tests/relaxng_schema.xml'))
+                                                'tests/relaxng_schema.1.1.xml'))
         xml_schema.assertValid(doc)
 
     def test_xml_content(self):
         domain = models.Domain.objects.get(name="test.com")
-        config_xml = serializers.xmlThreeDotZero(domain.config)
+        config_xml = serializers.xmlOneDotZero(domain.config)
         check_content(config_xml)
 
     def test_export_xml_view_no_version(self):
@@ -65,7 +74,7 @@ class XMLTest(TestCase):
 
     def test_export_xml_view_valid_version(self):
         response = self.client.get(reverse("ispdb_export_xml",
-                                   args=["3.0", "1"]), {})
+                                   args=["1.0", "1"]), {})
         check_content(response.content)
 
     def test_export_xml_view_invalid_version(self):

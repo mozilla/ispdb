@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <element name="clientConfig">
+      <attribute name="version">
+        <value>1.1</value>
+      </attribute>
+      <element name="emailProvider">
+        <attribute name="id">
+          <text/>
+        </attribute>
+        <oneOrMore>
+          <element name="domain">
+            <text/>
+          </element>
+        </oneOrMore>
+        <element name="displayName">
+          <text/>
+        </element>
+        <element name="displayShortName">
+          <text/>
+        </element>
+        <oneOrMore>
+          <element name="incomingServer">
+            <attribute name="type">
+              <choice>
+                <value>imap</value>
+                <value>pop3</value>
+              </choice>
+            </attribute>
+            <ref name="common-elements"/>
+            <element name="authentication">
+              <choice>
+                <ref name="common-auth-types"/>
+              </choice>
+            </element>
+            <optional>
+              <element name="pop3">
+                <optional>
+                  <element name="leaveMessagesOnServer">
+                    <choice>
+                      <value>true</value>
+                      <value>false</value>
+                    </choice>
+                  </element>
+                </optional>
+                <optional>
+                  <element name="checkInterval">
+                    <attribute name="minutes">
+                      <data type="int"/>
+                    </attribute>
+                  </element>
+                </optional>
+              </element>
+            </optional>
+          </element>
+        </oneOrMore>
+        <oneOrMore>
+          <element name="outgoingServer">
+            <attribute name="type">
+              <value>smtp</value>
+            </attribute>
+            <ref name="common-elements"/>
+            <element name="authentication">
+              <choice>
+                <ref name="common-auth-types"/>
+                <value>SMTP-after-POP</value>
+                <value>client-IP-address</value>
+              </choice>
+            </element>
+            <optional>
+              <element name="restriction">
+                <choice>
+                  <value>client-IP-address</value>
+                </choice>
+              </element>
+            </optional>
+          </element>
+        </oneOrMore>
+        <zeroOrMore>
+          <element name="enable">
+            <attribute name="visiturl">
+              <data type="anyURI"/>
+            </attribute>
+            <oneOrMore>
+              <element name="instruction">
+                <optional>
+                  <attribute name="lang">
+                    <data type="language"/>
+                  </attribute>
+                </optional>
+                <text/>
+              </element>
+            </oneOrMore>
+          </element>
+        </zeroOrMore>
+        <zeroOrMore>
+          <element name="documentation">
+            <attribute name="url">
+              <data type="anyURI"/>
+            </attribute>
+            <zeroOrMore>
+              <element name="descr">
+                <optional>
+                  <attribute name="lang">
+                    <data type="language"/>
+                  </attribute>
+                </optional>
+                <text/>
+              </element>
+            </zeroOrMore>
+          </element>
+        </zeroOrMore>
+      </element>
+    </element>
+  </start>
+
+  <define name="common-elements">
+    <element name="hostname">
+      <text/>
+    </element>
+    <element name="port">
+      <data type="unsignedInt"/>
+    </element>
+    <element name="socketType">
+      <choice>
+        <value>plain</value>
+        <value>SSL</value>
+        <value>STARTTLS</value>
+      </choice>
+    </element>
+    <element name="username">
+      <data type="string">
+        <param name="minLength">1</param>
+       </data>
+    </element>
+  </define>
+
+  <define name="common-auth-types">
+    <choice>
+      <value>password-cleartext</value>
+      <value>password-encrypted</value>
+      <value>NTLM</value>
+      <value>GSSAPI</value>
+      <value>none</value>
+    </choice>
+  </define>
+
+</grammar>
