@@ -2,12 +2,13 @@
 
 from cStringIO import StringIO
 import datetime
+import os
 import re
-import lxml.etree as ET
 import zipfile
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from lxml import etree
 from nose.tools import *
 
 from ispdb.config import models
@@ -33,7 +34,7 @@ def make_config(value):
             "outgoing_socket_type":"STARTTLS",
             "outgoing_username_form":"%EMAILLOCALPART%",
             "outgoing_authentication":"password-cleartext",
-            "settings_page_url":"google.com",
+            "settings_page_url":"http://google.com/",
             "settings_page_language":"en",
             "confirmations":"0",
             "problems":"0"}
@@ -43,7 +44,7 @@ def check_returned_xml(response, id_count):
     assert_equal(response.status_code, 200)
     assert_equal(response["Content-Type"], "text/xml")
 
-    content = ET.XML(response.content)
+    content = etree.XML(response.content)
     assert_equal(len(content.findall("provider")), id_count)
 
     ids = content.findall("provider/id")
@@ -134,3 +135,30 @@ class ListTest(TestCase):
                                      "comment":"I didn't like this domain"})
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 2)
+
+    def test_one_dot_zero_xml_response(self):
+        response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
+        domain = models.Domain.objects.get(name="test2.com")
+        assert isinstance(domain,models.Domain)
+
+        response = self.client.post(reverse("ispdb_export_xml",
+                                            kwargs={"id": domain.id}));
+        doc = etree.XML(response.content)
+
+        xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
+                                                'tests/relaxng_schema.1.0.xml'))
+        xml_schema.assertValid(doc)
+
+    def test_one_dot_zero_xml_response(self):
+        response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
+        domain = models.Domain.objects.get(name="test2.com")
+        assert isinstance(domain,models.Domain)
+
+        response = self.client.post(reverse("ispdb_export_xml",
+                                            kwargs={"version": "1.1",
+                                                    "id": domain.id}));
+        doc = etree.XML(response.content)
+
+        xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
+                                                'tests/relaxng_schema.1.1.xml'))
+        xml_schema.assertValid(doc)

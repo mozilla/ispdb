@@ -186,7 +186,7 @@ def adding_domain_form():
             "outgoing_socket_type":"STARTTLS",
             "outgoing_username_form":"%25EMAILLOCALPART%25",
             "outgoing_authentication":"password-cleartext",
-            "settings_page_url":"google.com",
+            "settings_page_url":"http://google.com/",
             "settings_page_language":"en",
             "confirmations":"0",
             "problems":"0"}
