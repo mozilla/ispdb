@@ -51,7 +51,7 @@ class XMLTest(TestCase):
         doc = etree.XML(config_xml)
 
         xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
-                                                'tests/relaxng_schema.1.0.xml'))
+                                                'tests/relaxng_schema.xml'))
         xml_schema.assertValid(doc)
 
     def test_validated_export_xml_one_one(self):
