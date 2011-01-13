@@ -85,8 +85,9 @@ class Config(models.Model):
   incoming_username_form = models.CharField(max_length=100, verbose_name="Username formula")
   INCOMING_AUTHENTICATION_CHOICES = (
     ("password-cleartext", "Unencrypted Password"),
-
-    ("password-encrypted", "Encrypted Password"),
+    ("password-encrypted", "Encrypted Password"),   
+    ("NTLM", "NTLM"),   
+    ("GSSAPI", "GSSAPI")
   )
   incoming_authentication = models.CharField(max_length = 20,
     choices = INCOMING_AUTHENTICATION_CHOICES,
@@ -109,10 +110,11 @@ class Config(models.Model):
   outgoing_username_form = models.CharField(max_length=100, verbose_name="Username formula")
   OUTGOING_AUTHENTICATION_CHOICES = (
     ("password-cleartext", "Unencrypted Password"),
-
     ("password-encrypted", "Encrypted Password"),
     ("none", "Client IP address"),
     ("smtp-after-pop", "SMTP-after-POP"),
+    ("NTLM", "NTLM"),   
+    ("GSSAPI", "GSSAPI")
   )
   outgoing_authentication = models.CharField(max_length = 20,
     choices = OUTGOING_AUTHENTICATION_CHOICES,
