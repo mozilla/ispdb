@@ -62,6 +62,7 @@ def details(request, id):
     for field in config._meta.fields:
         data = {'name': field.name,
                 'verbose_name': field.verbose_name,
+                'choices': field.choices,
                 'value': getattr(config, field.name)}
         if field.name.startswith('incoming'):
             incoming.append(data)
