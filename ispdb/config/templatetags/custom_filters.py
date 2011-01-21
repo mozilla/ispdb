@@ -1,6 +1,5 @@
 #ispdb/templatetags/data_verbose.py
 from django import template
-import sys
 
 register = template.Library()
 
@@ -15,6 +14,9 @@ def data_verbose(boundField):
         {% load data_verbose %}
         {{form.some_field|data_verbose}}
     """
-    data = boundField['value']
+    data = boundField["value"]
     field = boundField
-    return field.has_key('choices') and dict(field['choices']).get(data, '') or data
+    rv = data
+    if field.has_key("choices") and dict(field['choices']).get(data, ''):
+        rv = dict(field["choices"]).get(data, "")
+    return rv
