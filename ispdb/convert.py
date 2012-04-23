@@ -19,6 +19,7 @@ def get_authentication(element):
         rv = "password-cleartext"
     elif (rv == "secure"):
         rv = "password-encrypted"
+    return rv
 
 def main():
   datadir = os.environ.get("AUTOCONFIG_DATA", "../autoconfig_data")
@@ -42,6 +43,19 @@ def main():
     outgoing_username_form = get_username(outgoing)
     incoming_authentication = get_authentication(incoming)
     outgoing_authentication = get_authentication(outgoing)
+    
+    if not incoming_authentication:
+        continue
+    
+    try:
+        addThisServer = outgoing.find('addThisServer').text == "true"
+    except:
+        addThisServer = False
+
+    try:
+        useGlobalPreferredServer = outgoing.find('useGlobalPreferredServer').text == "true"
+    except:
+        useGlobalPreferredServer = False
 
     c = Config(id=None,
                email_provider_id = id,
@@ -59,8 +73,8 @@ def main():
                outgoing_socket_type = outgoing.find('socketType').text,
                outgoing_username_form = outgoing_username_form,
                outgoing_authentication = outgoing_authentication,
-               outgoing_add_this_server = outgoing.find('addThisServer').text == "true",
-               outgoing_use_global_preferred_server = outgoing.find('useGlobalPreferredServer').text == "true",
+               outgoing_add_this_server = addThisServer,
+               outgoing_use_global_preferred_server = useGlobalPreferredServer,
 
               )
     domains = root.findall('.//domain')
