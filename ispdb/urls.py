@@ -14,7 +14,7 @@ unclaimed_dict = {
 
 urlpatterns = patterns('',
     (r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: /", mimetype="text/plain")),
-    (r'^admin/(.*)', admin.site.root),
+    (r'^admin/', include(admin.site.urls)),
     (r'^comments/', include('django.contrib.comments.urls')),
     (r'^openid/', include('django_openid_auth.urls')),
     url(r'^logout/', 'ispdb.config.views.logout_view', name='ispdb_logout'),
