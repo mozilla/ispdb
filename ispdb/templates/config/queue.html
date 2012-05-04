@@ -1,7 +1,8 @@
 {% extends "config/base.html" %}
+{% load url from future %}
 {% block scripts %}
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/enter_config.css/"/>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.validate.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/enter_config.css/"/>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.validate.min.js"></script>
 {% endblock %}
 
 
@@ -18,7 +19,7 @@ $(document).ready(function() {
 <h2>Configurations pending approval</h2>
 
 {% for config in pending_configs %}
-<div><a href="{% url ispdb_details id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
+<div><a href="{% url 'ispdb_details' id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
 {% endfor %}
 
 <h2>Most asked for domains</h2>
@@ -30,7 +31,7 @@ $(document).ready(function() {
 <h2>Configurations that were marked invalid </h2>
 
 {% for config in invalid_configs %}
-<div><a href="{% url ispdb_details id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
+<div><a href="{% url 'ispdb_details' id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
 {% endfor %}
 
 {% endblock %}
