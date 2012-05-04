@@ -1,9 +1,8 @@
-
 experimental django front-end to figure out workflow of ISP database info
 for the Thunderbird autoconfig database
 
-## Step 0: Dependencies
-   *  django-1.1
+## Dependencies
+   *  django-1.4
    *  django-openid-auth
    *  python-openid
    *  django-nose 
