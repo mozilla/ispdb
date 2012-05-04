@@ -1,7 +1,8 @@
 {% extends "config/base.html" %}
+{% load url from future %}
 {% block scripts %}
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/enter_config.css"/>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.validate.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/enter_config.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.validate.min.js"></script>
 {% endblock %}
 
 
@@ -44,7 +45,7 @@ $(document).ready(function() {
       event.preventDefault();
       $("#yes,#no").attr("disabled", "disabled");
       $.ajax({
-        url: "{%url ispdb_check_domain%}/" + $("#id_form-0-name").val(),
+        url: "{% url 'ispdb_check_domain' %}/" + $("#id_form-0-name").val(),
         type: "GET",
         dataType: 'json',
         success: function(data) {
@@ -147,7 +148,7 @@ function AutoFillOutgoing() {
 going to make it easier for all users of the ISP to get their Thunderbird
 configured correctly and quickly.</div>
 
-<form action="{% url ispdb_add %}" method="POST">
+<form action="{% url 'ispdb_add' %}" method="POST">{% csrf_token %}
 
 <input id="dataful" name="asking_or_adding" type="hidden"></input>
 

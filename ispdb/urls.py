@@ -1,12 +1,11 @@
-from django.conf.urls.defaults import *
-from ispdb.config.models import *
-
+from django.conf.urls import patterns, include, url
 from django.http import HttpResponse
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from ispdb.config.models import *
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
-from django.conf import settings
 
 unclaimed_dict = {
     'queryset': UnclaimedDomain.objects.all(),
@@ -42,10 +41,4 @@ urlpatterns = patterns('',
         name='ispdb_check_domain_name'),
 )
 
-if settings.LOCAL_DEVELOPMENT:
-    urlpatterns += patterns("django.views",
-        url(r"%s(?P<path>.*)$" % settings.MEDIA_URL[1:], "static.serve", {
-            "document_root": settings.MEDIA_ROOT,
-        })
-    )
-
+urlpatterns += staticfiles_urlpatterns()

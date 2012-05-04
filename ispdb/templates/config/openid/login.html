@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load url from future %}
 {% load i18n %}
 {% block title %}
 Sign in with your OpenID
@@ -6,7 +7,7 @@ Sign in with your OpenID
 {% block scripts %}
 <style type="text/css">
 input.openid {
-  background: url({% url openid-logo %}) no-repeat; 
+  background: url({% url 'openid-logo' %}) no-repeat; 
   background-position: 0 50%;
   padding-left: 16px;
 }
@@ -28,7 +29,7 @@ Sign in with your OpenID
         {% endif %}
 </p>
 {% endif %}
-<form name="fopenid" action="{{ action }}" method="post">
+<form name="fopenid" action="{{ action }}" method="post">{% csrf_token %}
         <fieldset>
                 <legend>{% trans "Sign In Using Your OpenID" %}</legend>
         <div class="form-row"><label for="id_openid_identifier">{% trans "OpenID:" %}</label><br />{{ form.openid_identifier }}</div>
