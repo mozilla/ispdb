@@ -1,7 +1,8 @@
 {% extends "config/base.html" %}
+{% load url from future %}
 {% load custom_filters %}
 {% block scripts %}
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/details.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/details.css"/>
 {% endblock %}
 
 {% block title %}Mozilla ISP Database{% endblock %}
@@ -41,7 +42,7 @@ $(document).ready(function() {
   <div>This configuration is APPROVED.</div>
       {% if perms.config.can_approve %}
         <div>Is there a reason it shouldn't be?</div>
-        <form action="{% url ispdb_approve id=config.id %}" method="POST">
+	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
           <div>
             <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
           </div>
@@ -59,7 +60,7 @@ $(document).ready(function() {
     </div>
       {% if perms.config.can_approve %}
         <div>Is there a reason it shouldn't be?</div>
-        <form action="{% url ispdb_approve id=config.id %}" method="POST">
+	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
           <div>
             <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
           </div>
@@ -70,8 +71,8 @@ $(document).ready(function() {
       {% endif %}
     {% else %}
       {% if perms.config.can_approve %}
-        Can you confirm that this is a good configuration according to our <a href="{% url ispdb_policy %}">policies</a>?
-        <form action="{% url ispdb_approve id=config.id %}" method="POST">
+        Can you confirm that this is a good configuration according to our <a href="{% url 'ispdb_policy' %}">policies</a>?
+	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
           <div>
             <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
           </div>
@@ -144,7 +145,7 @@ $(document).ready(function() {
 
 <h4>View XML data</h4>
 
-<p>See <a href="{% url ispdb_export_xml version=1.1 id=config.id %}">XML version</a> (used by Thunderbird).</p>
+<p>See <a href="{% url 'ispdb_export_xml' version=1.1 id=config.id %}">XML version</a> (used by Thunderbird).</p>
 
 {% if not perms.config.can_approve %}
 <h3>Accurate?</h3>
