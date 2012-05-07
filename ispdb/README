@@ -11,6 +11,8 @@ Step 0: Prerequisites
 
     You can install all of the above with:
     pip install django python-openid django-openid-auth django-nose lxml
+       OR
+    pip install -r requirements.txt 
     Note: You may have to do an "easy_install pip" first
 
 Step 1:
