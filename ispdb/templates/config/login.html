@@ -5,17 +5,10 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.validate.min.js"></script>
 <script type="text/javascript">
 $(document).ready(function() {
-    $('#browserid').bind('click', function(e) {
-        e.preventDefault();
-        navigator.id.getVerifiedEmail(function(assertion) {
-            if (assertion) {
-                var $e = $('#id_assertion');
-                $e.val(assertion.toString());
-                $e.parent().submit();
-            }
-	    var url = $('#redir_url').val();
-            window.location.replace(url);
-        });
+    $('#login').bind('click', function(e) {
+        var redir_url = $('#id_redir_url').val();
+        $('#id_next').val(redir_url);
+        $('#browserid').click();
     });
 });
 </script>
@@ -30,14 +23,7 @@ $(document).ready(function() {
 {% block heading %}Login{% endblock %}
 
 {% block content %}
-
-<p>You need to 
-<a id="browserid" href="#">Log in</a> first.
-<form method="POST" action="{% url 'browserid_verify' %}">
-    {% csrf_token %}
-    {{ browserid_form.as_p }}
-</form>
-</p>
-
-<input type="hidden" name="redir_url" id="redir_url" value="{{ redir_url }}"/>
+<p>You don't have permission to access this page. 
+<a id="login" href="#">Log in</a>.</p>
+<input type="hidden" id="id_redir_url" value="{{ redir_url }}" />
 {% endblock %}

@@ -8,7 +8,20 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/ispdb.css" />
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="https://browserid.org/include.js"></script>
-
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#browserid').bind('click', function(e) {
+        e.preventDefault();
+        navigator.id.getVerifiedEmail(function(assertion) {
+            if (assertion) {
+                var $e = $('#id_assertion');
+                $e.val(assertion.toString());
+                $e.parent().submit();
+            }
+        });
+    });
+});
+</script>
 {% block scripts %}
 {% endblock %}
 <meta name="robots" content="NONE,NOARCHIVE" />
@@ -35,6 +48,7 @@
     {% else %}
         <a id="browserid" href="#">{% trans 'Log in' %}</a>
         <form method="POST" action="{% url 'browserid_verify' %}">
+            <input type="hidden" name="next" id="id_next" value="/"/>
             {% csrf_token %}
             {{ browserid_form.as_p }}
         </form>
