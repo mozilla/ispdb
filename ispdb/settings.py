@@ -122,21 +122,36 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'django.contrib.auth',
+    'django_browserid',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.comments',
     'django.contrib.staticfiles',
-    'django_openid_auth',
     'ispdb.config',
     'django_nose',
 )
 
 AUTHENTICATION_BACKENDS = (
-    'django_openid_auth.auth.OpenIDBackend',
+    'django_browserid.auth.BrowserIDBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 
-LOGIN_URL = '/openid/login'
+SITE_URL = 'http://localhost:8000'
+LOGIN_URL = '/login'
 LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL_FAILURE = '/'
+BROWSERID_CREATE_USER = True
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+    "django.core.context_processors.request",
+    "django_browserid.context_processors.browserid_form",
+)

@@ -1,0 +1,43 @@
+{% extends "config/base.html" %}
+{% load url from future %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.validate.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#browserid').bind('click', function(e) {
+        e.preventDefault();
+        navigator.id.getVerifiedEmail(function(assertion) {
+            if (assertion) {
+                var $e = $('#id_assertion');
+                $e.val(assertion.toString());
+                $e.parent().submit();
+            }
+	    var url = $('#redir_url').val();
+            window.location.replace(url);
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block title %}Login{% endblock %}
+
+{% block bodystart %}
+
+{% endblock %}
+
+{% block heading %}Login{% endblock %}
+
+{% block content %}
+
+<p>You need to 
+<a id="browserid" href="#">Log in</a> first.
+<form method="POST" action="{% url 'browserid_verify' %}">
+    {% csrf_token %}
+    {{ browserid_form.as_p }}
+</form>
+</p>
+
+<input type="hidden" name="redir_url" id="redir_url" value="{{ redir_url }}"/>
+{% endblock %}

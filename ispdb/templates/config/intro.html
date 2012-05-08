@@ -3,6 +3,20 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.validate.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#browserid').bind('click', function(e) {
+        e.preventDefault();
+        navigator.id.getVerifiedEmail(function(assertion) {
+            if (assertion) {
+                var $e = $('#id_assertion');
+                $e.val(assertion.toString());
+                $e.parent().submit();
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
 
 {% block title %}Mozilla ISP Database{% endblock %}
