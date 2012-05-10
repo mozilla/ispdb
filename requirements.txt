@@ -1,0 +1,6 @@
+Django==1.4
+django-nose==1.0
+django-openid-auth==0.4
+lxml==2.3.4
+nose==1.1.2
+python-openid==2.2.5
