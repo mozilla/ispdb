@@ -22,12 +22,11 @@ for the Thunderbird autoconfig database
 1. python ../manage.py syncdb
 2. convert existing XML data to the DB:
 
-   # have http://svn.mozilla.org/mozillamessaging.com/sites/autoconfig.mozillamessaging.com/trunk checked out at ../autoconfig_data
-
-   # if autoconfig_data is somewhere else, you can set the env't var AUTOCONFIG_DATA to  point to it
-
-   echo 'import ispdb.convert;ispdb.convert.main()' | python ../manage.py shell
+  have http://svn.mozilla.org/mozillamessaging.com/sites/autoconfig.mozillamessaging.com/trunk checked out at ../autoconfig_data
+ 
+  if autoconfig_data is somewhere else, you can set the env't var AUTOCONFIG_DATA to  point to it
+  
+  echo 'import ispdb.convert;ispdb.convert.main()' | python ../manage.py shell
 
 3. python ../manage.py runserver
-
 4. then hit http://localhost:8000
