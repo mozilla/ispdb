@@ -46,7 +46,7 @@ $(document).ready(function() {
           <a href="{% url 'ispdb_logout' %}">{% trans 'Log out' %}</a>
         {% endblock %}
     {% else %}
-        <a id="browserid" href="#">{% trans 'Log in' %}</a>
+    <a id="browserid" href="#"><img src="{{ STATIC_URL }}img/sign_in_blue.png"></a>
         <form method="POST" action="{% url 'browserid_verify' %}">
             <input type="hidden" name="next" id="id_next" value="/"/>
             {% csrf_token %}
