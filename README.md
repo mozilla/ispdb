@@ -3,14 +3,13 @@ for the Thunderbird autoconfig database
 
 ## Dependencies
    *  django-1.4
-   *  django-openid-auth
-   *  python-openid
+   *  django-browserid
    *  django-nose 
    *  lxml
 
     You can install all of the above with:
 
-    pip install django python-openid django-openid-auth django-nose lxml
+    pip install django django-browserid django-nose lxml
 
     or 
 

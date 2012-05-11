@@ -4,13 +4,12 @@ for the Thunderbird autoconfig database
 
 Step 0: Prerequisites
     django-1.1
-    django-openid-auth
-    python-openid
+    django-browserid
     django-nose 
     lxml
 
     You can install all of the above with:
-    pip install django python-openid django-openid-auth django-nose lxml
+    pip install django django-browserid django-nose lxml
        OR
     pip install -r requirements.txt 
     Note: You may have to do an "easy_install pip" first
