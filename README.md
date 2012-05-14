@@ -25,7 +25,7 @@ for the Thunderbird autoconfig database
  
   if autoconfig_data is somewhere else, you can set the env't var AUTOCONFIG_DATA to  point to it
   
-  echo 'import ispdb.convert;ispdb.convert.main()' | python ../manage.py shell
+  echo 'import ispdb.convert;ispdb.convert.main()' | python manage.py shell
 
-3. python ../manage.py runserver
+3. python manage.py runserver
 4. then hit http://localhost:8000
