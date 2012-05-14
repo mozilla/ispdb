@@ -7,6 +7,21 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/ispdb.css" />
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="https://browserid.org/include.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#browserid').bind('click', function(e) {
+        e.preventDefault();
+        navigator.id.getVerifiedEmail(function(assertion) {
+            if (assertion) {
+                var $e = $('#id_assertion');
+                $e.val(assertion.toString());
+                $e.parent().submit();
+            }
+        });
+    });
+});
+</script>
 {% block scripts %}
 {% endblock %}
 <meta name="robots" content="NONE,NOARCHIVE" />
@@ -26,12 +41,17 @@
     <div id="user-tools">
       {% if user.is_authenticated %}
         {% trans 'Welcome,' %}
-        <strong>{% firstof user.first_name user.username %}</strong>.
+        <strong>{{ user.email }}</strong>.
         {% block userlinks %}
           <a href="{% url 'ispdb_logout' %}">{% trans 'Log out' %}</a>
         {% endblock %}
     {% else %}
-        <a href="{% url 'ispdb_login' %}">{% trans 'Log in' %}</a>
+        <a id="browserid" href="#"><img src="{{ STATIC_URL }}img/sign_in_blue.png"></a>
+        <form method="POST" action="{% url 'browserid_verify' %}">
+            <input type="hidden" name="next" id="id_next" value="/"/>
+            {% csrf_token %}
+            {{ browserid_form.as_p }}
+        </form>
     {% endif %}
     </div>
     {% block nav-global %}{% endblock %}

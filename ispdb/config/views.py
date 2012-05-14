@@ -18,12 +18,15 @@ from django.utils import simplejson
 from ispdb.config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
 from ispdb.config import serializers
 
+def login(request):
+    redirect_url = '/'
+    if 'next' in request.GET:
+        redirect_url = request.GET['next']
+    return render_to_response("config/login.html", {'redir_url': redirect_url},
+                              context_instance=RequestContext(request))
+
 def logout_view(request):
     logout(request)
-    return HttpResponseRedirect('/')
-
-@login_required
-def admin_login(request):
     return HttpResponseRedirect('/')
 
 def intro(request):

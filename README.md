@@ -3,14 +3,13 @@ for the Thunderbird autoconfig database
 
 ## Dependencies
    *  django-1.4
-   *  django-openid-auth
-   *  python-openid
+   *  django-browserid
    *  django-nose 
    *  lxml
 
     You can install all of the above with:
 
-    pip install django python-openid django-openid-auth django-nose lxml
+    pip install django django-browserid django-nose lxml
 
     or 
 
@@ -26,7 +25,7 @@ for the Thunderbird autoconfig database
  
   if autoconfig_data is somewhere else, you can set the env't var AUTOCONFIG_DATA to  point to it
   
-  echo 'import ispdb.convert;ispdb.convert.main()' | python ../manage.py shell
+  echo 'import ispdb.convert;ispdb.convert.main()' | python manage.py shell
 
-3. python ../manage.py runserver
+3. python manage.py runserver
 4. then hit http://localhost:8000

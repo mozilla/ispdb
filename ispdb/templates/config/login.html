@@ -1,0 +1,31 @@
+{% extends "config/base.html" %}
+{% load url from future %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.validate.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#login').bind('click', function(e) {
+        var redir_url = $('#id_redir_url').val();
+        $('#id_next').val(redir_url);
+        $('#browserid').click();
+    });
+});
+</script>
+{% endblock %}
+
+{% block title %}Login{% endblock %}
+
+{% block bodystart %}
+
+{% endblock %}
+
+{% block heading %}Login{% endblock %}
+
+{% block content %}
+<p>You don't have permission to access this page.
+{% if not user.is_authenticated %}
+<a id="login" href="#">Log in</a>.</p>
+<input type="hidden" id="id_redir_url" value="{{ redir_url }}" />
+{% endif %}
+{% endblock %}
