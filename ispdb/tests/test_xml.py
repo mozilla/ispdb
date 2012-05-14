@@ -50,16 +50,16 @@ class XMLTest(TestCase):
         config_xml = serializers.xmlOneDotZero(domain.config)
         doc = etree.XML(config_xml)
 
-        xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
-                                                'tests/relaxng_schema.xml'))
+        xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
+                                                'relaxng_schema.xml'))
         xml_schema.assertValid(doc)
 
     def test_validated_export_xml_one_one(self):
         domain = models.Domain.objects.get(name="test.com")
         config_xml = serializers.xmlOneDotOne(domain.config)
         doc = etree.XML(config_xml)
-        xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
-                                                'tests/relaxng_schema.1.1.xml'))
+        xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
+                                                'relaxng_schema.1.1.xml'))
         xml_schema.assertValid(doc)
 
     def test_xml_content(self):
