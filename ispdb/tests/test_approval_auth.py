@@ -21,9 +21,9 @@ class ApprovalAuthTest(TestCase):
         # Should not have changed the config
         nose.tools.assert_equal(config.approved, False)
 
-        # Make sure it redirects to openid login
+        # Make sure it redirects to login page
         redirect = result.redirect_chain[0][0]
-        goodRedirect = "/openid/login/?next=%s" % (quote_plus("/approve/1"))
+        goodRedirect = "/login/?next=%s" % (quote_plus("/approve/1"))
 
         self.assertRedirects(result, goodRedirect)
 
