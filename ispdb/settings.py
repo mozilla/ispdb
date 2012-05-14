@@ -4,7 +4,7 @@ import os
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-ISPDB_ROOT = os.path.dirname(__file__)
+ISPDB_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 ADMINS = (
 )
@@ -14,7 +14,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'ispdb.sqlite',                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(ISPDB_ROOT,'ispdb.sqlite'),                      # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -29,7 +29,7 @@ NOSE_ARGS = ['--with-doctest', '--doctest-extension=.doctest']
 #Fixtures
 FIXTURE_DIRS = (
 #TODO: Clean this up after eric's patch for local settings
-   os.path.join(os.path.abspath("./"),"fixtures/"),
+   os.path.join(ISPDB_ROOT,"fixtures/"),
 )
 
 # Local time zone for this installation. Choices can be found here:

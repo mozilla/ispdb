@@ -145,8 +145,8 @@ class ListTest(TestCase):
                                             kwargs={"id": domain.id}));
         doc = etree.XML(response.content)
 
-        xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
-                                                'tests/relaxng_schema.1.0.xml'))
+        xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
+                                                'relaxng_schema.1.0.xml'))
         xml_schema.assertValid(doc)
 
     def test_one_dot_zero_xml_response(self):
@@ -159,6 +159,6 @@ class ListTest(TestCase):
                                                     "id": domain.id}));
         doc = etree.XML(response.content)
 
-        xml_schema = etree.RelaxNG(file=os.path.join(os.getcwd(),
-                                                'tests/relaxng_schema.1.1.xml'))
+        xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
+                                                'relaxng_schema.1.1.xml'))
         xml_schema.assertValid(doc)
