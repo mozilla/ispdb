@@ -14,16 +14,16 @@ import nose.tools
 from ispdb.config import views,models,serializers
 
 def check_content(config_xml):
-    expected = { "domain" : ["test.com", "aim.com"],
+    expected = {"domain" : ["test.com", "aim.com"],
         "displayName" : "NetZero Email",
-        "displayShortName" : "netzero" }
-    expected_incoming = { "hostname" : "hostname_in", "port" : "143",
+        "displayShortName" : "netzero"}
+    expected_incoming = {"hostname" : "hostname_in", "port" : "143",
         "socketType" : "SSL", "username" : "%EMAILLOCALPART%",
-        "authentication" : "plain", }
-    expected_outgoing = { "hostname" : "hostname_out",
+        "authentication" : "plain"}
+    expected_outgoing = {"hostname" : "hostname_out",
         "port" : "25", "socketType" : "SSL",
         "username" : "%EMAILLOCALPART%", "authentication" : "plain",
-        "addThisServer" : "false", "useGlobalPreferredServer" : "false" }
+        "addThisServer" : "false", "useGlobalPreferredServer" : "false"}
     doc = etree.XML(config_xml)
     #gets incoming/outgoing server element root
     root = doc.getiterator();
@@ -51,7 +51,7 @@ class XMLTest(TestCase):
         doc = etree.XML(config_xml)
 
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
-                                                'relaxng_schema.xml'))
+                                                     'relaxng_schema.xml'))
         xml_schema.assertValid(doc)
 
     def test_validated_export_xml_one_one(self):
@@ -59,7 +59,7 @@ class XMLTest(TestCase):
         config_xml = serializers.xmlOneDotOne(domain.config)
         doc = etree.XML(config_xml)
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
-                                                'relaxng_schema.1.1.xml'))
+                                                     'relaxng_schema.1.1.xml'))
         xml_schema.assertValid(doc)
 
     def test_xml_content(self):
