@@ -78,27 +78,23 @@ class ListTest(TestCase):
         domain = models.Domain.objects.get(name="test2.com")
         assert isinstance(domain,models.Domain)
 
-        response = self.client.post(reverse("ispdb_approve",
-                                            kwargs={"id":domain.id}),
-                                    {"approved":"mark valid",
-                                     "comment":"Always enter a comment here"})
+        response = self.client.post(
+            reverse("ispdb_approve", kwargs={"id":domain.id}),
+            {"approved":"mark valid", "comment":"Always enter a comment here"})
         response = self.client.get(reverse("ispdb_list", args=["xml"]), {})
         check_returned_xml(response, 1)
 
     def test_two_xml_reponses(self):
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         domain = models.Domain.objects.get(name="test2.com")
-        response = self.client.post(reverse("ispdb_approve",
-                                            kwargs={"id":domain.id}),
-                                    {"approved":"mark valid",
-                                     "comment":"I liked this domain"})
-
+        response = self.client.post(
+            reverse("ispdb_approve", kwargs={"id":domain.id}),
+            {"approved":"mark valid", "comment":"I liked this domain"})
         response = self.client.post(reverse("ispdb_add"), ListTest.test3dict)
         domain = models.Domain.objects.get(name="test3.com")
-        response = self.client.post(reverse("ispdb_approve",
-                                            kwargs={"id":domain.id}),
-                                    {"denied":"mark invalid",
-                                     "comment":"I didn't like this domain"})
+        response = self.client.post(
+            reverse("ispdb_approve", kwargs={"id":domain.id}),
+            {"denied":"mark invalid", "comment":"I didn't like this domain"})
         response = self.client.get(reverse("ispdb_list", args=["xml"]), {})
         check_returned_xml(response, 2)
 
@@ -112,27 +108,24 @@ class ListTest(TestCase):
         domain = models.Domain.objects.get(name="test2.com")
         assert isinstance(domain,models.Domain)
 
-        response = self.client.post(reverse("ispdb_approve",
-                                            kwargs={"id":domain.id}),
-                                    {"approved":"mark valid",
-                                     "comment":"Always enter a comment here"})
+        response = self.client.post(
+            reverse("ispdb_approve", kwargs={"id":domain.id}),
+            {"approved":"mark valid", "comment":"Always enter a comment here"})
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 1)
 
     def test_two_reponses(self):
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         domain = models.Domain.objects.get(name="test2.com")
-        response = self.client.post(reverse("ispdb_approve",
-                                            kwargs={"id":domain.id}),
-                                    {"approved":"mark valid",
-                                     "comment":"I liked this domain"})
+        response = self.client.post(
+            reverse("ispdb_approve", kwargs={"id":domain.id}),
+            {"approved":"mark valid", "comment":"I liked this domain"})
 
         response = self.client.post(reverse("ispdb_add"), ListTest.test3dict)
         domain = models.Domain.objects.get(name="test3.com")
-        response = self.client.post(reverse("ispdb_approve",
-                                            kwargs={"id":domain.id}),
-                                    {"denied":"mark invalid",
-                                     "comment":"I didn't like this domain"})
+        response = self.client.post(
+            reverse("ispdb_approve", kwargs={"id":domain.id}),
+            {"denied":"mark invalid", "comment":"I didn't like this domain"})
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 2)
 
@@ -146,7 +139,7 @@ class ListTest(TestCase):
         doc = etree.XML(response.content)
 
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
-                                                'relaxng_schema.1.0.xml'))
+                                                     'relaxng_schema.1.0.xml'))
         xml_schema.assertValid(doc)
 
     def test_one_dot_zero_xml_response(self):
@@ -160,5 +153,5 @@ class ListTest(TestCase):
         doc = etree.XML(response.content)
 
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
-                                                'relaxng_schema.1.1.xml'))
+                                                     'relaxng_schema.1.1.xml'))
         xml_schema.assertValid(doc)
