@@ -104,7 +104,7 @@ def check_domain(request, name):
     json = simplejson.dumps(dom_form.errors)
     return HttpResponse(json,mimetype='application/json')
 
-def add(request, domain=None):
+def add(request, domain=None, edit=None):
     DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10)
     InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
 
@@ -167,6 +167,7 @@ def add(request, domain=None):
     return render_to_response('config/enter_config.html', {
         'formset': formset,
         'config_form': config_form,
+        'edit': edit,
     }, context_instance=RequestContext(request))
 
 

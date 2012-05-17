@@ -31,7 +31,7 @@ $(document).ready(function() {
       addRow();
     });
 
-    {% if config_form.errors %}
+    {% if config_form.errors or formset.errors or edit %}
       $("#configform").show();
       $("#add_domain").show();
       $("#submit").show();
