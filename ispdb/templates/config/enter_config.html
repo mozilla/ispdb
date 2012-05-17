@@ -12,7 +12,7 @@
 {% block bodystart %}
 <script type="text/javascript">
 $(document).ready(function() {
-    var i = 1;
+    var i = $("#id_form-TOTAL_FORMS").val();
     var template = jQuery.format($("#template").val());
     function addRow() {
       $(template(i++)).appendTo("#domain_list table");
