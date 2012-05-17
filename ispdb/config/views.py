@@ -145,6 +145,9 @@ def add(request, domain=None):
                 config_form.save()
                 created_domains = []
                 for domain in domains:
+                    # discard empty domains
+                    if domain == '':
+                        continue
                     unclaimed = UnclaimedDomain.objects.filter(name=domain)
                     if unclaimed:
                         d = unclaimed[0]

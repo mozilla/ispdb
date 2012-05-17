@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import ChoiceField
@@ -199,6 +200,12 @@ class DomainForm(ModelForm):
             msg = ("Domain configuration already exists "
                    "<a href=\"%s\">here</a>." %
                    reverse("ispdb_details", kwargs={"id": dom[0].config.id}))
+            raise ValidationError(mark_safe(msg))
+        regex = re.compile(
+            r'((?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$)',
+            re.IGNORECASE)
+        if not regex.match(data):
+            msg = ("Domain name it not valid")
             raise ValidationError(mark_safe(msg))
         return data
 
