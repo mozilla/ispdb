@@ -254,8 +254,15 @@ class BaseDomainFormSet(BaseFormSet):
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
+        # Get number of deleted forms
+        deleted_forms = 0
         for i in range(0, self.total_form_count()):
             form = self.forms[i]
-            if not form.cleaned_data['delete']:
-                return
-        raise ValidationError("At least one domain should be specifed.")
+            if form.cleaned_data['delete']:
+                deleted_forms = deleted_forms + 1
+        # Check if all forms are deleted
+        if self.total_form_count() == deleted_forms:
+            raise ValidationError("At least one domain should be specifed.")
+        # Check if number of non deleted forms is greater then max_num
+        if (self.total_form_count() - deleted_forms) > self.max_num:
+            raise ValidationError("Number of domains exceeded.")

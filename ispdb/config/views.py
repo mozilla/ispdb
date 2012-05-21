@@ -108,7 +108,8 @@ def check_domain(request, name):
 
 @login_required
 def edit(request, config_id):
-    DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10)
+    DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,
+            formset=BaseDomainFormSet)
     InlineFormSet = inlineformset_factory(Config, DomainRequest)
     config = get_object_or_404(Config, pk=config_id)
     # Validate the user
