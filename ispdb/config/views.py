@@ -14,8 +14,10 @@ from django.forms.models import inlineformset_factory
 from django.contrib.auth import logout
 from django.template import RequestContext
 from django.utils import simplejson
+from django.utils.functional import curry
 
-from ispdb.config.models import Config, ConfigForm, Domain, DomainForm, UnclaimedDomain
+from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
+    UnclaimedDomain, DomainRequest, BaseDomainFormSet)
 from ispdb.config import serializers
 
 def login(request):
@@ -104,21 +106,99 @@ def check_domain(request, name):
     json = simplejson.dumps(dom_form.errors)
     return HttpResponse(json,mimetype='application/json')
 
-def add(request, domain=None, edit=None):
+@login_required
+def edit(request, config_id):
     DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10)
+    InlineFormSet = inlineformset_factory(Config, DomainRequest)
+    config = get_object_or_404(Config, pk=config_id)
+    # Validate the user
+    if not (request.user.is_staff or (
+            not config.approved and config.owner == request.user)):
+        return HttpResponseRedirect(reverse('ispdb_login'))
+    # Get initial data
+    initial = []
+    for domain in config.domains.all() or config.domainrequests.all():
+        initial.append({'name': domain.name})
+
+    if request.method == 'POST':
+        data = request.POST
+        # A form bound to the POST data
+        config_form = ConfigForm(request.POST,
+                                 request.FILES,
+                                 instance=config)
+        if config.approved:
+            DomainFormSet.form = staticmethod(curry(DomainForm,
+                is_domainrequest=False))
+        formset = DomainFormSet(request.POST, request.FILES, initial=initial)
+        if config_form.is_valid() and formset.is_valid():
+            config_form.save()
+            for form in formset.forms:
+                # if the form hasn't changed, do nothing
+                if not form.has_changed():
+                    continue
+                # check if we need to delete the domain
+                if form.cleaned_data['delete']:
+                    # if domain is new and is deleted, do nothing
+                    if not form in formset.initial_forms:
+                        continue
+                    # get initial domain name
+                    index = formset.initial_forms.index(form)
+                    if config.approved:
+                        d = config.domains.all()[index]
+                    else:
+                        d = config.domainrequests.all()[index]
+                    d.delete()
+                    continue
+                else:   # update or create new domain
+                    domain = form.cleaned_data['name']
+                    if form in formset.initial_forms:
+                        index = formset.initial_forms.index(form)
+                        if config.approved:
+                            claimed = config.domains.all()[index]
+                        else:
+                            claimed = config.domainrequests.all()[index]
+                        claimed.name = domain
+                    else:
+                        if config.approved:
+                            claimed = Domain(name=domain,
+                                             votes=1,
+                                             config=config)
+                        else:
+                            claimed = DomainRequest(name=domain,
+                                                    votes=1,
+                                                    config=config)
+                    claimed.save()
+            return HttpResponseRedirect(reverse('ispdb_details',
+                                                args=[config.id]))
+    else:
+        config_form = ConfigForm(instance=config)
+        formset = DomainFormSet(initial=initial)
+
+    return render_to_response('config/enter_config.html', {
+        'formset': formset,
+        'config_form': config_form,
+        'edit': True,
+        'callback': reverse('ispdb_edit', args=[config.id]),
+    }, context_instance=RequestContext(request))
+
+
+
+@login_required
+def add(request, domain=None):
+    DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,
+        formset=BaseDomainFormSet)
     InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
 
     #from nose.tools import set_trace;set_trace()
     if request.method == 'POST': # If the form has been submitted...
-        # is this a domain request, or a full configuration?
         data = request.POST
-        domains = []
-        num_domains = int(data['form-TOTAL_FORMS'])
-        for i in range(num_domains):
-            domains.append(data['form-' + unicode(i) + '-name'])
         # did the user fill in a full form, or are they just asking for some
         # domains to be registered
         if data['asking_or_adding'] == 'asking':
+            domains = []
+            num_domains = int(data['form-TOTAL_FORMS'])
+            for i in range(num_domains):
+                domains.append(data['form-' + unicode(i) + '-name'])
             # we'll create (unclaimed) domains if they don't exist, otherwise
             # register the vote
             for domain in domains:
@@ -134,7 +214,7 @@ def add(request, domain=None, edit=None):
                 d.save()
             return HttpResponseRedirect('/') # Redirect after POST
         else:
-            config = Config()
+            config = Config(owner=request.user)
             # A form bound to the POST data
             config_form = ConfigForm(request.POST,
                                      request.FILES,
@@ -143,22 +223,26 @@ def add(request, domain=None, edit=None):
             # All validation rules pass
             if config_form.is_valid() and formset.is_valid():
                 config_form.save()
-                created_domains = []
-                for domain in domains:
-                    # discard empty domains
-                    if domain == '':
+                for form in formset:
+                    # discard deleted forms
+                    if form.cleaned_data['delete']:
                         continue
+                    # get original domain if it exists
+                    domain = form.cleaned_data['name']
                     unclaimed = UnclaimedDomain.objects.filter(name=domain)
                     if unclaimed:
                         d = unclaimed[0]
-                        claimed = Domain(name=domain,
-                                         votes=d.votes,
-                                         config=config)
+                        claimed = DomainRequest(name=domain,
+                                                votes=d.votes,
+                                                config=config)
                         d.delete()
                     else:
-                        claimed = Domain(name=domain, votes=1, config=config)
+                        claimed = DomainRequest(name=domain,
+                                                votes=1,
+                                                config=config)
                     claimed.save()
-                return HttpResponseRedirect('/add/') # Redirect after POST
+                return HttpResponseRedirect(reverse('ispdb_details',
+                                                    args=[config.id]))
 
     else:
         config_form = ConfigForm()
@@ -167,10 +251,9 @@ def add(request, domain=None, edit=None):
     return render_to_response('config/enter_config.html', {
         'formset': formset,
         'config_form': config_form,
-        'edit': edit,
+        'edit': False,
+        'callback': reverse('ispdb_add'),
     }, context_instance=RequestContext(request))
-
-
 
 def queue(request):
     domains = UnclaimedDomain.objects.filter(status='requested').order_by('-votes')
@@ -189,11 +272,23 @@ def policy(request):
 
 @permission_required("config.can_approve")
 def approve(request, id):
-    config = Config.objects.filter(id=id)[0]
+    config = get_object_or_404(Config, pk=id)
     if request.method == 'POST': # If the form has been submitted...
         data = request.POST
         if data.get('approved', False):
             config.approved = True
+            # first we check if domain names already exist
+            for domain in config.domainrequests.all():
+                if Domain.objects.filter(name=domain):
+                    #TODO: the merge (template and view)
+                    # Redirect to merge url
+                    return HttpResponseRedirect('/')
+            for domain in config.domainrequests.all():
+                claimed = Domain(name=domain.name,
+                                 votes=domain.votes,
+                                 config=config)
+                claimed.save()
+                domain.delete()
         elif data.get('denied', False):
             config.invalid = True
             config.approved = False

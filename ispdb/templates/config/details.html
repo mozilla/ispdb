@@ -91,9 +91,15 @@ $(document).ready(function() {
 
 <h4>Domains Served</h4>
 <div id="domains">
-  {% for domain in config.domains.all %}
-    <div class="domain">{{domain}}</div>
-  {% endfor %}
+  {% if config.approved %}
+    {% for domain in config.domains.all %}
+      <div class="domain">{{domain}}</div>
+    {% endfor %}
+  {% else %}
+    {% for domain in config.domainrequests.all %}
+      <div class="domain">{{domain}}</div>
+    {% endfor %}
+  {% endif %}
 </div>
 
 <div id="server_data">
@@ -147,13 +153,11 @@ $(document).ready(function() {
 
 <p>See <a href="{% url 'ispdb_export_xml' version=1.1 id=config.id %}">XML version</a> (used by Thunderbird).</p>
 
-{% if not perms.config.can_approve %}
 <h3>Accurate?</h3>
 
-<p>If you know the data above is not accurate, do let us know: <button name="XXX">these
-parameters are out of date!</button>
+<p>If you know the data above is not accurate, do let us know: 
+<a href="{% url 'ispdb_edit' config.id %}">these parameters are out of date!</a>
 </p>
-{% endif %}
 
 <h3>Comments</h3>
 

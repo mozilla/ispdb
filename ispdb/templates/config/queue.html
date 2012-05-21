@@ -19,7 +19,7 @@ $(document).ready(function() {
 <h2>Configurations pending approval</h2>
 
 {% for config in pending_configs %}
-<div><a href="{% url 'ispdb_details' id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
+<div><a href="{% url 'ispdb_details' id=config.id %}">{{ config.display_name }}</a> ({{config.domainrequests.all|length}} domain{{config.domains.all|length|pluralize}})</div>
 {% endfor %}
 
 <h2>Most asked for domains</h2>
@@ -31,7 +31,12 @@ $(document).ready(function() {
 <h2>Configurations that were marked invalid </h2>
 
 {% for config in invalid_configs %}
-<div><a href="{% url 'ispdb_details' id=config.id %}">{{ config.display_name }}</a> ({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
+<div><a href="{% url 'ispdb_details' id=config.id %}">{{ config.display_name }}</a> 
+{% if config.domains.all %}
+({{config.domains.all|length}} domain{{config.domains.all|length|pluralize}})</div>
+{% else %}
+({{config.domainrequests.all|length}} domain{{config.domainrequests.all|length|pluralize}})</div>
+{% endif %}
 {% endfor %}
 
 {% endblock %}

@@ -3,11 +3,11 @@
 import re
 from django.core.urlresolvers import reverse
 from django.db import models
-from django.forms import ChoiceField
-from django.forms import ModelForm
-from django.forms import RadioSelect
-from django.forms import ValidationError
+from django.forms import (ChoiceField, BooleanField, HiddenInput, ModelForm,
+    RadioSelect, ValidationError)
+from django.forms.formsets import BaseFormSet
 from django.utils.safestring import mark_safe
+from django.contrib.auth.models import User
 import ispdb.audit as audit
 
 class Domain(models.Model):
@@ -18,7 +18,6 @@ class Domain(models.Model):
                                blank=True) # blank is for requests and rejects
     votes = models.IntegerField(default=1)
     DOMAIN_CHOICES = [
-        ("requested", "requested for inclusion"),
         ("configured", "domain mapped to a configuration"),
         ("rejected", "domain can't be accepted"),
     ]
@@ -36,6 +35,15 @@ class UnclaimedDomain(models.Model):
         ('rejected', 'domain can\'t be accepted'),
     ]
     status = models.CharField(max_length=20, choices = DOMAIN_CHOICES)
+
+    def __str__(self): return self.name
+
+class DomainRequest(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Email domain",
+                            help_text="(e.g. \"gmail.com\")")
+    config = models.ForeignKey('Config', related_name="domainrequests",
+                               blank=True) # blank is for requests and rejects
+    votes = models.IntegerField(default=1)
 
     def __str__(self): return self.name
 
@@ -64,6 +72,8 @@ class Config(models.Model):
         "for use in the admin UI"
         return self.display_name
 
+    owner = models.ForeignKey(User, unique=False, blank=True, null=True,
+                              on_delete=models.SET_NULL)
     last_update_datetime = models.DateTimeField(auto_now=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
     approved = models.BooleanField(default=False)
@@ -178,7 +188,8 @@ class ConfigForm(ModelForm):
                    'flagged_by_email',
                    'outgoing_add_this_server',
                    'outgoing_use_global_preferred_server',
-                   'incoming_username_form'
+                   'incoming_username_form',
+                   'owner',
                    ]
     incoming_type = ChoiceField(widget=RadioSelect,
                                 choices=Config.INCOMING_TYPE_CHOICES)
@@ -189,28 +200,54 @@ class ConfigForm(ModelForm):
         return clean_port(self, "outgoing_port")
 
 class DomainForm(ModelForm):
+    delete = BooleanField(required=False, initial=False, widget=HiddenInput)
+
     class Meta:
-        model = Domain
+        model = DomainRequest
         fields = ('name',)
 
-    def clean_name(self):
-        data = self.cleaned_data["name"]
-        dom = Domain.objects.filter(name=data)
-        if dom:
-            msg = ("Domain configuration already exists "
-                   "<a href=\"%s\">here</a>." %
-                   reverse("ispdb_details", kwargs={"id": dom[0].config.id}))
-            raise ValidationError(mark_safe(msg))
+    def __init__(self, *args, **kwargs):
+        self.is_domainrequest = kwargs.pop('is_domainrequest', True)
+        super(DomainForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super(DomainForm, self).clean()
+        # if it is going to be deleted, dont need to to check it
+        if cleaned_data["delete"]:
+            return cleaned_data
+        data = cleaned_data["name"]
+        # check if domain name is valid
         regex = re.compile(
             r'((?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$)',
             re.IGNORECASE)
         if not regex.match(data):
             msg = ("Domain name it not valid")
             raise ValidationError(mark_safe(msg))
-        return data
+        # if it is not a request, check if domain already exists
+        if not self.is_domainrequest:
+            dom = Domain.objects.filter(name=data)
+            if dom and (not self.initial.has_key('name') or (dom[0].name !=
+                    self.initial['name'])):
+                msg = ("Domain configuration already exists "
+                       "<a href=\"%s\">here</a>." %
+                       reverse("ispdb_details", kwargs={"id": dom[0].config.id}))
+                raise ValidationError(mark_safe(msg))
+        return cleaned_data
 
 def clean_port(self,field):
     data = self.cleaned_data[field]
     if data > 65535:
         raise ValidationError("Port number cannot be larger than 65535")
     return data
+
+class BaseDomainFormSet(BaseFormSet):
+    def clean(self):
+        """Checks that at least one domain is not deleted."""
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+        for i in range(0, self.total_form_count()):
+            form = self.forms[i]
+            if not form.cleaned_data['delete']:
+                return
+        raise ValidationError("At least one domain should be specifed.")

@@ -14,6 +14,17 @@
 $(document).ready(function() {
     var i = $("#id_form-TOTAL_FORMS").val();
     var template = jQuery.format($("#template").val());
+    for (var aux=0; aux<i; aux++){
+    	var text = "Remove";
+        if ($('#id_form-'+aux+'-delete').val() == "True"){
+            $('#id_form-'+aux+'-name').attr("readonly", "readonly");
+            text = "Undo";
+	}
+        $('#id_form-'+aux+'-name').parent('td')
+		.after('<td><a class="link delete_domain" value="'+aux+'">'+text+'</a></td>!');
+    }
+    $('.delete_domain').hide();
+
     function addRow() {
       $(template(i++)).appendTo("#domain_list table");
       $("#id_form-TOTAL_FORMS").val(i);
@@ -25,19 +36,36 @@ $(document).ready(function() {
       $("#dataful").val('adding');
       $("#configform").show("fast");
       $("#add_domain").show();
+      $(".delete_domain").show();
     }
 
     $("#add_domain").click(function() {
       addRow();
     });
+    
+    $("#domain_list").on("click", "a.delete_domain", function(){
+	var value = $(this).attr('value');
+	var input = $('#id_form-'+value+'-name');
+	var check = $('#id_form-'+value+'-delete');
+	if (input.attr("readonly") == "readonly"){
+	    check.val("False");
+            input.removeAttr("readonly");
+            $(this).text("Remove");
+        }else{
+	    check.val("True");
+            input.attr("readonly", "readonly");
+	    $(this).text("Undo");
+        }
+    });
 
-    {% if config_form.errors or formset.errors or edit %}
+    {% if config_form.errors or formset.errors or formset.non_form_errors or edit %}
       $("#configform").show();
       $("#add_domain").show();
       $("#submit").show();
       $("#question").hide();
       $("#encouragement").hide();
       $("#problem").show();
+      $(".delete_domain").show();
     {% endif %}
     $("#yes").click(function(event) {
       // the yes button is in a form, and we want to stop the
@@ -139,6 +167,9 @@ function AutoFillOutgoing() {
       <label for="id_form-{0}-name">Email domain:</label>
     </th>
     <td><input id="id_form-{0}-name" type="text" name="form-{0}-name" maxlength="100" />
+    <input type="hidden" name="form-{0}-delete" value="False" id="id_form-{0}-delete" />
+    </td>
+    <td><a class="link delete_domain" value="{0}">Remove</a>
     </td>
   </tr>
 </textarea>
@@ -148,12 +179,13 @@ function AutoFillOutgoing() {
 going to make it easier for all users of the ISP to get their Thunderbird
 configured correctly and quickly.</div>
 
-<form action="{% url 'ispdb_add' %}" method="POST">{% csrf_token %}
+<form action="{{ callback }}" method="POST">{% csrf_token %}
 
 <input id="dataful" name="asking_or_adding" type="hidden"></input>
 
 <div id="domain_list">
   <table>
+    {{ formset.non_form_errors }}
     {{ formset }}
   </table>
   <div id="add_domain" class="hidden"><a class="link">add another domain</a></div>

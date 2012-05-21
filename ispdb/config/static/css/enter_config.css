@@ -11,4 +11,7 @@
   bottom: 1em;
   right: 1em;
 }
-
+input[readonly=readonly] {
+  color: grey;
+  background-color:#F0F0F0;
+}

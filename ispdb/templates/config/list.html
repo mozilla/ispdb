@@ -29,7 +29,7 @@ $(document).ready(function() {
     {% if not config.approved and not config.invalid %}
     <div class="config">
       <h3>{{config.display_name}} ({{ config.incoming_type }})</h3>
-      {% for domain in config.domains.all %}
+      {% for domain in config.domainrequests.all %}
       <div class="domain"><a href="details/{{domain.config.id}}">{{ domain }}</a></div>
       {% endfor %}
     </div>
