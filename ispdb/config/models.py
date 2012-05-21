@@ -4,7 +4,7 @@ import re
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import (ChoiceField, BooleanField, HiddenInput, ModelForm,
-    RadioSelect, ValidationError)
+    RadioSelect, ValidationError, URLField)
 from django.forms.formsets import BaseFormSet
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User
@@ -24,6 +24,7 @@ class Domain(models.Model):
     status = models.CharField(max_length=20, choices = DOMAIN_CHOICES)
 
     def __str__(self): return self.name
+    def __unicode__(self): return self.name
 
 class UnclaimedDomain(models.Model):
     name = models.CharField(max_length=100, verbose_name="Email domain",
@@ -37,6 +38,7 @@ class UnclaimedDomain(models.Model):
     status = models.CharField(max_length=20, choices = DOMAIN_CHOICES)
 
     def __str__(self): return self.name
+    def __unicode__(self): return self.name
 
 class DomainRequest(models.Model):
     name = models.CharField(max_length=100, verbose_name="Email domain",
@@ -46,6 +48,7 @@ class DomainRequest(models.Model):
     votes = models.IntegerField(default=1)
 
     def __str__(self): return self.name
+    def __unicode__(self): return self.name
 
 def constructXMLTag(name):
     if '_' in name:
@@ -70,6 +73,9 @@ class Config(models.Model):
 
     def __str__(self):
         "for use in the admin UI"
+        return self.display_name
+
+    def __unicode__(self):
         return self.display_name
 
     owner = models.ForeignKey(User, unique=False, blank=True, null=True,
@@ -215,12 +221,14 @@ class DomainForm(ModelForm):
         # if it is going to be deleted, dont need to to check it
         if cleaned_data["delete"]:
             return cleaned_data
+        if not cleaned_data.has_key('name'):
+            return cleaned_data
         data = cleaned_data["name"]
         # check if domain name is valid
-        regex = re.compile(
-            r'((?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$)',
-            re.IGNORECASE)
-        if not regex.match(data):
+        f = URLField()
+        try:
+            f.clean(unicode(data))
+        except:
             msg = ("Domain name it not valid")
             raise ValidationError(mark_safe(msg))
         # if it is not a request, check if domain already exists
