@@ -4,6 +4,7 @@ import datetime
 import httplib
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.forms import ValidationError
 from nose.tools import *
 from ispdb.config import models
 
@@ -13,12 +14,16 @@ success_code = httplib.FOUND
 fail_code = httplib.OK
 
 class AddTest(TestCase):
+    fixtures = ['login.json']
+
     def test_ask(self):
+        self.client.login(username='test', password='test')
         self.client.post(reverse("ispdb_add"), asking_domain_form())
         domain = models.UnclaimedDomain.objects.get(name="test.com")
         assert isinstance(domain, models.UnclaimedDomain)
 
     def test_multiple_ask(self):
+        self.client.login(username='test', password='test')
         asking_form = asking_domain_form()
         self.client.post(reverse("ispdb_add"), asking_form)
         domain = models.UnclaimedDomain.objects.get(name="test.com")
@@ -30,76 +35,84 @@ class AddTest(TestCase):
         assert_equal(domain.votes, 2)
 
     def test_add(self):
-        domain = models.Domain.objects.filter(name="test.com")
+        self.client.login(username='test', password='test')
+        domain = models.DomainRequest.objects.filter(name="test.com")
         assert_false(domain)
         res = self.client.post(reverse("ispdb_add"), adding_domain_form())
         assert_equal(res.status_code, success_code)
-        domain = models.Domain.objects.get(name="test.com")
-        assert isinstance(domain, models.Domain)
+        domain = models.DomainRequest.objects.get(name="test.com")
+        assert isinstance(domain, models.DomainRequest)
 
     def test_add_duplicate_domain(self):
+        self.client.login(username='test', password='test')
         name = "test.com"
         domain = models.Domain.objects.filter(name=name)
         assert_false(domain)
         domain_form = adding_domain_form()
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
-        domain = models.Domain.objects.filter(name=name)
+        domain = models.DomainRequest.objects.filter(name=name)
         assert_true(domain)
-        assert isinstance(domain[0], models.Domain)
+        assert isinstance(domain[0], models.DomainRequest)
         res = self.client.post(reverse("ispdb_add"), domain_form)
-        assert_equal(res.status_code, fail_code)
-        domain = models.Domain.objects.filter(name=name)
-        assert_true(domain)
+        assert_equal(res.status_code, success_code)
+        domain = models.DomainRequest.objects.filter(name=name)
+        assert_true(len(domain) == 2)
 
     def test_add_internationalization(self):
-        name = u"Iñtërnâtiônàlizætiøn"
-        dom = models.Domain.objects.filter(name=name)
+        self.client.login(username='test', password='test')
+        name = u"Iñtërnâtiônàlizætiøn.com"
+        dom = models.DomainRequest.objects.filter(name=name)
         assert_false(dom)
         domain_form = adding_domain_form()
         domain_form["form-0-name"] = name
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
-        domain = models.Domain.objects.get(name=name)
-        assert isinstance(domain, models.Domain)
+        domain = models.DomainRequest.objects.get(name=name)
+        assert isinstance(domain, models.DomainRequest)
         assert_equal(domain.name, name)
 
     def test_add_missing_name(self):
+        self.client.login(username='test', password='test')
         domain_form = adding_domain_form()
         domain_form["display_name"] = ""
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, fail_code)
-        model = models.Domain.objects.filter(name="test.com")
+        model = models.DomainRequest.objects.filter(name="test.com")
         assert_false(model)
 
     def test_add_long_port(self):
+        self.client.login(username='test', password='test')
         port = "800000000000000000000000000000000000000000000000"
         domain_form = adding_domain_form()
         domain_form["incoming_port"] = port
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, fail_code)
-        model = models.Domain.objects.filter(name="test.com")
+        model = models.DomainRequest.objects.filter(name="test.com")
         assert_false(model)
 
     def test_add_negative_port(self):
+        self.client.login(username='test', password='test')
         port = "-1000"
         domain_form = adding_domain_form()
         domain_form["incoming_port"] = port
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, fail_code)
-        model = models.Domain.objects.filter(name="test.com")
+        model = models.DomainRequest.objects.filter(name="test.com")
         assert_false(model)
 
     def test_add_letters_port(self):
+        self.client.login(username='test', password='test')
         port = "11a1"
         domain_form = adding_domain_form()
         domain_form["incoming_port"] = port
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, fail_code)
-        model = models.Domain.objects.filter(name="test.com")
+        model = models.DomainRequest.objects.filter(name="test.com")
         assert_false(model)
 
     def test_add_with_unconfirmed(self):
+        self.client.login(username='test', password='test')
         name = "test.com"
         unclaimed_after = models.UnclaimedDomain.objects.filter(name=name)
         assert_false(unclaimed_after)
@@ -115,22 +128,26 @@ class AddTest(TestCase):
         self.client.post(reverse("ispdb_add"), domain_form)
         unclaimed_after = models.UnclaimedDomain.objects.filter(name=name)
         assert_false(unclaimed_after)
-        model = models.Domain.objects.get(name=name)
-        assert isinstance(model, models.Domain)
+        model = models.DomainRequest.objects.get(name=name)
+        assert isinstance(model, models.DomainRequest)
 
     def test_add_lots_of_domains(self):
+        self.client.login(username='test', password='test')
         num_domains = 10
         domain_form = adding_domain_form()
         domain_form["form-TOTAL_FORMS"] = num_domains
         for i in range(num_domains):
             domain_form["form-%d-name" % i] = "test%d.com" % i
+            domain_form["form-%d-delete" % i] = "False"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
         for i in range(num_domains):
-            assert_true(models.Domain.objects.filter(name="test%d.com"%i))
+            assert_true(models.DomainRequest.objects.filter(
+                name="test%d.com"%i))
 
     # Tests correct handling of a leading zero in form-TOTAL_FORMS
     def test_add_09_domains(self):
+        self.client.login(username='test', password='test')
         num_domains = 9
         domain_form = adding_domain_form()
         domain_form["form-TOTAL_FORMS"] = "09"
@@ -139,41 +156,48 @@ class AddTest(TestCase):
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
         for i in range(num_domains):
-            assert_true(models.Domain.objects.filter(name="test%d.com"%i))
+            assert_true(models.DomainRequest.objects.filter(name="test%d.com"%i))
 
     def test_add_aaa_domains(self):
-        before = models.Domain.objects.all().count()
+        self.client.login(username='test', password='test')
+        before = models.DomainRequest.objects.all().count()
         domain_form = adding_domain_form()
         domain_form["form-TOTAL_FORMS"] = "aaa"
-        assert_raises(ValueError,
+        assert_raises(ValidationError,
                       self.client.post,
                       reverse("ispdb_add"),
                       domain_form)
-        after = models.Domain.objects.all().count()
+        after = models.DomainRequest.objects.all().count()
         assert_equal(before, after)
 
     def test_add_bad_number_domains(self):
-        before = models.Domain.objects.all().count()
+        self.client.login(username='test', password='test')
+        num_domains = 11
         domain_form = adding_domain_form()
-        domain_form["form-TOTAL_FORMS"] = "10000"
-        assert_raises(KeyError,
-                      self.client.post,
-                      reverse("ispdb_add"),
-                      domain_form)
-        after = models.Domain.objects.all().count()
-        assert_equal(before, after)
+        domain_form["form-TOTAL_FORMS"] = num_domains
+        for i in range(num_domains):
+            domain_form["form-%d-name" % i] = "test%d.com" % i
+            domain_form["form-%d-delete" % i] = "False"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, fail_code)
+        for i in range(num_domains):
+            assert_false(models.DomainRequest.objects.filter(
+                name="test%d.com"%i))
 
 def asking_domain_form():
     return {"asking_or_adding":"asking",
             "form-TOTAL_FORMS":"1",
             "form-INITIAL_FORMS":"1",
-            "form-0-name":"test.com"}
+            "form-0-name":"test.com",
+            "form-0-delete":"False"}
 
 def adding_domain_form():
     return {"asking_or_adding":"adding",
             "form-TOTAL_FORMS":"1",
             "form-INITIAL_FORMS":"1",
+            "form-MAX_NUM_FORMS": "10",
             "form-0-name":"test.com",
+            "form-0-delete":"False",
             "display_name":"test",
             "display_short_name":"test",
             "incoming_type":"imap",
