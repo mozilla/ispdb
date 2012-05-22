@@ -4,7 +4,7 @@ import re
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import (ChoiceField, BooleanField, HiddenInput, ModelForm,
-    RadioSelect, ValidationError, URLField)
+    RadioSelect, ValidationError)
 from django.forms.formsets import BaseFormSet
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User
@@ -225,12 +225,17 @@ class DomainForm(ModelForm):
             return cleaned_data
         data = cleaned_data["name"]
         # check if domain name is valid
-        f = URLField()
-        try:
-            f.clean(unicode(data))
-        except:
+        regex = re.compile(r"(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+"
+                            "(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)",
+                           re.IGNORECASE)
+        if not regex.match(data):
+            # Trivial case failed. Try for possible IDN domain
             msg = ("Domain name it not valid")
-            raise ValidationError(mark_safe(msg))
+            try:
+                if not regex.match(data.encode('idna')): # IDN -> ACE
+                    raise ValidationError(mark_safe(msg))
+            except UnicodeError: # invalid domain
+                raise ValidationError(mark_safe(msg))
         # if it is not a request, check if domain already exists
         if not self.is_domainrequest:
             dom = Domain.objects.filter(name=data)
