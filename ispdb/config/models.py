@@ -261,10 +261,16 @@ class BaseDomainFormSet(BaseFormSet):
             return
         # Get number of deleted forms
         deleted_forms = 0
+        names = []
         for i in range(0, self.total_form_count()):
             form = self.forms[i]
             if form.cleaned_data['delete']:
                 deleted_forms = deleted_forms + 1
+            else:
+                # Check for repeated domain names
+                if form.cleaned_data['name'] in names:
+                    raise ValidationError("Duplicated domain name found.")
+                names.append(form.cleaned_data['name'])
         # Check if all forms are deleted
         if self.total_form_count() == deleted_forms:
             raise ValidationError("At least one domain should be specifed.")
