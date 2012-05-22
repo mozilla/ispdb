@@ -61,16 +61,24 @@ class AddTest(TestCase):
 
     def test_add_internationalization(self):
         self.client.login(username='test', password='test')
-        name = u"Iñtërnâtiônàlizætiøn.com"
-        dom = models.DomainRequest.objects.filter(name=name)
-        assert_false(dom)
-        domain_form = adding_domain_form()
-        domain_form["form-0-name"] = name
-        res = self.client.post(reverse("ispdb_add"), domain_form)
-        assert_equal(res.status_code, success_code)
-        domain = models.DomainRequest.objects.get(name=name)
-        assert isinstance(domain, models.DomainRequest)
-        assert_equal(domain.name, name)
+        domains = [
+            u"Iñtërnâtiônàlizætiøn.com",
+            u"郵件.商務",
+            u"मोहन.ईन्फो",
+            u"екзампл.ком",
+            u"εχαμπλε.ψομ",
+            u"ящик-с-апельсинами.рф",
+        ]
+        for name in domains:
+            dom = models.DomainRequest.objects.filter(name=name)
+            assert_false(dom)
+            domain_form = adding_domain_form()
+            domain_form["form-0-name"] = name
+            res = self.client.post(reverse("ispdb_add"), domain_form)
+            assert_equal(res.status_code, success_code)
+            domain = models.DomainRequest.objects.get(name=name)
+            assert isinstance(domain, models.DomainRequest)
+            assert_equal(domain.name, name)
 
     def test_add_missing_name(self):
         self.client.login(username='test', password='test')
@@ -184,6 +192,68 @@ class AddTest(TestCase):
         for i in range(num_domains):
             assert_false(models.DomainRequest.objects.filter(
                 name="test%d.com"%i))
+
+    def test_add_invalid_domains(self):
+        self.client.login(username='test', password='test')
+        domains = [
+            'test',
+            'test_test.com',
+            'test.c',
+            100*'test'+'.com',
+            '127.0.0.1',
+            'example.',
+            'com.',
+            'invalid-.com',
+            '-invalid.com',
+            'inv-.alid-.com',
+            'inv-.-alid.com',
+            '[a',
+        ]
+        for domain in domains:
+            domain_form = adding_domain_form()
+            domain_form["form-0-name"] = domain
+            res = self.client.post(reverse("ispdb_add"), domain_form)
+            print domain
+            print res.status_code
+            assert_equal(res.status_code, fail_code)
+            assert_false(models.DomainRequest.objects.filter(name=domain))
+
+    def test_add_only_deleted_domains(self):
+        self.client.login(username='test', password='test')
+        domain_form = adding_domain_form()
+        domain_form["form-0-delete"] = "True"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, fail_code)
+        model = models.DomainRequest.objects.filter(name="test.com")
+        assert_false(model)
+
+    def test_add_one_deleted_domain(self):
+        self.client.login(username='test', password='test')
+        domain_form = adding_domain_form()
+        domain_form["form-TOTAL_FORMS"] = "2",
+        domain_form["form-0-name"] = "test.com"
+        domain_form["form-0-delete"] = "True"
+        domain_form["form-1-name"] = "test2.com"
+        domain_form["form-1-delete"] = "False"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, success_code)
+        model = models.DomainRequest.objects.filter(name="test.com")
+        assert_false(model)
+        model = models.DomainRequest.objects.filter(name="test2.com")
+        assert_true(model)
+
+    def test_add_duplicated_domain_names(self):
+        self.client.login(username='test', password='test')
+        domain_form = adding_domain_form()
+        domain_form["form-TOTAL_FORMS"] = "2",
+        domain_form["form-0-name"] = "test.com"
+        domain_form["form-0-delete"] = "False"
+        domain_form["form-1-name"] = "test.com"
+        domain_form["form-1-delete"] = "False"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, fail_code)
+        model = models.DomainRequest.objects.filter(name="test.com")
+        assert_false(model)
 
 def asking_domain_form():
     return {"asking_or_adding":"asking",
