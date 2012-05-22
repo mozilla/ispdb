@@ -14,7 +14,7 @@ success_code = httplib.FOUND
 fail_code = httplib.OK
 
 class AddTest(TestCase):
-    fixtures = ['login.json']
+    fixtures = ['login_testdata.json']
 
     def test_ask(self):
         self.client.login(username='test', password='test')
@@ -156,7 +156,8 @@ class AddTest(TestCase):
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
         for i in range(num_domains):
-            assert_true(models.DomainRequest.objects.filter(name="test%d.com"%i))
+            assert_true(models.DomainRequest.objects.filter(
+                name="test%d.com"%i))
 
     def test_add_aaa_domains(self):
         self.client.login(username='test', password='test')

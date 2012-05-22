@@ -228,7 +228,6 @@ def add(request, domain=None):
                     # discard deleted forms
                     if form.cleaned_data['delete']:
                         continue
-                    # get original domain if it exists
                     domain = form.cleaned_data['name']
                     unclaimed = UnclaimedDomain.objects.filter(name=domain)
                     if unclaimed:
