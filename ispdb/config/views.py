@@ -97,15 +97,6 @@ def export_xml(request, version=None, id=None, domain=None):
     data = serialize(config)
     return HttpResponse(data, mimetype='text/xml')
 
-def check_domain(request, name):
-    """
-    Tests if the given domain name is valid and that it's not already in the db.
-    """
-    dom_form = DomainForm({'name':name})
-    dom_form.is_valid()
-    json = simplejson.dumps(dom_form.errors)
-    return HttpResponse(json,mimetype='application/json')
-
 @login_required
 def edit(request, config_id):
     DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,

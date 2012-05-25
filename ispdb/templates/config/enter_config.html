@@ -71,31 +71,7 @@ $(document).ready(function() {
       // the yes button is in a form, and we want to stop the
       // click from being processed by the form object
       event.preventDefault();
-      $("#yes,#no").attr("disabled", "disabled");
-      $.ajax({
-        url: "{% url 'ispdb_check_domain' %}/" + $("#id_form-0-name").val(),
-        type: "GET",
-        dataType: 'json',
-        success: function(data) {
-          // no error messages
-          if(!data.name) {
-            $(".errorlist").remove();
-            showForm();
-          }
-          else {
-            $(".errorlist").remove();
-            list = $("<ul class='errorlist'></ul>");
-            list.append("<li>" + data.name + "</li>");
-            $("#domain_list td").prepend(list);
-          }
-        },
-        error: function(a) {
-          showForm();
-        },
-        complete: function() {
-          $("#yes,#no").removeAttr("disabled");
-        }
-      });
+      showForm();
     });
 
     $("#no").click(function(event) {

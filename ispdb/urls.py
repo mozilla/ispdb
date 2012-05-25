@@ -38,10 +38,6 @@ urlpatterns = patterns('',
     url(r'^queue$', 'ispdb.config.views.queue', name='ispdb_queue'),
     url(r'^policy$', 'ispdb.config.views.policy', name='ispdb_policy'),
     url(r'^approve/(?P<id>\d+)', 'ispdb.config.views.approve', name='ispdb_approve'),
-    url(r'^check_domain$', 'ispdb.config.views.check_domain',
-        name='ispdb_check_domain'),
-    url(r'^check_domain/(?P<name>.+)', 'ispdb.config.views.check_domain',
-        name='ispdb_check_domain_name'),
 )
 
 urlpatterns += staticfiles_urlpatterns()
