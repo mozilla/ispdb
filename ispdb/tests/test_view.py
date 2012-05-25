@@ -76,10 +76,11 @@ class ListTest(TestCase):
         check_returned_xml(response, 0)
 
     def test_single_xml_reponse(self):
+        self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         assert_equal(response.status_code,302)
-        domain = models.Domain.objects.get(name="test2.com")
-        assert isinstance(domain,models.Domain)
+        domain = models.DomainRequest.objects.get(name="test2.com")
+        assert isinstance(domain,models.DomainRequest)
 
         response = self.client.post(
             reverse("ispdb_approve", kwargs={"id":domain.id}),
@@ -88,13 +89,14 @@ class ListTest(TestCase):
         check_returned_xml(response, 1)
 
     def test_two_xml_reponses(self):
+        self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
-        domain = models.Domain.objects.get(name="test2.com")
+        domain = models.DomainRequest.objects.get(name="test2.com")
         response = self.client.post(
             reverse("ispdb_approve", kwargs={"id":domain.id}),
             {"approved":"mark valid", "comment":"I liked this domain"})
         response = self.client.post(reverse("ispdb_add"), ListTest.test3dict)
-        domain = models.Domain.objects.get(name="test3.com")
+        domain = models.DomainRequest.objects.get(name="test3.com")
         response = self.client.post(
             reverse("ispdb_approve", kwargs={"id":domain.id}),
             {"denied":"mark invalid", "comment":"I didn't like this domain"})
@@ -106,10 +108,11 @@ class ListTest(TestCase):
         check_returned_html(response, 0)
 
     def test_single_reponse(self):
+        self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         assert_equal(response.status_code,302)
-        domain = models.Domain.objects.get(name="test2.com")
-        assert isinstance(domain,models.Domain)
+        domain = models.DomainRequest.objects.get(name="test2.com")
+        assert isinstance(domain,models.DomainRequest)
 
         response = self.client.post(
             reverse("ispdb_approve", kwargs={"id":domain.id}),
@@ -118,14 +121,15 @@ class ListTest(TestCase):
         check_returned_html(response, 1)
 
     def test_two_reponses(self):
+        self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
-        domain = models.Domain.objects.get(name="test2.com")
+        domain = models.DomainRequest.objects.get(name="test2.com")
         response = self.client.post(
             reverse("ispdb_approve", kwargs={"id":domain.id}),
             {"approved":"mark valid", "comment":"I liked this domain"})
 
         response = self.client.post(reverse("ispdb_add"), ListTest.test3dict)
-        domain = models.Domain.objects.get(name="test3.com")
+        domain = models.DomainRequest.objects.get(name="test3.com")
         response = self.client.post(
             reverse("ispdb_approve", kwargs={"id":domain.id}),
             {"denied":"mark invalid", "comment":"I didn't like this domain"})
