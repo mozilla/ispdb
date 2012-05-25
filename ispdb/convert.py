@@ -76,6 +76,7 @@ def main():
                outgoing_add_this_server = addThisServer,
                outgoing_use_global_preferred_server = useGlobalPreferredServer,
 
+               approved = True,
               )
     domains = root.findall('.//domain')
     c.save()
