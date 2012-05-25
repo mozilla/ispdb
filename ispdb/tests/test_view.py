@@ -22,6 +22,7 @@ def make_config(value):
             "form-TOTAL_FORMS":"1",
             "form-INITIAL_FORMS":"1",
             "form-0-name":"test%s.com" % value,
+            "form-0-delete":"False",
             "display_name":"test%s" % value,
             "display_short_name":"test%s" % value,
             "incoming_type":"imap",
@@ -67,6 +68,8 @@ class ListTest(TestCase):
 
     test2dict = make_config("2")
     test3dict = make_config("3")
+
+    fixtures = ['login_testdata.json']
 
     def test_empty_xml_reponse(self):
         response = self.client.get(reverse("ispdb_list", args=["xml"]), {})
@@ -129,27 +132,16 @@ class ListTest(TestCase):
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 2)
 
-    def test_one_dot_zero_xml_response(self):
+    def test_one_dot_one_xml_response(self):
+        self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
-        domain = models.Domain.objects.get(name="test2.com")
-        assert isinstance(domain,models.Domain)
-
-        response = self.client.post(reverse("ispdb_export_xml",
-                                            kwargs={"id": domain.id}));
-        doc = etree.XML(response.content)
-
-        xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
-                                                     'relaxng_schema.1.0.xml'))
-        xml_schema.assertValid(doc)
-
-    def test_one_dot_zero_xml_response(self):
-        response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
-        domain = models.Domain.objects.get(name="test2.com")
-        assert isinstance(domain,models.Domain)
+        domain = models.DomainRequest.objects.get(name="test2.com")
+        assert isinstance(domain,models.DomainRequest)
 
         response = self.client.post(reverse("ispdb_export_xml",
                                             kwargs={"version": "1.1",
                                                     "id": domain.id}));
+        print response
         doc = etree.XML(response.content)
 
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
