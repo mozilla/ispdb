@@ -136,6 +136,18 @@ class ListTest(TestCase):
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 2)
 
+    def test_one_dot_zero_xml_response(self):
+        self.client.login(username='test', password='test')
+        response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
+        domain = models.DomainRequest.objects.get(name="test2.com")
+        assert isinstance(domain,models.DomainRequest)
+
+        response = self.client.post(reverse("ispdb_export_xml",
+                                            kwargs={"id": domain.id}));
+        doc = etree.XML(response.content)
+
+        xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
+                                                     'relaxng_schema.xml'))
     def test_one_dot_one_xml_response(self):
         self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
@@ -145,7 +157,6 @@ class ListTest(TestCase):
         response = self.client.post(reverse("ispdb_export_xml",
                                             kwargs={"version": "1.1",
                                                     "id": domain.id}));
-        print response
         doc = etree.XML(response.content)
 
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),

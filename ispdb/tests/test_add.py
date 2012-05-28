@@ -213,8 +213,6 @@ class AddTest(TestCase):
             domain_form = adding_domain_form()
             domain_form["form-0-name"] = domain
             res = self.client.post(reverse("ispdb_add"), domain_form)
-            print domain
-            print res.status_code
             assert_equal(res.status_code, fail_code)
             assert_false(models.DomainRequest.objects.filter(name=domain))
 
