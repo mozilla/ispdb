@@ -37,9 +37,9 @@ def intro(request):
                               context_instance=RequestContext(request))
 
 def list(request, format="html"):
-    configs = Config.objects.all()
     if format == "xml":
         providers = ET.Element("providers")
+        configs = Config.objects.filter(status='approved')
         for config in configs:
             provider = ET.SubElement(providers, "provider")
             ET.SubElement(provider, "id").text = unicode(config.id)
@@ -54,6 +54,7 @@ def list(request, format="html"):
         response.write(output.getvalue())
         output.close()
         return response
+    configs = Config.objects.all()
     return render_to_response("config/list.html", {'configs': configs},
                               context_instance=RequestContext(request))
 
