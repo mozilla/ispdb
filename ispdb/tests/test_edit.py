@@ -100,7 +100,7 @@ class EditTest(TestCase):
         result = self.client.post("/approve/1", {
                                   "approved": True,})
         config = models.Config.objects.get(id=1)
-        assert_true(config.approved)
+        assert_equal(config.status, 'approved')
         form = adding_domain_form()
         form["form-1-name"] = "approved.com"
         form["form-1-delete"] = "False"
@@ -115,7 +115,7 @@ class EditTest(TestCase):
         result = self.client.post("/approve/1", {
                                   "approved": True,})
         config = models.Config.objects.get(id=1)
-        assert_true(config.approved)
+        assert_equal(config.status, 'approved')
         self.client.logout()
         self.client.login(username='test', password='test')
         form = adding_domain_form()

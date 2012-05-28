@@ -14,7 +14,7 @@ $(document).ready(function() {
 
 <h1>Approved configurations</h1>
   {% for config in configs %}
-    {% if config.approved %}
+    {% if config.status == 'approved' %}
     <div class="config">
       <h3>{{config.display_name}} ({{ config.incoming_type }})</h3>
       {% for domain in config.domains.all %}
@@ -26,7 +26,7 @@ $(document).ready(function() {
 
 <h1>Configurations pending review</h1>
   {% for config in configs %}
-    {% if not config.approved and not config.invalid %}
+    {% if config.status == 'requested' %}
     <div class="config">
       <h3>{{config.display_name}} ({{ config.incoming_type }})</h3>
       {% for domain in config.domainrequests.all %}

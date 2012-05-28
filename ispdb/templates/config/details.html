@@ -37,8 +37,8 @@ $(document).ready(function() {
 {% ifnotequal config.display_name config.display_short_name %} ({{config.display_short_name}} for short) {% endifnotequal %}
 </h1>
 
-<div class="configstatus {% if config.approved %} approved {% else %} pending {% endif %}">
-  {% if config.approved %}
+<div class="configstatus {{ config.status }}">
+  {% if config.status == 'approved' %}
   <div>This configuration is APPROVED.</div>
       {% if perms.config.can_approve %}
         <div>Is there a reason it shouldn't be?</div>
@@ -52,7 +52,7 @@ $(document).ready(function() {
         </form>
       {% endif %}
   {% else %}
-    {% if config.invalid %}
+    {% if config.status == 'invalid' %}
     <div>
       This configuration has been determined INVALID.  We've looked at the
       data, and either it's not correct, or it can't be verified from outside
@@ -91,7 +91,7 @@ $(document).ready(function() {
 
 <h4>Domains Served</h4>
 <div id="domains">
-  {% if config.approved %}
+  {% if config.domains.all %}
     {% for domain in config.domains.all %}
       <div class="domain">{{domain}}</div>
     {% endfor %}

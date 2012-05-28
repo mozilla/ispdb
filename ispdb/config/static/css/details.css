@@ -50,6 +50,10 @@
   border: 1px solid green;
 }
 
-.pending {
+.invalid {
+  border: 1px solid red;
+}
+
+.requested {
   border: 1px solid orange;
 }

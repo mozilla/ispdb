@@ -19,7 +19,7 @@ class ApprovalAuthTest(TestCase):
         config = Config.objects.get(id=1)
 
         # Should not have changed the config
-        nose.tools.assert_equal(config.approved, False)
+        nose.tools.assert_equal(config.status, 'requested')
 
         # Make sure it redirects to login page
         redirect = result.redirect_chain[0][0]
@@ -42,7 +42,7 @@ class ApprovalAuthTest(TestCase):
         config = Config.objects.get(id=1)
 
         # Should have changed the config
-        nose.tools.assert_equal(config.approved, True)
+        nose.tools.assert_equal(config.status, 'approved')
 
         # Make sure it redirects to details page
         redirect = result.redirect_chain[0][0]

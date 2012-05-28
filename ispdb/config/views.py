@@ -105,7 +105,7 @@ def edit(request, config_id):
     config = get_object_or_404(Config, pk=config_id)
     # Validate the user
     if not (request.user.is_staff or (
-            not config.approved and config.owner == request.user)):
+            config.status == 'requested' and config.owner == request.user)):
         return HttpResponseRedirect(reverse('ispdb_login'))
     # Get initial data
     initial = []
@@ -118,7 +118,7 @@ def edit(request, config_id):
         config_form = ConfigForm(request.POST,
                                  request.FILES,
                                  instance=config)
-        if config.approved:
+        if config.status == 'approved':
             DomainFormSet.form = staticmethod(curry(DomainForm,
                 is_domainrequest=False))
         formset = DomainFormSet(request.POST, request.FILES, initial=initial)
@@ -135,7 +135,7 @@ def edit(request, config_id):
                         continue
                     # get initial domain name
                     index = formset.initial_forms.index(form)
-                    if config.approved:
+                    if config.status == 'approved':
                         d = config.domains.all()[index]
                     else:
                         d = config.domainrequests.all()[index]
@@ -145,15 +145,14 @@ def edit(request, config_id):
                     domain = form.cleaned_data['name']
                     if form in formset.initial_forms:
                         index = formset.initial_forms.index(form)
-                        if config.approved:
+                        if config.status == 'approved':
                             claimed = config.domains.all()[index]
                         else:
                             claimed = config.domainrequests.all()[index]
                         claimed.name = domain
                     else:
-                        if config.approved:
+                        if config.status == 'approved':
                             claimed = Domain(name=domain,
-                                             votes=1,
                                              config=config)
                         else:
                             claimed = DomainRequest(name=domain,
@@ -198,14 +197,16 @@ def add(request, domain=None):
                          DomainRequest.objects.filter(name=domain)
                 if exists:
                     d = exists[0]
-                    d.votes += 1
+                    if isinstance(d, DomainRequest):
+                        d.votes += 1
+                        d.save()
                 else:
                     d = DomainRequest(name=domain,
                                       votes=1)
-                d.save()
+                    d.save()
             return HttpResponseRedirect('/') # Redirect after POST
         else:
-            config = Config(owner=request.user)
+            config = Config(owner=request.user, status='requested')
             # A form bound to the POST data
             config_form = ConfigForm(request.POST,
                                      request.FILES,
@@ -245,8 +246,8 @@ def add(request, domain=None):
 
 def queue(request):
     domains = DomainRequest.objects.filter(config=None).order_by('-votes')
-    pending_configs = Config.objects.filter(approved=False, invalid=False)
-    invalid_configs = Config.objects.filter(invalid=True)
+    pending_configs = Config.objects.filter(status='requested')
+    invalid_configs = Config.objects.filter(status='invalid')
 
     return render_to_response('config/queue.html', {
         'domains': domains,
@@ -264,22 +265,20 @@ def approve(request, id):
     if request.method == 'POST': # If the form has been submitted...
         data = request.POST
         if data.get('approved', False):
-            config.approved = True
             # first we check if domain names already exist
             for domain in config.domainrequests.all():
                 if Domain.objects.filter(name=domain):
                     #TODO: the merge (template and view)
                     # Redirect to merge url
                     return HttpResponseRedirect('/')
+            config.status = 'approved'
             for domain in config.domainrequests.all():
                 claimed = Domain(name=domain.name,
-                                 votes=domain.votes,
                                  config=config)
                 claimed.save()
                 domain.delete()
         elif data.get('denied', False):
-            config.invalid = True
-            config.approved = False
+            config.status = 'invalid'
         else:
             raise ValueError, "shouldn't get here"
         # XXX do something w/ the comment text

@@ -16,12 +16,6 @@ class Domain(models.Model):
                             help_text="(e.g. \"gmail.com\")")
     config = models.ForeignKey('Config', related_name="domains",
                                blank=True) # blank is for requests and rejects
-    votes = models.IntegerField(default=1)
-    DOMAIN_CHOICES = [
-        ("configured", "domain mapped to a configuration"),
-        ("rejected", "domain can't be accepted"),
-    ]
-    status = models.CharField(max_length=20, choices = DOMAIN_CHOICES)
 
     def __str__(self): return self.name
     def __unicode__(self): return self.name
@@ -68,8 +62,13 @@ class Config(models.Model):
                               on_delete=models.SET_NULL)
     last_update_datetime = models.DateTimeField(auto_now=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
-    approved = models.BooleanField(default=False)
-    invalid = models.BooleanField(default=False)
+    CONFIG_CHOICES = [
+        ("requested", "configuration was not reviewed yet"),
+        ("approved", "configuration is approved"),
+        ("invalid", "configuration is invalid"),
+        ("deleted", "configuration is deleted"),
+    ]
+    status = models.CharField(max_length=20, choices = CONFIG_CHOICES)
     email_provider_id = models.CharField(max_length=50)
     display_name = models.CharField(
         max_length=100,
@@ -173,8 +172,7 @@ class Config(models.Model):
 class ConfigForm(ModelForm):
     class Meta:
         model = Config
-        exclude = ['approved',
-                   'invalid',
+        exclude = ['status',
                    'email_provider_id',
                    'flagged_as_incorrect',
                    'flagged_by_email',

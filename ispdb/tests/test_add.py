@@ -294,7 +294,7 @@ class ModelTest(TestCase):
                                outgoing_port=2,
                                created_datetime=datetime.datetime.now())
         config.save()
-        d = models.Domain(name="test", votes=1, config=config)
+        d = models.Domain(name="test", config=config)
         d.save()
         domain = models.Domain.objects.get(name="test")
         assert isinstance(domain, models.Domain)
@@ -306,7 +306,7 @@ class ModelTest(TestCase):
                                outgoing_port=2,
                                created_datetime=datetime.datetime.now())
         config.save()
-        d = models.Domain(name=name, votes=1, config=config)
+        d = models.Domain(name=name, config=config)
         d.save()
         domain = models.Domain.objects.get(name=name)
         assert isinstance(domain, models.Domain)
