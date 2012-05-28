@@ -17,7 +17,7 @@ from django.utils import simplejson
 from django.utils.functional import curry
 
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
-    UnclaimedDomain, DomainRequest, BaseDomainFormSet)
+    DomainRequest, BaseDomainFormSet)
 from ispdb.config import serializers
 
 def login(request):
@@ -195,14 +195,13 @@ def add(request, domain=None):
             # register the vote
             for domain in domains:
                 exists = Domain.objects.filter(name=domain) or \
-                         UnclaimedDomain.objects.filter(name=domain)
+                         DomainRequest.objects.filter(name=domain)
                 if exists:
                     d = exists[0]
                     d.votes += 1
                 else:
-                    d = UnclaimedDomain(name=domain,
-                                        status='requested',
-                                        votes=1)
+                    d = DomainRequest(name=domain,
+                                      votes=1)
                 d.save()
             return HttpResponseRedirect('/') # Redirect after POST
         else:
@@ -220,13 +219,11 @@ def add(request, domain=None):
                     if form.cleaned_data['delete']:
                         continue
                     domain = form.cleaned_data['name']
-                    unclaimed = UnclaimedDomain.objects.filter(name=domain)
+                    unclaimed = DomainRequest.objects.filter(name=domain,
+                                                             config=None)
                     if unclaimed:
-                        d = unclaimed[0]
-                        claimed = DomainRequest(name=domain,
-                                                votes=d.votes,
-                                                config=config)
-                        d.delete()
+                        claimed = unclaimed[0]
+                        claimed.config = config
                     else:
                         claimed = DomainRequest(name=domain,
                                                 votes=1,
@@ -247,7 +244,7 @@ def add(request, domain=None):
     }, context_instance=RequestContext(request))
 
 def queue(request):
-    domains = UnclaimedDomain.objects.filter(status='requested').order_by('-votes')
+    domains = DomainRequest.objects.filter(config=None).order_by('-votes')
     pending_configs = Config.objects.filter(approved=False, invalid=False)
     invalid_configs = Config.objects.filter(invalid=True)
 

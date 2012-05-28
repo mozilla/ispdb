@@ -26,25 +26,11 @@ class Domain(models.Model):
     def __str__(self): return self.name
     def __unicode__(self): return self.name
 
-class UnclaimedDomain(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Email domain",
-                            help_text="(e.g. \"gmail.com\")")
-    votes = models.IntegerField(default=1)
-    DOMAIN_CHOICES = [
-        ('requested', 'requested for inclusion'),
-        ('configured', 'domain mapped to a configuration'),
-        ('rejected', 'domain can\'t be accepted'),
-    ]
-    status = models.CharField(max_length=20, choices = DOMAIN_CHOICES)
-
-    def __str__(self): return self.name
-    def __unicode__(self): return self.name
-
 class DomainRequest(models.Model):
     name = models.CharField(max_length=100, verbose_name="Email domain",
                             help_text="(e.g. \"gmail.com\")")
     config = models.ForeignKey('Config', related_name="domainrequests",
-                               blank=True) # blank is for requests and rejects
+                               blank=True, null=True)
     votes = models.IntegerField(default=1)
 
     def __str__(self): return self.name

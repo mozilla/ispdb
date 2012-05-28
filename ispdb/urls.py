@@ -7,10 +7,6 @@ from ispdb.config.models import *
 from django.contrib import admin
 admin.autodiscover()
 
-unclaimed_dict = {
-    'queryset': UnclaimedDomain.objects.all(),
-}
-
 urlpatterns = patterns('',
     (r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: /", mimetype="text/plain")),
     (r'^admin/', include(admin.site.urls)),

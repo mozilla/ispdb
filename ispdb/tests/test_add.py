@@ -19,19 +19,19 @@ class AddTest(TestCase):
     def test_ask(self):
         self.client.login(username='test', password='test')
         self.client.post(reverse("ispdb_add"), asking_domain_form())
-        domain = models.UnclaimedDomain.objects.get(name="test.com")
-        assert isinstance(domain, models.UnclaimedDomain)
+        domain = models.DomainRequest.objects.get(name="test.com", config=None)
+        assert isinstance(domain, models.DomainRequest)
 
     def test_multiple_ask(self):
         self.client.login(username='test', password='test')
         asking_form = asking_domain_form()
         self.client.post(reverse("ispdb_add"), asking_form)
-        domain = models.UnclaimedDomain.objects.get(name="test.com")
-        assert isinstance(domain, models.UnclaimedDomain)
+        domain = models.DomainRequest.objects.get(name="test.com", config=None)
+        assert isinstance(domain, models.DomainRequest)
         assert_equal(domain.votes, 1)
         self.client.post(reverse("ispdb_add"), asking_form)
-        domain = models.UnclaimedDomain.objects.get(name="test.com")
-        assert isinstance(domain, models.UnclaimedDomain)
+        domain = models.DomainRequest.objects.get(name="test.com", config=None)
+        assert isinstance(domain, models.DomainRequest)
         assert_equal(domain.votes, 2)
 
     def test_add(self):
@@ -122,19 +122,22 @@ class AddTest(TestCase):
     def test_add_with_unconfirmed(self):
         self.client.login(username='test', password='test')
         name = "test.com"
-        unclaimed_after = models.UnclaimedDomain.objects.filter(name=name)
+        unclaimed_after = models.DomainRequest.objects.filter(name=name,
+                                                              config=None)
         assert_false(unclaimed_after)
 
         asking_form = asking_domain_form()
         asking_form["form-0-name"] = name
         self.client.post(reverse("ispdb_add"), asking_form)
-        unclaimed = models.UnclaimedDomain.objects.filter(name=name)
+        unclaimed = models.DomainRequest.objects.get(name=name,
+                                                     config=None)
         assert_true(unclaimed)
 
         domain_form = adding_domain_form()
         domain_form["form-0-name"] = name
         self.client.post(reverse("ispdb_add"), domain_form)
-        unclaimed_after = models.UnclaimedDomain.objects.filter(name=name)
+        unclaimed_after = models.DomainRequest.objects.filter(name=name,
+                                                              config=None)
         assert_false(unclaimed_after)
         model = models.DomainRequest.objects.get(name=name)
         assert isinstance(model, models.DomainRequest)
