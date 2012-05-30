@@ -57,3 +57,14 @@
 .requested {
   border: 1px solid orange;
 }
+
+.float {
+  float: left;
+  clear: none;
+  margin-right: 4px;
+}
+
+#confirm_delete_text {
+  font-weight: bold;
+  margin-bottom: 10px;
+}

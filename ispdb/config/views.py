@@ -15,6 +15,7 @@ from django.contrib.auth import logout
 from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.functional import curry
+from django.db.models import Q
 
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
     DomainRequest, BaseDomainFormSet)
@@ -59,8 +60,8 @@ def list(request, format="html"):
                               context_instance=RequestContext(request))
 
 
-def details(request, id):
-    config = Config.objects.filter(id=int(id))[0]
+def details(request, id, confirm_delete=False):
+    config = get_object_or_404(Config, ~Q(status='deleted'), pk=id)
     other_fields = []
     incoming = []
     outgoing = []
@@ -79,12 +80,13 @@ def details(request, id):
         # We want a few others:
         elif field.name in ('last_update_datetime', 'settings_page_url'):
             other_fields.append(data)
-    return render_to_response("config/details.html", {'config': config,
-                                               'incoming': incoming,
-                                               'outgoing': outgoing,
-                                               'other_fields': other_fields},
-                              context_instance=RequestContext(request))
-
+    return render_to_response("config/details.html", {
+            'config': config,
+            'incoming': incoming,
+            'outgoing': outgoing,
+            'other_fields': other_fields,
+            'confirm_delete': confirm_delete},
+        context_instance=RequestContext(request))
 
 def export_xml(request, version=None, id=None, domain=None):
     config = None
@@ -105,7 +107,7 @@ def edit(request, config_id):
     InlineFormSet = inlineformset_factory(Config, DomainRequest)
     config = get_object_or_404(Config, pk=config_id)
     # Validate the user
-    if not (request.user.is_staff or (
+    if not (request.user.is_superuser or (
             config.status == 'requested' and config.owner == request.user)):
         return HttpResponseRedirect(reverse('ispdb_login'))
     # Get initial data
@@ -266,16 +268,26 @@ def approve(request, id):
     if request.method == 'POST': # If the form has been submitted...
         data = request.POST
         if data.get('approved', False):
-            # first we check if domain names already exist
+            # check if domains and domains requests are null
+            if not config.domains and not config.domainrequests:
+                #TODO show error message
+                return HttpResponseRedirect('/')
+            # we check if domain names already exist
             for domain in config.domainrequests.all():
-                if Domain.objects.filter(name=domain):
-                    #TODO: the merge (template and view)
-                    # Redirect to merge url
+                if Domain.objects.filter(name=domain).exclude(
+                        Q(config__status='deleted') |
+                        Q(config__status='invalid')):
+                    #TODO show error message
                     return HttpResponseRedirect('/')
             config.status = 'approved'
             for domain in config.domainrequests.all():
-                claimed = Domain(name=domain.name,
-                                 config=config)
+                exists = Domain.objects.filter(name=domain)
+                if exists:
+                    claimed = exists[0]
+                    claimed.config = config
+                else:
+                    claimed = Domain(name=domain.name,
+                                     config=config)
                 claimed.save()
                 domain.delete()
         elif data.get('denied', False):
@@ -285,3 +297,18 @@ def approve(request, id):
         # XXX do something w/ the comment text
         config.save()
     return HttpResponseRedirect('/details/' + id) # Redirect after POST
+
+@permission_required('auth.is_superuser')
+def delete(request, id):
+    config = get_object_or_404(Config, pk=id)
+    if request.method == 'POST':
+        data = request.POST
+        if data.has_key('confirm_delete') and data['confirm_delete'] == "1":
+          config.status = 'deleted'
+          config.save()
+          return HttpResponseRedirect(reverse('ispdb_list'))
+        else:
+            # The user dont have JS
+            return details(request, config.id, confirm_delete=True)
+    else:
+        return details(request, config.id, confirm_delete=True)
