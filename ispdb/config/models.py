@@ -63,10 +63,10 @@ class Config(models.Model):
     last_update_datetime = models.DateTimeField(auto_now=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
     CONFIG_CHOICES = [
-        ("requested", "configuration was not reviewed yet"),
-        ("approved", "configuration is approved"),
-        ("invalid", "configuration is invalid"),
-        ("deleted", "configuration is deleted"),
+        ("requested", "requested"),
+        ("approved", "approved"),
+        ("invalid", "invalid"),
+        ("deleted", "deleted"),
     ]
     status = models.CharField(max_length=20, choices = CONFIG_CHOICES)
     email_provider_id = models.CharField(max_length=50)
