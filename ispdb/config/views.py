@@ -298,11 +298,15 @@ def approve(request, id):
         config.save()
     return HttpResponseRedirect('/details/' + id) # Redirect after POST
 
-@permission_required('auth.is_superuser')
+@login_required
 def delete(request, id):
     config = get_object_or_404(Config, pk=id)
+    if not (request.user.is_superuser or (
+            config.status == 'requested' and config.owner == request.user)):
+        return HttpResponseRedirect(reverse('ispdb_login'))
     if request.method == 'POST':
         data = request.POST
+        print data
         if data.has_key('confirm_delete') and data['confirm_delete'] == "1":
           config.status = 'deleted'
           config.save()
