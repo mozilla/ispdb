@@ -58,14 +58,19 @@ $(document).ready(function() {
         }
     });
 
-    {% if config_form.errors or formset.errors or formset.non_form_errors or edit %}
-      $("#configform").show();
-      $("#add_domain").show();
+    {% if config_form.errors or formset.errors or formset.non_form_errors or action == 'edit' %}
       $("#submit").show();
       $("#question").hide();
       $("#encouragement").hide();
       $("#problem").show();
-      $(".delete_domain").show();
+      {% if action == 'ask' %}
+        $("#dataful").val('asking');
+        $("#voteforit").show();
+      {% else %}
+        $("#add_domain").show();
+        $(".delete_domain").show();
+        $("#configform").show();
+      {% endif %}
     {% endif %}
     $("#yes").click(function(event) {
       // the yes button is in a form, and we want to stop the

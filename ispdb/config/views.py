@@ -171,7 +171,7 @@ def edit(request, config_id):
     return render_to_response('config/enter_config.html', {
         'formset': formset,
         'config_form': config_form,
-        'edit': True,
+        'action': 'edit',
         'callback': reverse('ispdb_edit', args=[config.id]),
     }, context_instance=RequestContext(request))
 
@@ -182,45 +182,49 @@ def add(request, domain=None):
     DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,
         formset=BaseDomainFormSet)
     InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
+    action = 'add'
 
     #from nose.tools import set_trace;set_trace()
     if request.method == 'POST': # If the form has been submitted...
         data = request.POST
+        formset = DomainFormSet(request.POST,request.FILES)
         # did the user fill in a full form, or are they just asking for some
         # domains to be registered
         if data['asking_or_adding'] == 'asking':
-            domains = []
-            num_domains = int(data['form-TOTAL_FORMS'])
-            for i in range(num_domains):
-                domains.append(data['form-' + unicode(i) + '-name'])
-            # we'll create (unclaimed) domains if they don't exist, otherwise
-            # register the vote
-            for domain in domains:
-                exists = Domain.objects.filter(name=domain) or \
-                         DomainRequest.objects.filter(name=domain)
-                if exists:
-                    d = exists[0]
-                    if isinstance(d, DomainRequest):
-                        d.votes += 1
+            config_form = ConfigForm()
+            action = 'ask'
+            if formset.is_valid():
+                domains = []
+                num_domains = int(data['form-TOTAL_FORMS'])
+                for i in range(num_domains):
+                    domains.append(data['form-' + unicode(i) + '-name'])
+                # we'll create (unclaimed) domains if they don't exist, otherwise
+                # register the vote
+                for domain in domains:
+                    exists = Domain.objects.filter(name=domain) or \
+                             DomainRequest.objects.filter(name=domain)
+                    if exists:
+                        d = exists[0]
+                        if isinstance(d, DomainRequest):
+                            d.votes += 1
+                            d.save()
+                    else:
+                        d = DomainRequest(name=domain,
+                                          votes=1)
                         d.save()
-                else:
-                    d = DomainRequest(name=domain,
-                                      votes=1)
-                    d.save()
-            return HttpResponseRedirect('/') # Redirect after POST
+                return HttpResponseRedirect('/') # Redirect after POST
         else:
             config = Config(owner=request.user, status='requested')
             # A form bound to the POST data
             config_form = ConfigForm(request.POST,
                                      request.FILES,
                                      instance=config)
-            formset = DomainFormSet(request.POST,request.FILES)
             # All validation rules pass
             if config_form.is_valid() and formset.is_valid():
                 config_form.save()
                 for form in formset:
                     # discard deleted forms
-                    if form.cleaned_data['delete']:
+                    if not form.cleaned_data or form.cleaned_data['delete']:
                         continue
                     domain = form.cleaned_data['name']
                     unclaimed = DomainRequest.objects.filter(name=domain,
@@ -235,7 +239,6 @@ def add(request, domain=None):
                     claimed.save()
                 return HttpResponseRedirect(reverse('ispdb_details',
                                                     args=[config.id]))
-
     else:
         config_form = ConfigForm()
         formset = DomainFormSet(initial=[{'name': domain}])
@@ -243,7 +246,7 @@ def add(request, domain=None):
     return render_to_response('config/enter_config.html', {
         'formset': formset,
         'config_form': config_form,
-        'edit': False,
+        'action': action,
         'callback': reverse('ispdb_add'),
     }, context_instance=RequestContext(request))
 
@@ -306,7 +309,6 @@ def delete(request, id):
         return HttpResponseRedirect(reverse('ispdb_login'))
     if request.method == 'POST':
         data = request.POST
-        print data
         if data.has_key('confirm_delete') and data['confirm_delete'] == "1":
           config.status = 'deleted'
           config.save()

@@ -248,6 +248,8 @@ class BaseDomainFormSet(BaseFormSet):
         names = []
         for i in range(0, self.total_form_count()):
             form = self.forms[i]
+            if not form.cleaned_data:
+                continue
             if form.cleaned_data['delete']:
                 deleted_forms = deleted_forms + 1
             else:
