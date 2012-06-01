@@ -60,7 +60,7 @@ def list(request, format="html"):
                               context_instance=RequestContext(request))
 
 
-def details(request, id, confirm_delete=False):
+def details(request, id, error=None, confirm_delete=False):
     config = get_object_or_404(Config, ~Q(status='deleted'), pk=id)
     other_fields = []
     incoming = []
@@ -85,6 +85,7 @@ def details(request, id, confirm_delete=False):
             'incoming': incoming,
             'outgoing': outgoing,
             'other_fields': other_fields,
+            'error': error,
             'confirm_delete': confirm_delete},
         context_instance=RequestContext(request))
 
@@ -272,16 +273,18 @@ def approve(request, id):
         data = request.POST
         if data.get('approved', False):
             # check if domains and domains requests are null
-            if not config.domains and not config.domainrequests:
-                #TODO show error message
-                return HttpResponseRedirect('/')
-            # we check if domain names already exist
+            if not config.domains.all() and not config.domainrequests.all():
+                error = """Can't approve this configuration. There is no
+                        correlated domain."""
+                return details(request, id, error=error)
+            # check if domain names already exist
             for domain in config.domainrequests.all():
                 if Domain.objects.filter(name=domain).exclude(
                         Q(config__status='deleted') |
                         Q(config__status='invalid')):
-                    #TODO show error message
-                    return HttpResponseRedirect('/')
+                    error = """Can't approve this configuration. Domain is
+                            already used by another approved configuration."""
+                    return details(request, id, error=error)
             config.status = 'approved'
             for domain in config.domainrequests.all():
                 exists = Domain.objects.filter(name=domain)
@@ -315,6 +318,10 @@ def delete(request, id):
           return HttpResponseRedirect(reverse('ispdb_list'))
         else:
             # The user dont have JS
-            return details(request, config.id, confirm_delete=True)
+            error = """Are you sure you want do delete this configuration?
+                    Please click on confirm delete button to confirm."""
+            return details(request, config.id, error=error, confirm_delete=True)
     else:
-        return details(request, config.id, confirm_delete=True)
+        error = """Are you sure you want do delete this configuration?
+                Please click on confirm delete button to confirm."""
+        return details(request, config.id, error=error, confirm_delete=True)

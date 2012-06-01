@@ -45,13 +45,13 @@ $(document).ready(function() {
 {% ifnotequal config.display_name config.display_short_name %} ({{config.display_short_name}} for short) {% endifnotequal %}
 </h1>
 
+{% if error %}
+  <div id="errornote" class="errornote">
+    <p>{{ error }}
+  </div>
+{% endif %}
+
 <div class="configstatus {{ config.status }}">
-  {% if confirm_delete %}
-    <div id="confirm_delete_text">
-      <p>Are you sure you want do delete this configuration?
-      <p>Please click on confirm delete button to confirm.
-    </div>
-  {% endif %}
   {% if config.status == 'approved' %}
   <div>This configuration is APPROVED.</div>
       {% if perms.config.can_approve %}
