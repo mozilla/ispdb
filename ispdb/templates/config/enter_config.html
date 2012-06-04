@@ -155,12 +155,16 @@ function AutoFillOutgoing() {
   </tr>
 </textarea>
 
-<h1>Submit a new configuration</h1>
-<div>Thanks for submitting a configuration for us to review.  By doing so, you're
-going to make it easier for all users of the ISP to get their Thunderbird
-configured correctly and quickly.</div>
-
 <form action="{{ callback }}" method="POST">{% csrf_token %}
+
+{% if action == 'add' %}
+  <h1>Submit a new configuration</h1>
+  <div>Thanks for submitting a configuration for us to review.  By doing so, you're
+  going to make it easier for all users of the ISP to get their Thunderbird
+  configured correctly and quickly.</div>
+{% else %}{% if action == 'edit' %}
+  <h1>Edit configuration</h1>
+{% endif %}{% endif %}
 
 <input id="dataful" name="asking_or_adding" type="hidden"></input>
 
