@@ -16,7 +16,7 @@ class ConfigAdmin(admin.ModelAdmin):
     radio_fields = {"incoming_type": admin.VERTICAL}
     list_display = ['display_name', 'status', 'list_domains']
     list_filter = ['status']
-    search_fields = ['display_name']
+    search_fields = ['display_name', 'domains__name']
 
     def change_view(self, request, obj_id):
         c = self.model.objects.get(pk=obj_id)
