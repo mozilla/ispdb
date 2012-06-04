@@ -222,7 +222,7 @@ class DomainForm(ModelForm):
                 raise ValidationError(mark_safe(msg))
         # if it is not a request, check if domain already exists
         if not self.is_domainrequest:
-            dom = Domain.objects.filter(name=data)
+            dom = Domain.objects.filter(name=data, config__status='approved')
             if dom and (not self.initial.has_key('name') or (dom[0].name !=
                     self.initial['name'])):
                 msg = ("Domain configuration already exists "

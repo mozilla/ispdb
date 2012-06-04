@@ -147,7 +147,19 @@ def edit(request, config_id):
                     continue
                 else:   # update or create new domain
                     domain = form.cleaned_data['name']
-                    if form in formset.initial_forms:
+                    # Check if deleted or invalid domain exists
+                    exists = Domain.objects.filter(name=domain)
+                    if exists:
+                        if config.status == 'approved':
+                            exists[0].config = config
+                            exists[0].save()
+                            continue
+                        else:
+                            claimed = DomainRequest(name=domain,
+                                                    votes=1,
+                                                    config=config)
+                    # Check if it is a rename
+                    elif form in formset.initial_forms:
                         index = formset.initial_forms.index(form)
                         if config.status == 'approved':
                             claimed = config.domains.all()[index]
