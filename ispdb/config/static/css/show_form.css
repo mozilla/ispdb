@@ -1,0 +1,69 @@
+.box {
+  border: 1px solid #CACACA;
+  border-radius: 10px;
+  width: 60%;
+  overflow: auto;
+  word-wrap: break-word;
+}
+
+#author {
+  color: #666;
+  font-style: italic;
+  padding: 0 10px;
+}
+
+#title {
+  margin: -10px 0 0;
+  padding: 0 10px;
+}
+
+#status {
+  background-color: rgb(245, 245, 245);
+  border-top: 1px solid #CACACA;
+  border-bottom: 1px solid #CACACA;
+  border-radius: 2px;
+  padding: 5px 10px 0px 10px;
+  color: #444;
+  font-size: 11.5px;
+}
+
+#description {
+  padding: 10px 40px 0 40px;
+}
+
+#buttons {
+  padding: 5px 10px;
+  border-top: 1px solid #CACACA;
+  border-top:1px solid #eee;
+  border-left:1px solid #eee;
+}
+
+#domains {
+  line-height: 20px;
+}
+
+#removed_domains {
+  border: 1px solid #DDD;
+}
+
+.domain_removed {
+  background: #fdd url(../img/icon_deletelink.gif) 3px no-repeat;
+  padding: 0px 20px; 
+}
+
+#added_domains {
+  border: 1px solid #DDD;
+}
+
+.domain_added {
+  background: #ccffcc url(../img/icon_addlink.gif) 3px no-repeat;
+  padding: 0px 20px; 
+}
+
+#config {
+  padding: 0 10px;
+}
+
+.config_changed {
+  font-weight: bold;
+}

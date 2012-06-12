@@ -18,7 +18,7 @@ from django.utils.functional import curry
 from django.db.models import Q
 
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
-    DomainRequest, BaseDomainFormSet)
+    DomainRequest, BaseDomainFormSet, Issue, IssueForm)
 from ispdb.config import serializers
 
 def login(request):
@@ -86,6 +86,7 @@ def details(request, id, error=None, confirm_delete=False):
             'outgoing': outgoing,
             'other_fields': other_fields,
             'error': error,
+            'issues': config.reported_issues.filter(status="open"),
             'confirm_delete': confirm_delete},
         context_instance=RequestContext(request))
 
@@ -110,7 +111,7 @@ def edit(request, config_id):
     # Validate the user
     if not (request.user.is_superuser or (
             config.status == 'requested' and config.owner == request.user)):
-        return HttpResponseRedirect(reverse('ispdb_login'))
+        return HttpResponseRedirect(reverse('ispdb_report', args=[config_id]))
     # Get initial data
     initial = []
     for domain in config.domains.all() or config.domainrequests.all():
@@ -122,9 +123,6 @@ def edit(request, config_id):
         config_form = ConfigForm(request.POST,
                                  request.FILES,
                                  instance=config)
-        if config.status == 'approved':
-            DomainFormSet.form = staticmethod(curry(DomainForm,
-                is_domainrequest=False))
         formset = DomainFormSet(request.POST, request.FILES, initial=initial)
         if config_form.is_valid() and formset.is_valid():
             config_form.save()
@@ -337,3 +335,151 @@ def delete(request, id):
         error = """Are you sure you want do delete this configuration?
                 Please click on confirm delete button to confirm."""
         return details(request, config.id, error=error, confirm_delete=True)
+
+@login_required
+def report(request, id):
+    config = get_object_or_404(Config, pk=id, status='approved')
+    DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,
+        formset=BaseDomainFormSet)
+    InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
+    initial = []
+    for domain in config.domains.all() or config.domainrequests.all():
+        initial.append({'name': domain.name})
+
+    if request.method == 'POST':
+        data = request.POST
+        p_config = Config()
+        issue = Issue(config=config)
+        config_form = ConfigForm(request.POST,
+                                 request.FILES,
+                                 instance=p_config)
+        issue_form = IssueForm(request.POST, instance=issue)
+        formset = DomainFormSet(request.POST, request.FILES, initial=initial)
+        if issue_form.is_valid():
+            issue.owner = request.user
+            if issue_form.cleaned_data['show_form']:
+                if config_form.is_valid() and formset.is_valid():
+                    config_form.save()
+                    issue.updated_config = p_config
+                    issue_form.save()
+                    for form in formset.forms:
+                        # check if domain is deleted
+                        if not form.cleaned_data or (
+                                form.cleaned_data['delete']):
+                            continue
+                        else:   # create domain requests
+                            domain = form.cleaned_data['name']
+                            claimed = DomainRequest(name=domain,
+                                                    config=p_config)
+                            claimed.save()
+                    return HttpResponseRedirect(reverse('ispdb_details',
+                                                        args=[config.id]))
+            else:
+                issue_form.save()
+                return HttpResponseRedirect(reverse('ispdb_details',
+                                                    args=[config.id]))
+
+    else:
+        formset = DomainFormSet(initial=initial)
+        config_form = ConfigForm(instance=config)
+        issue = Issue(config=config)
+        issue_form = IssueForm(instance=issue)
+    return render_to_response('config/enter_config.html', {
+        'formset': formset,
+        'config_form': config_form,
+        'issue_form': issue_form,
+        'action': 'report',
+        'callback': reverse('ispdb_report', args=[id]),
+    }, context_instance=RequestContext(request))
+
+def show_issue(request, id):
+    issue = get_object_or_404(Issue, pk=id)
+    other_fields = []
+    incoming = []
+    outgoing = []
+    non_modified_domains = set()
+    removed_domains = set()
+    added_domains = set()
+
+    up_conf = issue.updated_config
+    for field in issue.config._meta.fields:
+        data = {'name': field.name,
+                'verbose_name': field.verbose_name,
+                'choices': field.choices,
+                'value': getattr(issue.config, field.name)}
+        if up_conf and field in up_conf._meta.fields:
+            new_value = getattr(up_conf, field.name)
+            if data['value'] != new_value:
+                data['new_value'] = new_value
+        if field.name.startswith('incoming'):
+            incoming.append(data)
+        elif field.name.startswith('outgoing'):
+            if field.name not in ('outgoing_add_this_server'
+                                  'outgoing_use_global_preferred_server'):
+                outgoing.append(data)
+        elif field.name in ('settings_page_url'):
+            other_fields.append(data)
+
+    if issue.updated_config:
+        # get removed/added domains
+        original_domains = []
+        updated_domains = []
+        for domain in (issue.config.domains.all() or
+                       issue.config.domainrequets.all()):
+            original_domains.append(domain.name)
+        for domain in issue.updated_config.domainrequests.all():
+            updated_domains.append(domain.name)
+        d_set = set(original_domains)
+        ud_set = set(updated_domains)
+        non_modified_domains = d_set.intersection(updated_domains)
+        removed_domains = d_set.difference(updated_domains)
+        added_domains = ud_set.difference(original_domains)
+
+    if request.method == 'POST':
+        error = ""
+        data = request.POST
+        if data['action'] == 'close':
+            issue.status = 'closed'
+            issue.save()
+        elif data['action'] == 'merge':
+            if not issue.config.status == "approved":
+                error = "Can't merge into non approved configurations."
+            elif issue.updated_config:
+                # check if any of the added domains are already bound to some
+                # approved configuration
+                if added_domains:
+                    for domain in added_domains:
+                        if Domain.objects.filter(name=domain,
+                                                 config__status="approved"):
+                            error = """Can't approve this configuration.
+                                    Domain is already used by another approved
+                                    configuration."""
+                            break;
+                if not error:
+                    issue.config.status = 'deleted'
+                    issue.updated_config.status = 'approved'
+                    issue.status = 'closed'
+                    for domain in non_modified_domains:
+                        d = Domain.objects.filter(name=domain)[0]
+                        d.config = issue.config
+                        d.save()
+                    for domain in added_domains:
+                        exists = Domain.objects.filter(name=domain)
+                        if exists:
+                            exists[0].config = issue.config
+                            exists[0].save()
+                        else:
+                            claimed = Domain(name=domain,
+                                             config=issue.config)
+                            claimed.save()
+                    issue.save()
+
+    return render_to_response("config/show_issue.html", {
+            'issue': issue,
+            'incoming': incoming,
+            'outgoing': outgoing,
+            'other_fields': other_fields,
+            'non_modified_domains': non_modified_domains,
+            'removed_domains': removed_domains,
+            'added_domains': added_domains,
+        }, context_instance=RequestContext(request))

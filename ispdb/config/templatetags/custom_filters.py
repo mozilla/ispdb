@@ -4,7 +4,7 @@ from django import template
 register = template.Library()
 
 @register.filter
-def data_verbose(boundField):
+def data_verbose(boundField, attr_name="value"):
     """
     Returns field's data or it's verbose version 
     for a field with choices defined.
@@ -14,7 +14,7 @@ def data_verbose(boundField):
         {% load data_verbose %}
         {{form.some_field|data_verbose}}
     """
-    data = boundField["value"]
+    data = boundField[attr_name]
     field = boundField
     rv = data
     if field.has_key("choices") and dict(field['choices']).get(data, ''):

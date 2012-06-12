@@ -47,7 +47,7 @@ $(document).ready(function() {
 
 {% if error %}
   <div id="errornote" class="errornote">
-    <p>{{ error }}
+    <p>{{ error }}</p>
   </div>
 {% endif %}
 
@@ -202,11 +202,23 @@ $(document).ready(function() {
 
 <p>See <a href="{% url 'ispdb_export_xml' version=1.1 id=config.id %}">XML version</a> (used by Thunderbird).</p>
 
-<h3>Accurate?</h3>
+{% if config.status == "approved" %}
+  <h3>Reported Issues</h3>
 
-<p>If you know the data above is not accurate, do let us know: 
-<a href="{% url 'ispdb_edit' config.id %}">these parameters are out of date!</a>
-</p>
+  {% for issue in issues %}
+    <ul>
+      <li><a href="{% url 'ispdb_show_issue' issue.id %}">{{ issue.title }}</a></li>
+    </ul>
+  {% empty %}
+    <p>No reported issues.</p>
+  {% endfor %}
+
+  <h3>Accurate?</h3>
+
+  <p>If you know the data above is not accurate, do let us know: 
+  <a href="{% url 'ispdb_edit' config.id %}">these parameters are out of date!</a>
+  </p>
+{% endif %}
 
 <h3>Comments</h3>
 

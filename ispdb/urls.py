@@ -36,6 +36,9 @@ urlpatterns = patterns('',
     url(r'^approve/(?P<id>\d+)', 'ispdb.config.views.approve', name='ispdb_approve'),
     url(r'^delete/(?P<id>\d+)/?', 'ispdb.config.views.delete',
         name='ispdb_delete'),
+    url(r'^report/(?P<id>\d+)', 'ispdb.config.views.report', name='ispdb_report'),
+    url(r'^show_issue/(?P<id>\d+)', 'ispdb.config.views.show_issue',
+        name='ispdb_show_issue'),
 )
 
 urlpatterns += staticfiles_urlpatterns()

@@ -37,8 +37,7 @@ def make_config(value):
             "outgoing_authentication":"password-cleartext",
             "settings_page_url":"http://google.com/",
             "settings_page_language":"en",
-            "confirmations":"0",
-            "problems":"0"}
+            "confirmations":"0"}
 
 def check_returned_xml(response, id_count):
     "Make sure the response xml has the right values."

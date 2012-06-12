@@ -57,6 +57,30 @@ $(document).ready(function() {
 	    $(this).text("Undo");
         }
     });
+    
+    $("#report_link").click(function(event) {
+      if($("#id_show_form").val() == "False"){
+        $("#domain_list").show();
+        $("#add_domain").show();
+        $(".delete_domain").show();
+        showForm();
+	$("#id_show_form").val("True");
+	$("#report_link").text("Don't send configuration");
+      }else{
+	$("#domain_list").hide();
+        $("#add_domain").hide();
+        $(".delete_domain").hide();
+	$("#configform").hide();
+	$("#id_show_form").val("False");
+	$("#report_link").text("Send an updated configuration");
+      }
+    });
+
+    {% if action == 'report' %}  
+      $("#question").hide();
+      $("#domain_list").hide();
+      $("#submit").show();
+    {% endif %}
 
     {% if config_form.errors or formset.errors or formset.non_form_errors or action == 'edit' %}
       $("#submit").show();
@@ -66,12 +90,18 @@ $(document).ready(function() {
       {% if action == 'ask' %}
         $("#dataful").val('asking');
         $("#voteforit").show();
-      {% else %}
+      {% else %}{% if action == 'report' %}
+	if ($("#id_show_form").val() == "True"){
+          $("#report_link").click();
+          $("#domain_list").show();
+        }
+      {% else %}   
         $("#add_domain").show();
         $(".delete_domain").show();
         $("#configform").show();
-      {% endif %}
+      {% endif %}{% endif %}
     {% endif %}
+
     $("#yes").click(function(event) {
       // the yes button is in a form, and we want to stop the
       // click from being processed by the form object
@@ -164,7 +194,11 @@ function AutoFillOutgoing() {
   configured correctly and quickly.</div>
 {% else %}{% if action == 'edit' %}
   <h1>Edit configuration</h1>
-{% endif %}{% endif %}
+{% else %}{% if action == 'report' %}
+  <h1>Report a problem</h1>
+  {{ issue_form.as_p }}
+  <div><a id="report_link" class="link">Send an updated configuration</a></div>
+{% endif %}{% endif %}{% endif %}
 
 <input id="dataful" name="asking_or_adding" type="hidden"></input>
 
@@ -177,7 +211,7 @@ function AutoFillOutgoing() {
 </div>
 
 <div id="question">
-<p>Do you know the configuration settings for the above domain?<p>
+<p>Do you know the configuration settings for the above domain?</p>
 
 <p><button id="yes">I think so</button> <button id="no">I wish!</button></p>
 </div>
