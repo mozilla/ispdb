@@ -40,24 +40,15 @@
 
 #domains {
   line-height: 20px;
-}
-
-#removed_domains {
-  border: 1px solid #DDD;
+  padding: 0px 20px; 
 }
 
 .domain_removed {
-  background: #fdd url(../img/icon_deletelink.gif) 3px no-repeat;
-  padding: 0px 20px; 
-}
-
-#added_domains {
-  border: 1px solid #DDD;
+  text-decoration: line-through;
 }
 
 .domain_added {
-  background: #ccffcc url(../img/icon_addlink.gif) 3px no-repeat;
-  padding: 0px 20px; 
+  font-weight: bold;
 }
 
 #config {

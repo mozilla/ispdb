@@ -372,12 +372,12 @@ def report(request, id):
                             claimed = DomainRequest(name=domain,
                                                     config=p_config)
                             claimed.save()
-                    return HttpResponseRedirect(reverse('ispdb_details',
-                                                        args=[config.id]))
+                    return HttpResponseRedirect(reverse('ispdb_show_issue',
+                                                        args=[issue.id]))
             else:
                 issue_form.save()
-                return HttpResponseRedirect(reverse('ispdb_details',
-                                                    args=[config.id]))
+                return HttpResponseRedirect(reverse('ispdb_show_issue',
+                                                    args=[issue.id]))
 
     else:
         formset = DomainFormSet(initial=initial)
@@ -397,6 +397,7 @@ def show_issue(request, id):
     other_fields = []
     incoming = []
     outgoing = []
+    base = []
     non_modified_domains = set()
     removed_domains = set()
     added_domains = set()
@@ -411,13 +412,15 @@ def show_issue(request, id):
             new_value = getattr(up_conf, field.name)
             if data['value'] != new_value:
                 data['new_value'] = new_value
-        if field.name.startswith('incoming'):
+        if field.name in ('display_name', 'display_short_name'):
+            base.append(data)
+        elif field.name.startswith('incoming'):
             incoming.append(data)
         elif field.name.startswith('outgoing'):
             if field.name not in ('outgoing_add_this_server'
                                   'outgoing_use_global_preferred_server'):
                 outgoing.append(data)
-        elif field.name in ('settings_page_url'):
+        elif field.name in ('settings_page_url', 'settings_page_language'):
             other_fields.append(data)
 
     if issue.updated_config:
@@ -476,6 +479,7 @@ def show_issue(request, id):
 
     return render_to_response("config/show_issue.html", {
             'issue': issue,
+            'base': base,
             'incoming': incoming,
             'outgoing': outgoing,
             'other_fields': other_fields,

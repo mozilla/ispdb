@@ -2,7 +2,7 @@
 {% load url from future %}
 {% load custom_filters %}
 {% block scripts %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/show_form.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/show_issue.css"/>
 {% endblock %}
 
 {% block title %}Mozilla ISP Database{% endblock %}
@@ -33,6 +33,7 @@ $(document).ready(function() {
 
 {% block content %}
 
+<div id="config"><h2><a href="{% url 'ispdb_details' issue.config.id %}">{{ issue.config.display_name }}</a></h2></div>
 <div class="box">
   <div id="author"><p>opened by {{ issue.owner.email }} {{ issue.created_datetime|timesince }} ago.</p></div>
   <div id="title"><h2>{{ issue.title }}</h2></div>
@@ -70,6 +71,23 @@ $(document).ready(function() {
         <div class="domain_added">{{ domain }}</div>
       {% endfor %}
       </div>
+    </div>
+
+    <div id="base_data">
+      <h4>Base data</h4>
+      <table>
+        {% for field in base %}
+	<tr>
+	  {% if field.new_value %}
+            <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
+	    <td><strike>{{field|data_verbose}}</strike></td>
+	    <td>{{field|data_verbose:"new_value"}}</td>
+	  {% else %}
+            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
+	  {% endif %}
+        </tr>
+        {% endfor %}
+      </table>
     </div>
 
     <div id="incoming_data">
@@ -117,7 +135,7 @@ $(document).ready(function() {
 	    <td><strike>{{field|data_verbose}}</strike></td>
 	    <td>{{field|data_verbose:"new_value"}}</td>
 	  {% else %}
-            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field.value}}</td>
+            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
 	  {% endif %}
           </tr>
         {% endfor %}
