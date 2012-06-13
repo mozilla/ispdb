@@ -34,6 +34,11 @@ $(document).ready(function() {
 {% block content %}
 
 <div id="config"><h2><a href="{% url 'ispdb_details' issue.config.id %}">{{ issue.config.display_name }}</a></h2></div>
+
+{% if error %}
+  <div id="errornote" class="errornote"><p>{{ error }}</p></div>
+{% endif %}
+
 <div class="box">
   <div id="author"><p>opened by {{ issue.owner.email }} {{ issue.created_datetime|timesince }} ago.</p></div>
   <div id="title"><h2>{{ issue.title }}</h2></div>
@@ -43,7 +48,7 @@ $(document).ready(function() {
     <form action="{% url 'ispdb_show_issue' id=issue.id %}" method="POST">{% csrf_token %}
     <div id="buttons">
       <input type="submit" value="close" name="action">  
-      {% if issue.updated_configuration and issue.config.status == 'approved' %}
+      {% if issue.updated_config and issue.config.status == 'approved' %}
         <input type="submit" value="merge" name="action">  
       {% endif %}
     </div>
@@ -55,7 +60,12 @@ $(document).ready(function() {
 {% if issue.updated_config %}
 <div class="box">
   <div id="config">
-    <h2>Suggested configuration</h2>
+    <div>
+      {% if issue.status == 'open' and issue.owner == user %}
+        <a id="edit" href="{% url 'ispdb_edit' issue.updated_config.id %}">Edit</a>
+      {% endif %}
+      <h2>Suggested configuration</h2>
+    </div>
     <h4>Domains Served</h4>
     <div id="domains">
       {% for domain in non_modified_domains %}

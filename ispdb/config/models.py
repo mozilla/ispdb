@@ -64,6 +64,7 @@ class Config(models.Model):
     created_datetime = models.DateTimeField(auto_now_add=True)
     CONFIG_CHOICES = [
         ("requested", "requested"),
+        ("suggested", "suggested"),
         ("approved", "approved"),
         ("invalid", "invalid"),
         ("deleted", "deleted"),
@@ -217,6 +218,10 @@ class DomainForm(ModelForm):
         model = DomainRequest
         fields = ('name',)
 
+    def __init__(self, *args, **kwargs):
+        self.config_status = kwargs.pop('config_status', '')
+        super(DomainForm, self).__init__(*args, **kwargs)
+
     def clean(self):
         cleaned_data = super(DomainForm, self).clean()
         # if it is going to be deleted, dont need to to check it
@@ -238,13 +243,14 @@ class DomainForm(ModelForm):
             except UnicodeError: # invalid domain
                 raise ValidationError(mark_safe(msg))
         # check if domain already exists
-        dom = Domain.objects.filter(name=data, config__status='approved')
-        if dom and (not self.initial.has_key('name') or (dom[0].name !=
-                self.initial['name'])):
-            msg = ("Domain configuration already exists "
-                   "<a href=\"%s\">here</a>." %
-                   reverse("ispdb_details", kwargs={"id": dom[0].config.id}))
-            raise ValidationError(mark_safe(msg))
+        if not self.config_status == 'suggested':
+            dom = Domain.objects.filter(name=data, config__status='approved')
+            if dom and (not self.initial.has_key('name') or (dom[0].name !=
+                    self.initial['name'])):
+                msg = ("Domain configuration already exists "
+                       "<a href=\"%s\">here</a>." %
+                       reverse("ispdb_details", args=[dom[0].config.id]))
+                raise ValidationError(mark_safe(msg))
         return cleaned_data
 
 def clean_port(self,field):

@@ -110,7 +110,8 @@ def edit(request, config_id):
     config = get_object_or_404(Config, pk=config_id)
     # Validate the user
     if not (request.user.is_superuser or (
-            config.status == 'requested' and config.owner == request.user)):
+            (config.status == 'requested' or config.status == 'suggested')
+             and config.owner == request.user)):
         return HttpResponseRedirect(reverse('ispdb_report', args=[config_id]))
     # Get initial data
     initial = []
@@ -123,6 +124,8 @@ def edit(request, config_id):
         config_form = ConfigForm(request.POST,
                                  request.FILES,
                                  instance=config)
+        DomainFormSet.form = staticmethod(curry(DomainForm,
+                                                config_status=config.status))
         formset = DomainFormSet(request.POST, request.FILES, initial=initial)
         if config_form.is_valid() and formset.is_valid():
             config_form.save()
@@ -173,6 +176,11 @@ def edit(request, config_id):
                                                     votes=1,
                                                     config=config)
                     claimed.save()
+
+            if config.status == 'suggested':
+                id = config.issue.all()[0].id
+                return HttpResponseRedirect(reverse('ispdb_show_issue',
+                                                    args=[id]))
             return HttpResponseRedirect(reverse('ispdb_details',
                                                 args=[config.id]))
     else:
@@ -359,6 +367,8 @@ def report(request, id):
             issue.owner = request.user
             if issue_form.cleaned_data['show_form']:
                 if config_form.is_valid() and formset.is_valid():
+                    p_config.status = 'suggested'
+                    p_config.owner = request.user
                     config_form.save()
                     issue.updated_config = p_config
                     issue_form.save()
@@ -401,6 +411,7 @@ def show_issue(request, id):
     non_modified_domains = set()
     removed_domains = set()
     added_domains = set()
+    error = ""
 
     up_conf = issue.updated_config
     for field in issue.config._meta.fields:
@@ -439,7 +450,6 @@ def show_issue(request, id):
         added_domains = ud_set.difference(original_domains)
 
     if request.method == 'POST':
-        error = ""
         data = request.POST
         if data['action'] == 'close':
             issue.status = 'closed'
@@ -455,17 +465,13 @@ def show_issue(request, id):
                         if Domain.objects.filter(name=domain,
                                                  config__status="approved"):
                             error = """Can't approve this configuration.
-                                    Domain is already used by another approved
-                                    configuration."""
+                                    Domain %s is already used by another approved
+                                    configuration.""" % (domain)
                             break;
                 if not error:
-                    issue.config.status = 'deleted'
-                    issue.updated_config.status = 'approved'
-                    issue.status = 'closed'
-                    for domain in non_modified_domains:
+                    for domain in removed_domains:
                         d = Domain.objects.filter(name=domain)[0]
-                        d.config = issue.config
-                        d.save()
+                        d.delete()
                     for domain in added_domains:
                         exists = Domain.objects.filter(name=domain)
                         if exists:
@@ -475,7 +481,17 @@ def show_issue(request, id):
                             claimed = Domain(name=domain,
                                              config=issue.config)
                             claimed.save()
+                    all_fields = base + incoming + outgoing + other_fields
+                    for field in all_fields:
+                        if field.has_key('new_value'):
+                            setattr(issue.config, field['name'], field['new_value'])
+                    issue.updated_config.status = 'deleted'
+                    issue.updated_config.save()
+                    issue.config.save()
+                    issue.status = 'closed'
                     issue.save()
+                    return HttpResponseRedirect(reverse('ispdb_details',
+                        args=[issue.config.id]))
 
     return render_to_response("config/show_issue.html", {
             'issue': issue,
@@ -486,4 +502,5 @@ def show_issue(request, id):
             'non_modified_domains': non_modified_domains,
             'removed_domains': removed_domains,
             'added_domains': added_domains,
+            'error': error,
         }, context_instance=RequestContext(request))
