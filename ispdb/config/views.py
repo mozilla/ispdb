@@ -112,7 +112,7 @@ def edit(request, config_id):
     if not (request.user.is_superuser or (
             (config.status == 'requested' or config.status == 'suggested')
              and config.owner == request.user)):
-        return HttpResponseRedirect(reverse('ispdb_report', args=[config_id]))
+        return HttpResponseRedirect(reverse('ispdb_login'))
     # Get initial data
     initial = []
     for domain in config.domains.all() or config.domainrequests.all():

@@ -41,9 +41,14 @@ $(document).ready(function() {
 
 {% block content %}
 
-<h1>{{config.display_name}}
-{% ifnotequal config.display_name config.display_short_name %} ({{config.display_short_name}} for short) {% endifnotequal %}
-</h1>
+<div>
+  <h1>{{config.display_name}}
+    {% ifnotequal config.display_name config.display_short_name %} ({{config.display_short_name}} for short) {% endifnotequal %}
+  </h1>
+</div>
+{% if perms.is_superuser or config.status == 'requested' and config.owner == user %}
+  <div id="edit">[<a href="{% url 'ispdb_edit' config.id %}">Edit</a>]</div>
+{% endif %}
 
 {% if error %}
   <div id="errornote" class="errornote">
@@ -216,7 +221,7 @@ $(document).ready(function() {
   <h3>Accurate?</h3>
 
   <p>If you know the data above is not accurate, do let us know: 
-  <a href="{% url 'ispdb_edit' config.id %}">these parameters are out of date!</a>
+  <a href="{% url 'ispdb_report' config.id %}">these parameters are out of date!</a>
   </p>
 {% endif %}
 
