@@ -451,6 +451,8 @@ def show_issue(request, id):
 
     if request.method == 'POST':
         data = request.POST
+        if not request.user.is_superuser:
+            return HttpResponseRedirect(reverse('ispdb_login'))
         if data['action'] == 'close':
             issue.status = 'closed'
             issue.save()
