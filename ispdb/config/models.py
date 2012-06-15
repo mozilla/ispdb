@@ -62,6 +62,7 @@ class Config(models.Model):
                               on_delete=models.SET_NULL)
     last_update_datetime = models.DateTimeField(auto_now=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
+    deleted_datetime = models.DateTimeField(null=True)
     CONFIG_CHOICES = [
         ("requested", "requested"),
         ("suggested", "suggested"),
@@ -70,6 +71,7 @@ class Config(models.Model):
         ("deleted", "deleted"),
     ]
     status = models.CharField(max_length=20, choices = CONFIG_CHOICES)
+    last_status = models.CharField(max_length=20, choices = CONFIG_CHOICES)
     email_provider_id = models.CharField(max_length=50)
     display_name = models.CharField(
         max_length=100,
@@ -195,6 +197,8 @@ class ConfigForm(ModelForm):
     class Meta:
         model = Config
         exclude = ['status',
+                   'last_status',
+                   'deleted_datetime',
                    'email_provider_id',
                    'flagged_as_incorrect',
                    'flagged_by_email',

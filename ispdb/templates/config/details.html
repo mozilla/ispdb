@@ -18,14 +18,6 @@ $(document).ready(function() {
     $(this).hide();
     $(this).parent().children('.comment_form').show('fast');
   })
-  $('#delete').click(function () {
-    //TODO use a better dialog
-    if (confirm("Are you sure you want to delete this configuration?")) {
-      $("#confirm_delete").val("1"); 
-      return true;
-    }
-    return false;
-  });
 
   {% if perms.config.can_approve %}
   // We want to make sure reviewers can see the comments
@@ -58,27 +50,16 @@ $(document).ready(function() {
 
 <div class="configstatus {{ config.status }}">
   {% if config.status == 'approved' %}
-  <div>This configuration is APPROVED.</div>
+    <div>This configuration is APPROVED.</div>
       {% if perms.config.can_approve %}
         <div>Is there a reason it shouldn't be?</div>
-	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
-          <div>
-            <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
-          </div>
-          <div class="float">
-            <input type="submit" value="mark invalid" name="denied"></input>
-          </div>
-        </form>
-        <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
-          <div>
-            {% if confirm_delete %}
-              <input id="confirm_delete" type="hidden" value="1" name="confirm_delete"></input>
-              <input id="delete" type="submit" value="confirm delete" name="delete"></input>
-            {% else %}
-              <input id="confirm_delete" type="hidden" value="0" name="confirm_delete"></input>
-              <input id="delete" type="submit" value="delete" name="delete"></input>
-	    {% endif %}
-          </div>
+        <form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
+        <div>
+          <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
+        </div>
+        <div>
+          <input type="submit" value="mark invalid" name="denied"></input>
+        </div>
         </form>
       {% endif %}
   {% else %}
@@ -100,44 +81,47 @@ $(document).ready(function() {
         </form>
         <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
           <div>
-            {% if confirm_delete %}
-              <input id="confirm_delete" type="hidden" value="1" name="confirm_delete"></input>
-              <input id="delete" type="submit" value="confirm delete" name="delete"></input>
-            {% else %}
-              <input id="confirm_delete" type="hidden" value="0" name="confirm_delete"></input>
-              <input id="delete" type="submit" value="delete" name="delete"></input>
-	    {% endif %}
+            <input id="delete" type="submit" value="delete" name="delete"></input>
           </div>
         </form>
       {% endif %}
     {% else %}
-      {% if perms.config.can_approve %}
-        Can you confirm that this is a good configuration according to our <a href="{% url 'ispdb_policy' %}">policies</a>?
-	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
-          <div>
-            <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
-          </div>
-          <div class="float">
-            <input type="submit" value="yes, checks out ok" name="approved"></input>
-            <input type="submit" value="no, there's a problem" name="denied"></input>
-          </div>
-        </form>
+      {% if config.status == 'deleted' %}
+        <div>
+          This configuration has been DELETED.
+        </div>
+        {% if config|is_undo_available %}
+	  {% if perms.config.can_approve or config.owner == user and config.last_status == 'requested' %}
+            <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
+              <div>
+                <input id="delete" type="submit" value="undo" name="delete"></input>
+              </div>
+            </form>
+          {% endif %}
+        {% endif %}
       {% else %}
-        This configuration is PENDING REVIEW.  Our team of crack volunteers will review
-	it, and assuming the data checks out, we'll publish it.
-      {% endif %}
-      {% if user == config.owner or perms.is_superuser %}
-        <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
-          <div>
-            {% if confirm_delete %}
-              <input id="confirm_delete" type="hidden" value="1" name="confirm_delete"></input>
-              <input id="delete" type="submit" value="confirm delete" name="delete"></input>
-            {% else %}
-              <input id="confirm_delete" type="hidden" value="0" name="confirm_delete"></input>
+        {% if perms.config.can_approve %}
+          Can you confirm that this is a good configuration according to our <a href="{% url 'ispdb_policy' %}">policies</a>?
+          <form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
+            <div>
+              <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
+            </div>
+            <div class="float">
+              <input type="submit" value="yes, checks out ok" name="approved"></input>
+              <input type="submit" value="no, there's a problem" name="denied"></input>
+            </div>
+          </form>
+        {% else %}
+          This configuration is PENDING REVIEW.  Our team of crack volunteers will review
+          it, and assuming the data checks out, we'll publish it.
+        {% endif %}
+        {% if user == config.owner or perms.config.can_approve %}
+          <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
+            <div>
               <input id="delete" type="submit" value="delete" name="delete"></input>
-	    {% endif %}
-          </div>
-        </form>
+            </div>
+          </form>
+        {% endif %}
       {% endif %}
     {% endif %}
   {% endif %}

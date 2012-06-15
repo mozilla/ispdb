@@ -2,6 +2,7 @@
 
 import StringIO
 import lxml.etree as ET
+from datetime import datetime
 
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.contrib.auth.decorators import login_required
@@ -59,9 +60,8 @@ def list(request, format="html"):
     return render_to_response("config/list.html", {'configs': configs},
                               context_instance=RequestContext(request))
 
-
-def details(request, id, error=None, confirm_delete=False):
-    config = get_object_or_404(Config, ~Q(status='deleted'), pk=id)
+def details(request, id, error=None):
+    config = get_object_or_404(Config, pk=id)
     other_fields = []
     incoming = []
     outgoing = []
@@ -86,8 +86,7 @@ def details(request, id, error=None, confirm_delete=False):
             'outgoing': outgoing,
             'other_fields': other_fields,
             'error': error,
-            'issues': config.reported_issues.filter(status="open"),
-            'confirm_delete': confirm_delete},
+            'issues': config.reported_issues.filter(status="open")},
         context_instance=RequestContext(request))
 
 def export_xml(request, version=None, id=None, domain=None):
@@ -325,24 +324,28 @@ def approve(request, id):
 @login_required
 def delete(request, id):
     config = get_object_or_404(Config, pk=id)
-    if not (request.user.is_superuser or (
-            config.status == 'requested' and config.owner == request.user)):
+    if not (request.user.has_perm('config.can_approve') or (
+            (config.status == 'requested' or config.last_status == 'requested')
+            and config.owner == request.user)):
         return HttpResponseRedirect(reverse('ispdb_login'))
     if request.method == 'POST':
         data = request.POST
-        if data.has_key('confirm_delete') and data['confirm_delete'] == "1":
-          config.status = 'deleted'
-          config.save()
-          return HttpResponseRedirect(reverse('ispdb_list'))
-        else:
-            # The user dont have JS
-            error = """Are you sure you want do delete this configuration?
-                    Please click on confirm delete button to confirm."""
-            return details(request, config.id, error=error, confirm_delete=True)
-    else:
-        error = """Are you sure you want do delete this configuration?
-                Please click on confirm delete button to confirm."""
-        return details(request, config.id, error=error, confirm_delete=True)
+        if data.has_key('delete') and data['delete'] == "delete":
+            if not config.status in ("invalid", "requested"):
+                return HttpResponseRedirect(reverse('ispdb_details',args=[id]))
+            config.last_status = config.status
+            config.deleted_datetime = datetime.now()
+            config.status = 'deleted'
+            config.save()
+        elif data.has_key('delete') and data['delete'] == "undo":
+            if not config.status == 'deleted':
+                return HttpResponseRedirect(reverse('ispdb_details',args=[id]))
+            delta = datetime.now() - config.deleted_datetime
+            if not delta.days > 0:
+                config.status = config.last_status
+                config.last_status = ''
+                config.save()
+    return HttpResponseRedirect(reverse('ispdb_details', args=[id]))
 
 @login_required
 def report(request, id):

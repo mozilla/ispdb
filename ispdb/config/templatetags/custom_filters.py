@@ -1,5 +1,6 @@
 #ispdb/templatetags/data_verbose.py
 from django import template
+from datetime import datetime
 
 register = template.Library()
 
@@ -20,3 +21,10 @@ def data_verbose(boundField, attr_name="value"):
     if field.has_key("choices") and dict(field['choices']).get(data, ''):
         rv = dict(field["choices"]).get(data, "")
     return rv
+
+@register.filter
+def is_undo_available(self):
+    delta = datetime.now() - self.deleted_datetime
+    if delta.days > 0:
+        return False
+    return True

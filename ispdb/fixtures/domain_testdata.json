@@ -8,6 +8,14 @@
         }
     }, 
     {
+        "pk": 2, 
+        "model": "config.domain", 
+        "fields": {
+            "config": 4, 
+            "name": "invaliddomain.com"
+        }
+    },
+    {
         "pk": 1, 
         "model": "config.domainrequest", 
         "fields": {
@@ -22,14 +30,14 @@
         "fields": {
             "votes": 1, 
             "config": 3, 
-            "name": "invaliddomain.com"
+            "name": "invaliddomainrequest.com"
         }
     }, 
     {
         "pk": 1, 
         "model": "config.config", 
         "fields": {
-            "outgoing_username_form": "teste", 
+            "outgoing_username_form": "test", 
             "incoming_socket_type": "plain", 
             "outgoing_port": 465, 
             "flagged_by_email": "", 
@@ -40,20 +48,22 @@
             "display_name": "Domain Request", 
             "outgoing_add_this_server": false, 
             "outgoing_socket_type": "SSL", 
-            "created_datetime": "2012-05-31T21:06:47.613Z", 
+            "created_datetime": "2012-05-31T21:06:47.613", 
             "outgoing_authentication": "password-encrypted", 
-            "incoming_hostname": "teste.com", 
-            "settings_page_url": "http://teste.com/", 
+            "incoming_hostname": "test.com", 
+            "settings_page_url": "http://test.com/", 
             "status": "requested", 
-            "display_short_name": "Domain Request", 
+            "display_short_name": "Domain Request",
             "confirmations": 0, 
             "outgoing_use_global_preferred_server": false, 
             "incoming_port": 143, 
-            "last_update_datetime": "2012-05-31T21:06:47.613Z", 
+            "last_update_datetime": "2012-05-31T21:06:47.613", 
             "incoming_username_form": "", 
             "settings_page_language": "en", 
-            "outgoing_hostname": "teste.com", 
-            "incoming_type": "imap"
+            "outgoing_hostname": "test.com", 
+            "incoming_type": "imap",
+	    "deleted_datetime": null,
+	    "last_status": ""
         }
     }, 
     {
@@ -71,27 +81,29 @@
             "display_name": "Valid Domain", 
             "outgoing_add_this_server": false, 
             "outgoing_socket_type": "plain", 
-            "created_datetime": "2012-05-31T21:07:24.426Z", 
+            "created_datetime": "2012-05-31T21:07:24.426", 
             "outgoing_authentication": "password-encrypted", 
             "incoming_hostname": "Valid Domain", 
-            "settings_page_url": "http://teste.com/", 
+            "settings_page_url": "http://test.com/", 
             "status": "approved", 
             "display_short_name": "Valid Domain", 
             "confirmations": 0, 
             "outgoing_use_global_preferred_server": false, 
             "incoming_port": 143, 
-            "last_update_datetime": "2012-05-31T21:07:27.421Z", 
+            "last_update_datetime": "2012-05-31T21:07:27.421", 
             "incoming_username_form": "", 
             "settings_page_language": "en", 
             "outgoing_hostname": "Valid Domain", 
-            "incoming_type": "imap"
+            "incoming_type": "imap",
+	    "deleted_datetime": null,
+	    "last_status": ""
         }
     }, 
     {
         "pk": 3, 
         "model": "config.config", 
         "fields": {
-            "outgoing_username_form": "teste", 
+            "outgoing_username_form": "test", 
             "incoming_socket_type": "plain", 
             "outgoing_port": 587, 
             "flagged_by_email": "", 
@@ -102,20 +114,55 @@
             "display_name": "Invalid Domain", 
             "outgoing_add_this_server": false, 
             "outgoing_socket_type": "plain", 
-            "created_datetime": "2012-05-31T21:08:09.314Z", 
+            "created_datetime": "2012-05-31T21:08:09.314", 
             "outgoing_authentication": "password-encrypted", 
             "incoming_hostname": "Invalid Domain", 
-            "settings_page_url": "http://teste.com/", 
+            "settings_page_url": "http://test.com/", 
             "status": "invalid", 
             "display_short_name": "Invalid Domain", 
             "confirmations": 0, 
             "outgoing_use_global_preferred_server": false, 
             "incoming_port": 143, 
-            "last_update_datetime": "2012-05-31T21:08:11.305Z", 
+            "last_update_datetime": "2012-05-31T21:08:11.305", 
             "incoming_username_form": "", 
             "settings_page_language": "en", 
-            "outgoing_hostname": "teste.com", 
-            "incoming_type": "imap"
+            "outgoing_hostname": "test.com", 
+            "incoming_type": "imap",
+	    "last_status": "",
+	    "deleted_datetime": null
         }
+    },
+    {
+        "pk": 4, 
+        "model": "config.config", 
+        "fields": {
+            "outgoing_username_form": "test", 
+            "incoming_socket_type": "plain", 
+            "outgoing_port": 587, 
+            "flagged_by_email": "", 
+            "flagged_as_incorrect": false, 
+            "incoming_authentication": "password-encrypted", 
+            "email_provider_id": "", 
+            "owner": 1, 
+            "display_name": "Invalid Domain", 
+            "outgoing_add_this_server": false, 
+            "outgoing_socket_type": "plain", 
+            "created_datetime": "2012-05-31T21:08:09.314", 
+            "outgoing_authentication": "password-encrypted", 
+            "incoming_hostname": "Invalid Domain", 
+            "settings_page_url": "http://test.com/", 
+            "status": "invalid", 
+            "display_short_name": "Invalid Domain", 
+            "confirmations": 0, 
+            "outgoing_use_global_preferred_server": false, 
+            "incoming_port": 143, 
+            "last_update_datetime": "2012-05-31T21:08:11.305", 
+            "incoming_username_form": "", 
+            "settings_page_language": "en", 
+            "outgoing_hostname": "test.com", 
+            "incoming_type": "imap",
+	    "last_status": "",
+	    "deleted_datetime": null
+	}
     }
 ]

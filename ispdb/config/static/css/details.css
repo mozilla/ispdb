@@ -54,6 +54,10 @@
   border: 1px solid red;
 }
 
+.deleted {
+  border: 1px solid black;
+}
+
 .requested {
   border: 1px solid orange;
 }
