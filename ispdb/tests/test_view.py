@@ -36,8 +36,7 @@ def make_config(value):
             "outgoing_username_form":"%EMAILLOCALPART%",
             "outgoing_authentication":"password-cleartext",
             "settings_page_url":"http://google.com/",
-            "settings_page_language":"en",
-            "confirmations":"0"}
+            "settings_page_language":"en"}
 
 def check_returned_xml(response, id_count):
     "Make sure the response xml has the right values."

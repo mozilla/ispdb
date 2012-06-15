@@ -110,7 +110,6 @@ def adding_issue_form():
             "settings_page_language": "en",
             "outgoing_hostname": "Valid Domain",
             "incoming_type": "imap",
-            "confirmations":"0",
             "show_form":"False",
             "title":"Test",
             "description":"Test",

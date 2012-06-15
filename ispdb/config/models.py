@@ -167,7 +167,6 @@ class Config(models.Model):
 
     flagged_as_incorrect = models.BooleanField()
     flagged_by_email = models.EmailField(blank=True)
-    confirmations = models.IntegerField(default=0)
 
     history = audit.AuditTrail()
 

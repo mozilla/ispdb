@@ -283,8 +283,7 @@ def adding_domain_form():
             "outgoing_username_form":"%25EMAILLOCALPART%25",
             "outgoing_authentication":"password-cleartext",
             "settings_page_url":"http://google.com/",
-            "settings_page_language":"en",
-            "confirmations":"0"}
+            "settings_page_language":"en"}
 
 class ModelTest(TestCase):
     def test_simple_domain(self):
