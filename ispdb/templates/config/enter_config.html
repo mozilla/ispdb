@@ -196,8 +196,17 @@ function AutoFillOutgoing() {
   <h1>Edit configuration</h1>
 {% else %}{% if action == 'report' %}
   <h1>Report a problem</h1>
-  {{ issue_form.as_p }}
-  <div><a id="report_link" class="link">Send an updated configuration</a></div>
+  {{ issue_form.non_field_errors }}
+  <div class="fieldWrapper">
+    {{ issue_form.title.errors }}
+    {{ issue_form.title }}
+  </div>
+  <div class="fieldWrapper">
+    {{ issue_form.description.errors }}
+    {{ issue_form.description }}
+  </div>
+  {{ issue_form.show_form }}
+  <div id="div_report_link"><a id="report_link" class="link">Send an updated configuration</a></div>
 {% endif %}{% endif %}{% endif %}
 
 <input id="dataful" name="asking_or_adding" type="hidden"></input>
