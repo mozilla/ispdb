@@ -76,6 +76,10 @@ $(document).ready(function() {
       }
     });
 
+    $("#id_incoming_username_form").focusout(function(event){
+    	$("#id_outgoing_username_form").val($(this).val());
+    });
+
     {% if action == 'report' %}  
       $("#question").hide();
       $("#domain_list").hide();

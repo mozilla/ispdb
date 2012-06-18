@@ -140,6 +140,7 @@ def adding_domain_form():
             "incoming_port":"333",
             "incoming_socket_type":"plain",
             "incoming_authentication":"password-cleartext",
+            "incoming_username_form":"%25EMAILLOCALPART%25",
             "outgoing_hostname":"bar",
             "outgoing_port":"334",
             "outgoing_socket_type":"STARTTLS",

@@ -30,6 +30,7 @@ def make_config(value):
             "incoming_port":"22%s" % value,
             "incoming_socket_type":"plain",
             "incoming_authentication":"password-cleartext",
+            "incoming_username_form":"%EMAILLOCALPART%",
             "outgoing_hostname":"bar",
             "outgoing_port":"22%s" % value,
             "outgoing_socket_type":"STARTTLS",

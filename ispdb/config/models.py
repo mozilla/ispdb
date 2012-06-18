@@ -203,7 +203,6 @@ class ConfigForm(ModelForm):
                    'flagged_by_email',
                    'outgoing_add_this_server',
                    'outgoing_use_global_preferred_server',
-                   'incoming_username_form',
                    'owner',
                    ]
     incoming_type = ChoiceField(widget=RadioSelect,
