@@ -17,7 +17,7 @@ class Domain(models.Model):
     config = models.ForeignKey('Config', related_name="domains",
                                blank=True) # blank is for requests and rejects
 
-    def __str__(self): return self.name
+    def __str__(self): return str(self.name)
     def __unicode__(self): return self.name
 
 class DomainRequest(models.Model):
@@ -27,7 +27,7 @@ class DomainRequest(models.Model):
                                blank=True, null=True)
     votes = models.IntegerField(default=1)
 
-    def __str__(self): return self.name
+    def __str__(self): return str(self.name)
     def __unicode__(self): return self.name
 
 def constructXMLTag(name):
@@ -53,7 +53,7 @@ class Config(models.Model):
 
     def __str__(self):
         "for use in the admin UI"
-        return self.display_name
+        return str(self.display_name)
 
     def __unicode__(self):
         return self.display_name
