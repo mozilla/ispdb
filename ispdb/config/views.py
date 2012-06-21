@@ -17,10 +17,31 @@ from django.utils import simplejson
 from django.utils import timezone
 from django.utils.functional import curry
 from django.db.models import Q
+from django.contrib import comments
+from django.contrib.comments.views.comments import post_comment
+from django.contrib.comments.models import Comment
+from django.contrib.comments.views.moderation import delete as delete_comment
+from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
 
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
     DomainRequest, BaseDomainFormSet, Issue, IssueForm)
 from ispdb.config import serializers
+
+@login_required
+def comment_post_wrapper(request):
+    if not request.method == 'POST':
+        return HttpResponseRedirect('/')
+    return post_comment(request)
+
+@permission_required("comments.can_moderate")
+def delete_comment(request, id):
+    comment = get_object_or_404(comments.get_model(), pk=id,
+        site__pk=settings.SITE_ID)
+    comment.is_removed = True
+    comment.save()
+    redir = request.META.get('HTTP_REFERER', None) or '/'
+    return HttpResponseRedirect(redir)
 
 def login(request):
     redirect_url = '/'
@@ -286,6 +307,8 @@ def policy(request):
 @permission_required("config.can_approve")
 def approve(request, id):
     config = get_object_or_404(Config, pk=id)
+    old_status = config.status
+    message = ''
     if request.method == 'POST': # If the form has been submitted...
         data = request.POST
         if data.get('approved', False):
@@ -314,11 +337,29 @@ def approve(request, id):
                 claimed.save()
                 domain.delete()
         elif data.get('denied', False):
+            # Check mandatory comment when invalidating
+            if data['comment'] == 'Other - invalid':
+                if not data['commenttext'] or (data['commenttext'] ==
+                        'Always enter a comment here'):
+                    error = "Enter a valid comment."
+                    return details(request, id, error=error)
+                message = data['commenttext']
+            else:
+                message = data['comment']
             config.status = 'invalid'
         else:
             raise ValueError, "shouldn't get here"
-        # XXX do something w/ the comment text
         config.save()
+        comment = Comment(user_name='ISPDB System',
+                          site_id=settings.SITE_ID)
+        c = "<ul><li><b>Status</b> changed from <b><i>%s</i></b> to \
+             <b><i>%s</i></b> by %s</li></ul>\n %s" % (old_status,
+            config.status, request.user.email, message)
+        comment.comment = c
+        comment.content_type = ContentType.objects.get_for_model(Config)
+        comment.object_pk = config.pk
+        comment.save()
+
     return HttpResponseRedirect('/details/' + id) # Redirect after POST
 
 @login_required
