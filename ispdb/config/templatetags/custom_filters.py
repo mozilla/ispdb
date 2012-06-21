@@ -1,6 +1,6 @@
 #ispdb/templatetags/data_verbose.py
 from django import template
-from datetime import datetime
+from django.utils import timezone
 
 register = template.Library()
 
@@ -24,7 +24,7 @@ def data_verbose(boundField, attr_name="value"):
 
 @register.filter
 def is_undo_available(self):
-    delta = datetime.now() - self.deleted_datetime
+    delta = timezone.now() - self.deleted_datetime
     if delta.days > 0:
         return False
     return True

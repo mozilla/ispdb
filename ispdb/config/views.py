@@ -2,7 +2,6 @@
 
 import StringIO
 import lxml.etree as ET
-from datetime import datetime
 
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.contrib.auth.decorators import login_required
@@ -15,6 +14,7 @@ from django.forms.models import inlineformset_factory
 from django.contrib.auth import logout
 from django.template import RequestContext
 from django.utils import simplejson
+from django.utils import timezone
 from django.utils.functional import curry
 from django.db.models import Q
 
@@ -334,13 +334,13 @@ def delete(request, id):
             if not config.status in ("invalid", "requested"):
                 return HttpResponseRedirect(reverse('ispdb_details',args=[id]))
             config.last_status = config.status
-            config.deleted_datetime = datetime.now()
+            config.deleted_datetime = timezone.now()
             config.status = 'deleted'
             config.save()
         elif data.has_key('delete') and data['delete'] == "undo":
             if not config.status == 'deleted':
                 return HttpResponseRedirect(reverse('ispdb_details',args=[id]))
-            delta = datetime.now() - config.deleted_datetime
+            delta = timezone.now() - config.deleted_datetime
             if not delta.days > 0:
                 config.status = config.last_status
                 config.last_status = ''

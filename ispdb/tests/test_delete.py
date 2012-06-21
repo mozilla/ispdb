@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import httplib
-from datetime import datetime
 from urllib import quote_plus
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.utils import timezone
 from nose.tools import *
 from ispdb.config import models
 
@@ -96,7 +96,8 @@ class DeleteTest(TestCase):
         self.delete_domain(4)
         config = models.Config.objects.get(pk=4)
         assert_equal(config.status, 'deleted')
-        config.deleted_datetime = datetime(2000,10,10)
+        config.deleted_datetime = timezone.datetime(2000, 10, 10,
+                                                    tzinfo=timezone.utc)
         config.save()
         self.client.login(username='test_admin', password='test')
         res = self.client.post(reverse("ispdb_delete", args=[4]),

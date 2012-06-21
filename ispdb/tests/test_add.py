@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import httplib
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.forms import ValidationError
+from django.utils import timezone
 from nose.tools import *
 from ispdb.config import models
 
@@ -291,7 +291,7 @@ class ModelTest(TestCase):
         config = models.Config(id="1",
                                incoming_port=1,
                                outgoing_port=2,
-                               created_datetime=datetime.datetime.now())
+                               created_datetime=timezone.now())
         config.save()
         d = models.Domain(name="test", config=config)
         d.save()
@@ -303,7 +303,7 @@ class ModelTest(TestCase):
         config = models.Config(id="1",
                                incoming_port=1,
                                outgoing_port=2,
-                               created_datetime=datetime.datetime.now())
+                               created_datetime=timezone.now())
         config.save()
         d = models.Domain(name=name, config=config)
         d.save()

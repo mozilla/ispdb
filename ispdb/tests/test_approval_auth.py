@@ -9,7 +9,7 @@ import nose.tools
 
 
 class ApprovalAuthTest(TestCase):
-    fixtures = ['xml_testdata', 'approval_user']
+    fixtures = ['xml_testdata', 'login_testdata']
 
     def test_unauthenticated_user(self):
         result = self.client.post("/approve/1", {
@@ -31,7 +31,7 @@ class ApprovalAuthTest(TestCase):
         # Assert config.comments.count() == 0
 
     def test_authenticated_user(self):
-        user_info = {"username": "testuser", "password": "simplepassword"}
+        user_info = {"username": "test_admin", "password": "test"}
 
         self.client.login(**user_info)
 
