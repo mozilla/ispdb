@@ -1,0 +1,187 @@
+{% extends "config/base.html" %}
+{% load url from future %}
+{% load custom_filters %}
+{% block scripts %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/show_issue.css"/>
+{% endblock %}
+
+{% block title %}Mozilla ISP Database{% endblock %}
+{% block bodystart %}
+
+<script type="text/javascript">
+$(document).ready(function() {
+  $("#show").click(function() {
+    $(this).hide();
+    $(this).parent().children('.comment_list').show('fast');
+  })
+  $("#add").click(function() {
+    $(this).hide();
+    $(this).parent().children('.comment_form').show('fast');
+  })
+
+  {% if perms.config.can_approve %}
+  // We want to make sure reviewers can see the comments
+  $(".comment_list").show();
+  $("#show").hide();
+  {% endif %}
+
+});
+</script>
+{% endblock %}
+
+{% block heading %}Issue: {{ issue.title }} {% endblock %}
+
+{% block content %}
+
+<div id="config"><h2><a href="{% url 'ispdb_details' issue.config.id %}">{{ issue.config.display_name }}</a></h2></div>
+
+{% if error %}
+  <div id="errornote" class="errornote"><p>{{ error }}</p></div>
+{% endif %}
+
+<div class="box">
+  <div id="author"><p>opened by {{ issue.owner.email }} {{ issue.created_datetime|timesince }} ago.</p></div>
+  <div id="title"><h2>{{ issue.title }}</h2></div>
+  <div id="status"><p>This issue is {{ issue.status }}</p></div>
+  <div id="description"><p>{{ issue.description }}</p></div>
+  {% if perms.config.can_approve and issue.status == "open" %}
+    <form action="{% url 'ispdb_show_issue' id=issue.id %}" method="POST">{% csrf_token %}
+    <div id="buttons">
+      <input type="submit" value="close" name="action">  
+      {% if issue.updated_config and issue.config.status == 'approved' %}
+        <input type="submit" value="merge" name="action">  
+      {% endif %}
+    </div>
+    </form>
+  {% endif %}
+</div>
+
+<br>
+{% if issue.updated_config %}
+<div class="box">
+  <div id="config">
+    <div>
+      {% if issue.status == 'open' and issue.owner == user %}
+        <a id="edit" href="{% url 'ispdb_edit' issue.updated_config.id %}">Edit</a>
+      {% endif %}
+      <h2>Suggested configuration</h2>
+    </div>
+    <h4>Domains Served</h4>
+    <div id="domains">
+      {% for domain in non_modified_domains %}
+        <div>{{ domain }}</div>
+      {% endfor %}
+      <div class="removed_domains">
+      {% for domain in removed_domains %}
+        <div class="domain_removed">{{ domain }}</div>
+      {% endfor %}
+      </div>
+      <div class="added_domains">
+      {% for domain in added_domains %}
+        <div class="domain_added">{{ domain }}</div>
+      {% endfor %}
+      </div>
+    </div>
+
+    <div id="base_data">
+      <h4>Base data</h4>
+      <table>
+        {% for field in base %}
+	<tr>
+	  {% if field.new_value %}
+            <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
+	    <td><strike>{{field|data_verbose}}</strike></td>
+	    <td>{{field|data_verbose:"new_value"}}</td>
+	  {% else %}
+            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
+	  {% endif %}
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div id="incoming_data">
+      <h4>Incoming Server</h4>
+      <table>
+        {% for field in incoming %}
+        <tr>
+	  {% if field.new_value %}
+            <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
+	    <td><strike>{{field|data_verbose}}</strike></td>
+	    <td>{{field|data_verbose:"new_value"}}</td>
+	  {% else %}
+            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
+	  {% endif %}
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  
+    <div id="outoing_data">
+      <h4>Outgoing Server</h4>
+      <table>
+        {% for field in outgoing %}
+          <tr>
+	  {% if field.new_value %}
+            <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
+	    <td><strike>{{field|data_verbose}}</strike></td>
+	    <td>{{field|data_verbose:"new_value"}}</td>
+	  {% else %}
+            <td>{{ field.verbose_name|capfirst }}:</td>
+            <td>{{field|data_verbose}}</td>
+	  {% endif %}
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div id="other_data">
+      <h4>Other Fields</h4>
+      <table>
+        {% for field in other_fields %}
+          <tr>
+	  {% if field.new_value %}
+            <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
+	    <td><strike>{{field|data_verbose}}</strike></td>
+	    <td>{{field|data_verbose:"new_value"}}</td>
+	  {% else %}
+            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
+	  {% endif %}
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<h3>Comments</h3>
+
+{% load comments %}
+
+{% get_comment_list for issue as comment_list %}
+{% if comment_list %}
+<div id="previous_comments">
+  <div id="show"><a>Show {{ comment_list|length }} existing comment{{comment_list|length|pluralize}}</a></div>
+  <div class="comment_list hidden">
+  {% for comment in comment_list %}
+    <div class="comment">
+      <span class="comment_author">{{comment.user_name}}</span> said: <span class="comment_contents">{{comment.comment}}</span>
+    </div>
+  {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div id="add_a_comment">
+  <div id="add"><a class="link">Add a comment</a></div>
+  <div class="comment_form hidden">
+    {% render_comment_form for issue %}
+  </div>
+</div>
+
+<div class="back">
+  <h4><a href="{% url 'ispdb_details' issue.config.id %}">Go back to configuration</a></h4>
+</div>
+
+{% endblock %}

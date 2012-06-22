@@ -9,7 +9,7 @@ import nose.tools
 
 
 class ApprovalAuthTest(TestCase):
-    fixtures = ['xml_testdata', 'approval_user']
+    fixtures = ['xml_testdata', 'login_testdata']
 
     def test_unauthenticated_user(self):
         result = self.client.post("/approve/1", {
@@ -19,7 +19,7 @@ class ApprovalAuthTest(TestCase):
         config = Config.objects.get(id=1)
 
         # Should not have changed the config
-        nose.tools.assert_equal(config.approved, False)
+        nose.tools.assert_equal(config.status, 'requested')
 
         # Make sure it redirects to login page
         redirect = result.redirect_chain[0][0]
@@ -31,7 +31,7 @@ class ApprovalAuthTest(TestCase):
         # Assert config.comments.count() == 0
 
     def test_authenticated_user(self):
-        user_info = {"username": "testuser", "password": "simplepassword"}
+        user_info = {"username": "test_admin", "password": "test"}
 
         self.client.login(**user_info)
 
@@ -42,7 +42,7 @@ class ApprovalAuthTest(TestCase):
         config = Config.objects.get(id=1)
 
         # Should have changed the config
-        nose.tools.assert_equal(config.approved, True)
+        nose.tools.assert_equal(config.status, 'approved')
 
         # Make sure it redirects to details page
         redirect = result.redirect_chain[0][0]

@@ -33,26 +33,37 @@ $(document).ready(function() {
 
 {% block content %}
 
-<h1>{{config.display_name}}
-{% ifnotequal config.display_name config.display_short_name %} ({{config.display_short_name}} for short) {% endifnotequal %}
-</h1>
+<div>
+  <h1>{{config.display_name}}
+    {% ifnotequal config.display_name config.display_short_name %} ({{config.display_short_name}} for short) {% endifnotequal %}
+  </h1>
+</div>
+{% if perms.is_superuser or config.status == 'requested' and config.owner == user %}
+  <div id="edit">[<a href="{% url 'ispdb_edit' config.id %}">Edit</a>]</div>
+{% endif %}
 
-<div class="configstatus {% if config.approved %} approved {% else %} pending {% endif %}">
-  {% if config.approved %}
-  <div>This configuration is APPROVED.</div>
+{% if error %}
+  <div id="errornote" class="errornote">
+    <p>{{ error }}</p>
+  </div>
+{% endif %}
+
+<div class="configstatus {{ config.status }}">
+  {% if config.status == 'approved' %}
+    <div>This configuration is APPROVED.</div>
       {% if perms.config.can_approve %}
         <div>Is there a reason it shouldn't be?</div>
-	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
-          <div>
-            <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
-          </div>
-          <div>
-            <input type="submit" value="mark invalid" name="denied"></input>
-          </div>
+        <form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
+        <div>
+          <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
+        </div>
+        <div>
+          <input type="submit" value="mark invalid" name="denied"></input>
+        </div>
         </form>
       {% endif %}
   {% else %}
-    {% if config.invalid %}
+    {% if config.status == 'invalid' %}
     <div>
       This configuration has been determined INVALID.  We've looked at the
       data, and either it's not correct, or it can't be verified from outside
@@ -60,30 +71,57 @@ $(document).ready(function() {
     </div>
       {% if perms.config.can_approve %}
         <div>Is there a reason it shouldn't be?</div>
-	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
+      	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
           <div>
             <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
           </div>
-          <div>
+	  <div class="float">
             <input type="submit" value="mark valid" name="approved"></input>
+          </div>
+        </form>
+        <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
+          <div>
+            <input id="delete" type="submit" value="delete" name="delete"></input>
           </div>
         </form>
       {% endif %}
     {% else %}
-      {% if perms.config.can_approve %}
-        Can you confirm that this is a good configuration according to our <a href="{% url 'ispdb_policy' %}">policies</a>?
-	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
-          <div>
-            <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
-          </div>
-          <div>
-            <input type="submit" value="yes, checks out ok" name="approved"></input>
-            <input type="submit" value="no, there's a problem" name="denied"></input>
-          </div>
-        </form>
+      {% if config.status == 'deleted' %}
+        <div>
+          This configuration has been DELETED.
+        </div>
+        {% if config|is_undo_available %}
+	  {% if perms.config.can_approve or config.owner == user and config.last_status == 'requested' %}
+            <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
+              <div>
+                <input id="delete" type="submit" value="undo" name="delete"></input>
+              </div>
+            </form>
+          {% endif %}
+        {% endif %}
       {% else %}
-        This configuration is PENDING REVIEW.  Our team of crack volunteers will review
-        it, and assuming the data checks out, we'll publish it.
+        {% if perms.config.can_approve %}
+          Can you confirm that this is a good configuration according to our <a href="{% url 'ispdb_policy' %}">policies</a>?
+          <form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
+            <div>
+              <input type="text" size="100" name="comment" value="Always enter a comment here"></input>
+            </div>
+            <div class="float">
+              <input type="submit" value="yes, checks out ok" name="approved"></input>
+              <input type="submit" value="no, there's a problem" name="denied"></input>
+            </div>
+          </form>
+        {% else %}
+          This configuration is PENDING REVIEW.  Our team of crack volunteers will review
+          it, and assuming the data checks out, we'll publish it.
+        {% endif %}
+        {% if user == config.owner or perms.config.can_approve %}
+          <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
+            <div>
+              <input id="delete" type="submit" value="delete" name="delete"></input>
+            </div>
+          </form>
+        {% endif %}
       {% endif %}
     {% endif %}
   {% endif %}
@@ -91,9 +129,15 @@ $(document).ready(function() {
 
 <h4>Domains Served</h4>
 <div id="domains">
-  {% for domain in config.domains.all %}
-    <div class="domain">{{domain}}</div>
-  {% endfor %}
+  {% if config.domains.all %}
+    {% for domain in config.domains.all %}
+      <div class="domain">{{domain}}</div>
+    {% endfor %}
+  {% else %}
+    {% for domain in config.domainrequests.all %}
+      <div class="domain">{{domain}}</div>
+    {% endfor %}
+  {% endif %}
 </div>
 
 <div id="server_data">
@@ -147,12 +191,22 @@ $(document).ready(function() {
 
 <p>See <a href="{% url 'ispdb_export_xml' version=1.1 id=config.id %}">XML version</a> (used by Thunderbird).</p>
 
-{% if not perms.config.can_approve %}
-<h3>Accurate?</h3>
+{% if config.status == "approved" %}
+  <h3>Reported Issues</h3>
 
-<p>If you know the data above is not accurate, do let us know: <button name="XXX">these
-parameters are out of date!</button>
-</p>
+  {% for issue in issues %}
+    <ul>
+      <li><a href="{% url 'ispdb_show_issue' issue.id %}">{{ issue.title }}</a></li>
+    </ul>
+  {% empty %}
+    <p>No reported issues.</p>
+  {% endfor %}
+
+  <h3>Accurate?</h3>
+
+  <p>If you know the data above is not accurate, do let us know: 
+  <a href="{% url 'ispdb_report' config.id %}">these parameters are out of date!</a>
+  </p>
 {% endif %}
 
 <h3>Comments</h3>
