@@ -50,6 +50,24 @@
   border: 1px solid green;
 }
 
-.pending {
+.invalid {
+  border: 1px solid red;
+}
+
+.deleted {
+  border: 1px solid black;
+}
+
+.requested {
   border: 1px solid orange;
+}
+
+.float {
+  float: left;
+  clear: none;
+  margin-right: 4px;
+}
+
+.errornote {
+  margin-top: 10px;
 }

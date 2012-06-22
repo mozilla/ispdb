@@ -6,14 +6,15 @@ for the Thunderbird autoconfig database
    *  django-browserid
    *  django-nose 
    *  lxml
+   *  pytz (optional)
 
     You can install all of the above with:
 
-    pip install django django-browserid django-nose lxml
+    pip install django django-browserid django-nose lxml pytz
 
     or 
 
-    pip -r install requirements.txt
+    pip install -r requirements.txt
 
     Note: You may have to do an "easy_install pip" first
 

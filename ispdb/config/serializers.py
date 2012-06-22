@@ -3,7 +3,7 @@
 import lxml.etree as ET
 from StringIO import StringIO
 
-from ispdb.config.models import Domain
+from ispdb.config.models import Domain, DomainRequest
 
 # The serializers in reverse order, newest at the top.
 
@@ -30,7 +30,9 @@ def xmlOneDotOne(data):
     config = ET.Element("clientConfig")
     config.attrib["version"] = "1.1"
     emailProvider = ET.SubElement(config, "emailProvider")
-    for domain in Domain.objects.filter(config=data):
+    qs = Domain.objects.filter(config=data) or (
+        DomainRequest.objects.filter(config=data))
+    for domain in qs:
       if not data.email_provider_id:
         data.email_provider_id = domain.name
       ET.SubElement(emailProvider, "domain").text = domain.name

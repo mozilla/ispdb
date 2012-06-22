@@ -3,3 +3,4 @@ django-browserid==0.5
 django-nose==1.0
 lxml==2.3.4
 nose==1.1.2
+pytz

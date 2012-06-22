@@ -7,10 +7,6 @@ from ispdb.config.models import *
 from django.contrib import admin
 admin.autodiscover()
 
-unclaimed_dict = {
-    'queryset': UnclaimedDomain.objects.all(),
-}
-
 urlpatterns = patterns('',
     (r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: /", mimetype="text/plain")),
     (r'^admin/', include(admin.site.urls)),
@@ -30,15 +26,19 @@ urlpatterns = patterns('',
         'ispdb.config.views.export_xml', name='ispdb_export_xml'),
     url(r'^export_xml/v(?P<version>\d+\.\d+)/(?P<domain>.+)$',
         'ispdb.config.views.export_xml', name='ispdb_export_xml'),
-    url(r'^add/(?P<domain>.+)', 'ispdb.config.views.add', name='ispdb_add'),
+    url(r'^add/(?P<domain>[\w\d\-\.]+)/?$', 'ispdb.config.views.add',
+        name='ispdb_add'),
     url(r'^add/', 'ispdb.config.views.add', name='ispdb_add'),
+    url(r'^edit/(?P<config_id>\d+)/?$', 'ispdb.config.views.edit',
+        name='ispdb_edit'),
     url(r'^queue$', 'ispdb.config.views.queue', name='ispdb_queue'),
     url(r'^policy$', 'ispdb.config.views.policy', name='ispdb_policy'),
     url(r'^approve/(?P<id>\d+)', 'ispdb.config.views.approve', name='ispdb_approve'),
-    url(r'^check_domain$', 'ispdb.config.views.check_domain',
-        name='ispdb_check_domain'),
-    url(r'^check_domain/(?P<name>.+)', 'ispdb.config.views.check_domain',
-        name='ispdb_check_domain_name'),
+    url(r'^delete/(?P<id>\d+)/?', 'ispdb.config.views.delete',
+        name='ispdb_delete'),
+    url(r'^report/(?P<id>\d+)', 'ispdb.config.views.report', name='ispdb_report'),
+    url(r'^show_issue/(?P<id>\d+)', 'ispdb.config.views.show_issue',
+        name='ispdb_show_issue'),
 )
 
 urlpatterns += staticfiles_urlpatterns()

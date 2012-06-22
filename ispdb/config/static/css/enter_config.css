@@ -11,4 +11,23 @@
   bottom: 1em;
   right: 1em;
 }
+input[readonly=readonly] {
+  color: grey;
+  background-color:#F0F0F0;
+}
 
+#id_title {
+  width: 30%;
+  padding: 5px 5px;
+  font-size: 14px;
+}
+
+#id_description {
+  width: 30%;
+  padding: 5px 5px;
+  font-size: 14px;
+}
+
+#div_report_link {
+ padding: 10px;
+}
