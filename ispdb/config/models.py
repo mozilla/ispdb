@@ -238,7 +238,7 @@ class DomainForm(ModelForm):
                            re.IGNORECASE)
         if not regex.match(data):
             # Trivial case failed. Try for possible IDN domain
-            msg = ("Domain name it not valid")
+            msg = ("Domain name is not valid")
             try:
                 if not regex.match(data.encode('idna')): # IDN -> ACE
                     raise ValidationError(mark_safe(msg))
@@ -283,7 +283,7 @@ class BaseDomainFormSet(BaseFormSet):
                 names.append(form.cleaned_data['name'])
         # Check if all forms are deleted
         if self.total_form_count() == deleted_forms:
-            raise ValidationError("At least one domain should be specifed.")
+            raise ValidationError("At least one domain should be specified.")
         # Check if number of non deleted forms is greater then max_num
         if (self.total_form_count() - deleted_forms) > self.max_num:
             raise ValidationError("Number of domains exceeded.")
