@@ -3,6 +3,7 @@
 {% load custom_filters %}
 {% block scripts %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/show_issue.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/comments.css"/>
 {% endblock %}
 
 {% block title %}Mozilla ISP Database{% endblock %}
@@ -10,10 +11,6 @@
 
 <script type="text/javascript">
 $(document).ready(function() {
-  $("#show").click(function() {
-    $(this).hide();
-    $(this).parent().children('.comment_list').show('fast');
-  })
   $("#add").click(function() {
     $(this).hide();
     $(this).parent().children('.comment_form').show('fast');
@@ -22,7 +19,6 @@ $(document).ready(function() {
   {% if perms.config.can_approve %}
   // We want to make sure reviewers can see the comments
   $(".comment_list").show();
-  $("#show").hide();
   {% endif %}
 
 });
@@ -162,11 +158,26 @@ $(document).ready(function() {
 {% get_comment_list for issue as comment_list %}
 {% if comment_list %}
 <div id="previous_comments">
-  <div id="show"><a>Show {{ comment_list|length }} existing comment{{comment_list|length|pluralize}}</a></div>
-  <div class="comment_list hidden">
+  <div class="comment_list">
   {% for comment in comment_list %}
     <div class="comment">
-      <span class="comment_author">{{comment.user_name}}</span> said: <span class="comment_contents">{{comment.comment}}</span>
+      <div class="header">
+        {% if comment.user %}
+          <span class="comment_author">{{ comment.user.email }}</span>
+        {% else %}
+          <span class="comment_author">{{ comment.user_name }}</span>
+        {% endif %}
+        <span class="comment_date"> at {{ comment.submit_date }}</span>
+        {% if perms.comments.can_moderate %}
+          <a href="{% url 'ispdb_comment_delete' comment.id %}"><span class="remove_comment">Remove</span></a>
+        {% endif %}
+      </div>
+      {% if comment.user_name == 'ISPDB System' and comment.user == None %}
+        <div class="comment_body">{{comment.comment|safe|linebreaks}}</div>
+      {% else %}
+        <div class="comment_body">{{comment.comment|linebreaks}}</div>
+      {% endif %}
+      <hr />
     </div>
   {% endfor %}
   </div>
@@ -176,7 +187,22 @@ $(document).ready(function() {
 <div id="add_a_comment">
   <div id="add"><a class="link">Add a comment</a></div>
   <div class="comment_form hidden">
-    {% render_comment_form for issue %}
+    {% if request.user.is_authenticated %}
+      {% get_comment_form for issue as form %}
+      <form action="{% comment_form_target %}" method="post">
+        {% csrf_token %}
+        {% for field in form %}
+          {% if field.is_hidden %}
+            {{ field }}
+          {% endif %}
+        {% endfor %}
+        <input type="hidden" name="next" value="{{ request.path }}" />
+        <div><textarea id="id_comment" rows="10" cols="40" name="comment"></textarea></div>
+        <div><input type="submit" name="post" class="submit-post" value="Post"></div>
+      </form>
+    {% else %}
+      <b>You must sign in to post comments.</b>
+    {% endif %}
   </div>
 </div>
 

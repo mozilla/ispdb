@@ -26,21 +26,6 @@
   display: inline-block;
 }
 
-.comment {
-    margin-left: 1em;
-    padding-bottom: 1em;
-    padding-top: 1em;
-    border-top: 1px solid lightgrey;
-}
-
-.comment:first-child {
-    border-top: 1px solid transparent;
-}
-
-.comment_author {
-    font-weight: bold;
-}
-
 .configstatus  {
   padding: 1.5em;
   margin: 1.5em;
@@ -71,3 +56,12 @@
 .errornote {
   margin-top: 10px;
 }
+
+#commenttext_div {
+  padding: 8px;
+}
+
+#commenttext {
+  font-size: 12px;
+}
+
