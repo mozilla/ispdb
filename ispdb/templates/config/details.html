@@ -39,8 +39,6 @@ $(document).ready(function() {
     $(".comment_list").show();
     $("#show").hide();
   {% endif %}
-
-  addWaterMark($("#commenttext"), "Always enter a comment here");
 });
 </script>
 {% endblock %}
@@ -79,7 +77,7 @@ $(document).ready(function() {
             Other
         </div>
         <div id="commenttext_div">
-          <textarea id="commenttext" rows="3" cols="60" name="commenttext" value="Always enter a comment here"></textarea>
+          <textarea id="commenttext" rows="3" cols="60" name="commenttext" placeholder="Always enter a comment here"></textarea>
         </div>
         <div>
           <input type="submit" value="mark invalid" name="denied"></input>

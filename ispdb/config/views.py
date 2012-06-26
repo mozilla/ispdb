@@ -339,9 +339,8 @@ def approve(request, id):
         elif data.get('denied', False):
             # Check mandatory comment when invalidating
             if data['comment'] == 'Other - invalid':
-                if not data['commenttext'] or (data['commenttext'] ==
-                        'Always enter a comment here'):
-                    error = "Enter a valid comment."
+                if not data['commenttext']:
+                    error = "Enter a comment."
                     return details(request, id, error=error)
                 message = data['commenttext']
             else:

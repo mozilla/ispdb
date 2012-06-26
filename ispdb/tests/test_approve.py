@@ -7,8 +7,6 @@ from ispdb.config.models import Config
 from urllib import quote_plus
 from nose.tools import *
 
-WATERMARK_TEXT = "Always enter a comment here"
-
 class ApproveTest(TestCase):
     fixtures = ['xml_testdata', 'login_testdata']
 
@@ -52,20 +50,6 @@ class ApproveTest(TestCase):
 
         config = Config.objects.get(id=1)
         # Should not have changed the config status because no comment was
-        # supplied
-        assert_equal(config.status, 'requested')
-
-    def test_authenticated_user_deny_default_comment(self):
-        user_info = {"username": "test_admin", "password": "test"}
-        self.client.login(**user_info)
-        result = self.client.post("/approve/1", {
-                                      "denied": True,
-                                      "comment": 'Other - invalid',
-                                      "commenttext": WATERMARK_TEXT,
-                                  }, follow=True)
-
-        config = Config.objects.get(id=1)
-        # Should not have changed the config because default comment was
         # supplied
         assert_equal(config.status, 'requested')
 
