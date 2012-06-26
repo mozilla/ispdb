@@ -3,6 +3,7 @@
 {% load custom_filters %}
 {% block scripts %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/show_issue.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/comments.css"/>
 {% endblock %}
 
 {% block title %}Mozilla ISP Database{% endblock %}
@@ -18,7 +19,6 @@ $(document).ready(function() {
   {% if perms.config.can_approve %}
   // We want to make sure reviewers can see the comments
   $(".comment_list").show();
-  $("#show").hide();
   {% endif %}
 
 });

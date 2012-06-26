@@ -3,6 +3,7 @@
 {% load custom_filters %}
 {% block scripts %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/details.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/comments.css"/>
 {% endblock %}
 
 {% block title %}Mozilla ISP Database{% endblock %}
@@ -10,7 +11,7 @@
 
 <script type="text/javascript">
 $(document).ready(function() {
-  $("#show").click(function() {
+  $("#showcomments").click(function() {
     $(this).hide();
     $(this).parent().children('.comment_list').show('fast');
   })
@@ -37,7 +38,7 @@ $(document).ready(function() {
   {% if perms.config.can_approve %}
   // We want to make sure reviewers can see the comments
     $(".comment_list").show();
-    $("#show").hide();
+    $("#showcomments").hide();
   {% endif %}
 });
 </script>
@@ -243,7 +244,7 @@ $(document).ready(function() {
 {% get_comment_list for config as comment_list %}
 {% if comment_list %}
 <div id="previous_comments">
-  <div id="show"><a class="link">Show {{ comment_list|length }} existing comment{{comment_list|length|pluralize}}</a></div>
+  <div id="showcomments"><a class="link">Show {{ comment_list|length }} existing comment{{comment_list|length|pluralize}}</a></div>
   <div class="comment_list hidden">
   {% for comment in comment_list %}
     <div class="comment">
