@@ -6,6 +6,8 @@ for the Thunderbird autoconfig database
    *  django-browserid
    *  django-nose 
    *  lxml
+   *  dnspython
+   *  tldextract
    *  pytz (optional)
 
     You can install all of the above with:

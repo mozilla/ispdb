@@ -26,6 +26,42 @@ $(document).ready(function() {
       $("#commenttext").hide();
     }
   })
+  $("#sanity_link").ajaxError(
+      function(event, XMLHttpRequest, ajaxOptions, thrownError) {
+      if ($(this).text() == "Running sanity checks") {
+        $(this).html('<span class="error">Error running sanity checks.</span>');
+      }
+  });
+  $("#loading").ajaxStart(function(){
+    $(this).show();
+  });
+  $("#loading").ajaxStop(function(){
+    $(this).hide();
+  });
+  $("#sanity_link").click(function(e) {
+    e.preventDefault();
+    if ($(this).text() == "Running sanity checks")
+      return;
+    $(this).html("Running sanity checks");
+    self = $(this);
+    $.getJSON("{% url 'ispdb_sanity' config.id %}", null,
+      function(data) {
+        self.html("Re-run sanity checks.");
+        results = [];
+        if (data["errors"].length) {
+          results.push('<span class="error">' +
+            data["errors"].join('</span><br/><span class="error">') +
+            "</span><br/>");
+        }
+        if (data["warnings"].length) {
+          results.push('<span class="warning">' +
+            data["warnings"].join('</span><br/><span class="warning">') +
+            "</span><br/>");
+        }
+        $("#sanity_results").html(results.join(""));
+    });
+  })
+
   $("#commenttext").hide();
 
   $("#request-deny").click(function() {
@@ -59,7 +95,7 @@ $(document).ready(function() {
 
 {% if error %}
   <div id="errornote" class="errornote">
-    <p>{{ error }}</p>
+    <p>{{ error|linebreaks }}</p>
   </div>
 {% endif %}
 
@@ -87,13 +123,13 @@ $(document).ready(function() {
       {% endif %}
   {% else %}
     {% if config.status == 'invalid' %}
-    <div>
+    <div><p>
       This configuration has been determined INVALID.  We've looked at the
       data, and either it's not correct, or it can't be verified from outside
       the ISP's firewall, or the ISP has asked not to publish it.
-    </div>
+    </p></div>
       {% if perms.config.can_approve %}
-        <div>Is there a reason it shouldn't be?</div>
+        <div><p>Is there a reason it shouldn't be?</p></div>
       	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
           <div class="float">
             <input type="submit" value="mark valid" name="approved"></input>
@@ -104,12 +140,15 @@ $(document).ready(function() {
             <input id="delete" type="submit" value="delete" name="delete"></input>
           </div>
         </form>
+        <div id="sanity_checks">
+          <a href="#" id="sanity_link">Run sanity checks.</a>
+          <img id="loading" class="hidden" src="{{ STATIC_URL }}img/ajax-loading.gif">
+          <div id="sanity_results"></div>
+        </div>
       {% endif %}
     {% else %}
       {% if config.status == 'deleted' %}
-        <div>
-          This configuration has been DELETED.
-        </div>
+        <div><p>This configuration has been DELETED.</p></div>
         {% if config|is_undo_available %}
 	  {% if perms.config.can_approve or config.owner == user and config.last_status == 'requested' %}
             <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
@@ -139,16 +178,26 @@ $(document).ready(function() {
               <input type="submit" value="no, there's a problem" name="denied" id="request-deny"></input>
             </div>
           </form>
-        {% else %}
-          This configuration is PENDING REVIEW.  Our team of crack volunteers will review
-          it, and assuming the data checks out, we'll publish it.
-        {% endif %}
-        {% if user == config.owner or perms.config.can_approve %}
           <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
             <div>
               <input id="delete" type="submit" value="delete" name="delete"></input>
             </div>
           </form>
+          <div id="sanity_checks">
+            <a href="#" id="sanity_link">Run sanity checks.</a>
+            <img id="loading" class="hidden" src="{{ STATIC_URL }}img/ajax-loading.gif">
+            <div id="sanity_results"></div>
+          </div>
+        {% else %}
+          <p>This configuration is PENDING REVIEW.  Our team of crack volunteers will review
+          it, and assuming the data checks out, we'll publish it.</p>
+          {% if user == config.owner %}
+            <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
+              <div>
+                <input id="delete" type="submit" value="delete" name="delete"></input>
+              </div>
+            </form>
+          {% endif %}
         {% endif %}
       {% endif %}
     {% endif %}

@@ -2,6 +2,7 @@
 
 import StringIO
 import lxml.etree as ET
+import tldextract
 
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.contrib.auth.decorators import login_required
@@ -27,6 +28,7 @@ from django.conf import settings
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
     DomainRequest, BaseDomainFormSet, Issue, IssueForm)
 from ispdb.config import serializers
+from ispdb.config.configChecks import *
 
 @login_required
 def comment_post_wrapper(request):
@@ -360,6 +362,170 @@ def approve(request, id):
         comment.save()
 
     return HttpResponseRedirect('/details/' + id) # Redirect after POST
+
+@permission_required("config.can_approve")
+def sanity(request, id):
+    def _do_domain_checks(domains):
+        domain_errors = []
+        domain_warnings = []
+        if not domains:
+            return (domain_errors, domain_warnings)
+        # Check and compare nameservers
+        ns = get_nameservers(domains[0].name)
+        if not ns:
+            domain_warnings.append("Could not compare name servers because DNS "
+                                 "query of the first domain (%s) returned "
+                                 "None." % (domains[0].name))
+        else:
+            for domain in domains[1:]:
+                sub_ns = get_nameservers(str(domain))
+                if not sub_ns or not sub_ns.issubset(ns):
+                    domain_warnings.append("Name servers of domain '%s' differ"
+                                           " from name servers of the main "
+                                           "domain '%s'."
+                                           % (domains[0], domain))
+        # Check MX records
+        tlds = set()
+        extract = tldextract.TLDExtract(fetch=False)
+        for domain in domains:
+            mxservers = get_mxservers(domain.name)
+            # check if domain is valid and add it to tlds
+            tld = extract(domain.name)
+            if not tld.tld or tld.subdomain:
+                domain_errors.append("Domain '%s' is not valid." %
+                                     (domain.name))
+            else:
+                tlds.add(domain.name)
+            # get domain and tld from MX servers
+            for server in mxservers:
+                tld = extract(server)
+                if tld.tld:
+                    tlds.add(tld.domain+'.'+tld.tld)
+                    tld.domain+'.'+tld.tld
+            # Check if domain has at least one MX server
+            if not mxservers or len(mxservers) < 1:
+                domain_errors.append("Couldn't find MX record for '%s'." %
+                                     (domain,))
+        # Compare incoming/outgoing server TLD with tlds
+        tld = extract(domains[0].config.incoming_hostname)
+        d = tld.domain+'.'+tld.tld
+        if not d in tlds:
+            domain_errors.append("Incoming server domain '%s' is different"
+                                 " from the configured domains and its MX "
+                                 "servers domains." % (d))
+        tld = extract(domains[0].config.outgoing_hostname)
+        d = tld.domain+'.'+tld.tld
+        if not d in tlds:
+            domain_errors.append("Outgoing server domain '%s' is different"
+                                 " from the configured domains and its MX "
+                                 "servers domains." % (d))
+        return (domain_errors, domain_warnings)
+
+    def _do_config_checks(config):
+        config_errors = []
+        config_warnings = []
+        # Incoming server checks
+        # Check if there is a better socket type available
+        if config.incoming_socket_type == 'plain' or (
+                config.incoming_socket_type == 'STARTTLS'):
+            if check_socket_type(config.incoming_hostname,
+                                 config.incoming_type,
+                                 'SSL') != None:
+                config_warnings.append("Incoming server '%s' supports SSL "
+                                       "using default port." %
+                                       (config.incoming_hostname))
+            elif config.incoming_socket_type == 'plain':
+                if check_socket_type(config.incoming_hostname,
+                                     config.incoming_type,
+                                     'STARTTLS') != None:
+                    config_warnings.append("Incoming server '%s' supports "
+                                           "STARTTLS using default port." %
+                                           (config.incoming_hostname,))
+        # Check if current options are working
+        capa = check_socket_type(config.incoming_hostname,
+                                 config.incoming_type,
+                                 config.incoming_socket_type,
+                                 port=config.incoming_port)
+        if capa == None:
+            config_errors.append("Incoming server '%s' does not support "
+                                 "socket type %s on port %s." %
+                                 (config.incoming_hostname,
+                                  config.incoming_socket_type,
+                                  config.incoming_port))
+        elif not capa:
+            config_warnings.append("Couldn't retrieve supported authentication"
+                                   " methods from '%s'. Parser returned None." %
+                                   (config.incoming_hostname))
+        else:# Check supported authentication methods
+            capabilities = ["GSSAPI", "password-encrypted", "NTLM",
+                    "password-cleartext"]
+            for auth in capabilities:
+                if config.incoming_authentication == auth:
+                    if not capa[auth]:
+                        config_errors.append("Incoming server '%s' does not "
+                                             "support auth type %s." %
+                                             (config.incoming_hostname, auth))
+                    break
+                if capa[auth]:
+                    config_warnings.append("Incoming server '%s' supports "
+                                           "auth type %s." %
+                                           (config.incoming_hostname, auth))
+        # Outgoing server
+        # Check if there is a better socket type available
+        if config.outgoing_socket_type == 'plain' or (
+                config.outgoing_socket_type == 'STARTTLS'):
+            if check_socket_type(config.outgoing_hostname,
+                                 'smtp',
+                                 'SSL') != None:
+                config_warnings.append("Outgoing server '%s' supports SSL "
+                                       "using default port." %
+                                       (config.outgoing_hostname))
+            elif config.outgoing_socket_type == 'plain':
+                if check_socket_type(config.outgoing_hostname,
+                                     'smtp',
+                                     'STARTTLS') != None:
+                    config_warnings.append("Outgoing server supports '%s' "
+                                           "STARTTLS using default port." %
+                                           (config.outgoing_hostname,))
+        # Check if current options are working
+        capa = check_socket_type(config.outgoing_hostname,
+                                 'smtp',
+                                 config.outgoing_socket_type,
+                                 port=config.outgoing_port)
+        if capa == None:
+            config_errors.append("Outgoing server '%s' does not support "
+                                 "socket type %s on port %s." %
+                                 (config.outgoing_hostname,
+                                  config.outgoing_socket_type,
+                                  config.outgoing_port))
+        elif not capa:
+            config_warnings.append("Couldn't retrieve supported authentication"
+                                   "methods from '%s'." %
+                                   (config.incoming_hostname))
+        else: # Check authentication choices
+            capabilities = ["GSSAPI", "password-encrypted", "NTLM",
+                    "password-cleartext"]
+            for auth in capabilities:
+                if config.outgoing_authentication == auth:
+                    if not capa[auth]:
+                        config_errors.append("Outgoing server '%s' does not "
+                                             "support auth type %s." %
+                                             (config.outgoing_hostname, auth))
+                    break
+                if capa[auth]:
+                    config_warnings.append("Outgoing server '%s' supports "
+                                           "auth type %s." %
+                                           (config.outgoing_hostname, auth))
+        return (config_errors, config_warnings)
+
+    config = get_object_or_404(Config, pk=id)
+    domains = config.domains.all() or config.domainrequests.all()
+    domain_errors, domain_warnings = _do_domain_checks(domains)
+    config_errors, config_warnings = _do_config_checks(config)
+    data = simplejson.dumps({"errors" : domain_errors + config_errors,
+                             "warnings" : domain_warnings + config_warnings,
+                            })
+    return HttpResponse(data, mimetype='application/json')
 
 @login_required
 def delete(request, id):
