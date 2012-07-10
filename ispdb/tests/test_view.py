@@ -82,7 +82,7 @@ class ListTest(TestCase):
         assert isinstance(domain,models.DomainRequest)
         response = self.client.post(
             reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"approved":"mark valid", "comment":"Always enter a comment here"})
+            {"approved":"mark valid", "comment":"I liked this domain"})
         domain = models.Domain.objects.get(name="test2.com")
         assert isinstance(domain,models.Domain)
         response = self.client.get(reverse("ispdb_list", args=["xml"]), {})

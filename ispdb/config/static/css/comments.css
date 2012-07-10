@@ -1,0 +1,42 @@
+.comment {
+  width: 50%;
+  overflow: auto;
+  word-wrap: break-word;
+  padding-top: 10px;
+}
+
+.comment_author {
+  font-weight: bold;
+  border: 0px;
+  font-size: 12px;
+}
+
+.comment_date {
+  border: 0px;
+  font-size: 11px;
+}
+
+.comment_body {
+  padding-top: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.comment_list {
+  padding-top: 2px;
+  padding-bottom: 10px;
+  padding-left:10px;
+}
+
+#showcomments {
+  padding-top: 2px;
+}
+
+#add_a_comment {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.remove_comment {
+  font-size: 10px;
+}
