@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from django.forms.formsets import formset_factory
-from django.forms.models import inlineformset_factory
+from django.forms.models import modelformset_factory
 from django.contrib.auth import logout
 from django.template import RequestContext
 from django.utils import simplejson
@@ -25,7 +25,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
-    DomainRequest, BaseDomainFormSet, Issue, IssueForm)
+    DomainRequest, BaseDomainFormSet, Issue, IssueForm, DocURL, DocURLDesc,
+    BaseDocURLFormSet, DocURLForm, DocURLDescForm, BaseDocURLDescFormSet)
 from ispdb.config import serializers
 from ispdb.config.configChecks import do_domain_checks
 from ispdb.config.configChecks import do_config_checks
@@ -101,15 +102,20 @@ def details(request, id, error=None):
                                   'outgoing_use_global_preferred_server'):
                 outgoing.append(data)
         # We want a few others:
-        elif field.name in ('last_update_datetime', 'settings_page_url'):
+        elif field.name in ('last_update_datetime'):
             other_fields.append(data)
+    # Doc URLs
+    DocURLFormSet = modelformset_factory(DocURL, extra=0,
+            form=DocURLForm, formset=BaseDocURLFormSet)
+    docurl_formset = DocURLFormSet(queryset=config.docurl_set.all())
     return render_to_response("config/details.html", {
             'config': config,
             'incoming': incoming,
             'outgoing': outgoing,
             'other_fields': other_fields,
             'error': error,
-            'issues': config.reported_issues.filter(status="open")},
+            'issues': config.reported_issues.filter(status="open"),
+            'docurls': docurl_formset},
         context_instance=RequestContext(request))
 
 def export_xml(request, version=None, id=None, domain=None):
@@ -126,9 +132,6 @@ def export_xml(request, version=None, id=None, domain=None):
 
 @login_required
 def edit(request, config_id):
-    DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,
-            formset=BaseDomainFormSet)
-    InlineFormSet = inlineformset_factory(Config, DomainRequest)
     config = get_object_or_404(Config, pk=config_id)
     # Validate the user
     if not (request.user.is_superuser or (
@@ -136,69 +139,32 @@ def edit(request, config_id):
              and config.owner == request.user)):
         return HttpResponseRedirect(reverse('ispdb_login'))
     # Get initial data
-    initial = []
-    for domain in config.domains.all() or config.domainrequests.all():
-        initial.append({'name': domain.name})
+    if config.domains.all():
+        model = Domain
+    else:
+        model = DomainRequest
+    DomainFormSet = modelformset_factory(model, extra=0, max_num=10,
+            form=DomainForm, formset=BaseDomainFormSet)
+    domain_queryset = Domain.objects.filter(config=config) or \
+            DomainRequest.objects.filter(config=config)
+    DocURLFormSet = modelformset_factory(DocURL, extra=0,
+            form=DocURLForm, formset=BaseDocURLFormSet)
+    docurl_queryset = config.docurl_set.all()
 
     if request.method == 'POST':
         data = request.POST
         # A form bound to the POST data
+        domain_formset = DomainFormSet(request.POST, request.FILES,
+                queryset=domain_queryset)
+        docurl_formset = DocURLFormSet(request.POST, request.FILES,
+                queryset=docurl_queryset)
         config_form = ConfigForm(request.POST,
                                  request.FILES,
-                                 instance=config)
-        DomainFormSet.form = staticmethod(curry(DomainForm,
-                                                config_status=config.status))
-        formset = DomainFormSet(request.POST, request.FILES, initial=initial)
-        if config_form.is_valid() and formset.is_valid():
-            config_form.save()
-            for form in formset.forms:
-                # if the form hasn't changed, do nothing
-                if not form.has_changed():
-                    continue
-                # check if we need to delete the domain
-                if form.cleaned_data['delete']:
-                    # if domain is new and is deleted, do nothing
-                    if not form in formset.initial_forms:
-                        continue
-                    # get initial domain name
-                    index = formset.initial_forms.index(form)
-                    if config.status == 'approved':
-                        d = config.domains.all()[index]
-                    else:
-                        d = config.domainrequests.all()[index]
-                    d.delete()
-                    continue
-                else:   # update or create new domain
-                    domain = form.cleaned_data['name']
-                    # Check if deleted or invalid domain exists
-                    exists = Domain.objects.filter(name=domain)
-                    if exists:
-                        if config.status == 'approved':
-                            exists[0].config = config
-                            exists[0].save()
-                            continue
-                        else:
-                            claimed = DomainRequest(name=domain,
-                                                    votes=1,
-                                                    config=config)
-                    # Check if it is a rename
-                    elif form in formset.initial_forms:
-                        index = formset.initial_forms.index(form)
-                        if config.status == 'approved':
-                            claimed = config.domains.all()[index]
-                        else:
-                            claimed = config.domainrequests.all()[index]
-                        claimed.name = domain
-                    else:
-                        if config.status == 'approved':
-                            claimed = Domain(name=domain,
-                                             config=config)
-                        else:
-                            claimed = DomainRequest(name=domain,
-                                                    votes=1,
-                                                    config=config)
-                    claimed.save()
-
+                                 instance=config,
+                                 domain_formset=domain_formset,
+                                 docurl_formset=docurl_formset)
+        if config_form.is_valid_all():
+            config_form.save_all()
             if config.status == 'suggested':
                 id = config.issue.all()[0].id
                 return HttpResponseRedirect(reverse('ispdb_show_issue',
@@ -206,11 +172,13 @@ def edit(request, config_id):
             return HttpResponseRedirect(reverse('ispdb_details',
                                                 args=[config.id]))
     else:
-        config_form = ConfigForm(instance=config)
-        formset = DomainFormSet(initial=initial)
+        docurl_formset = DocURLFormSet(queryset=docurl_queryset)
+        domain_formset = DomainFormSet(queryset=domain_queryset)
+        config_form = ConfigForm(instance=config,
+                                 domain_formset=domain_formset,
+                                 docurl_formset=docurl_formset)
 
     return render_to_response('config/enter_config.html', {
-        'formset': formset,
         'config_form': config_form,
         'action': 'edit',
         'callback': reverse('ispdb_edit', args=[config.id]),
@@ -220,75 +188,64 @@ def edit(request, config_id):
 
 @login_required
 def add(request, domain=None):
-    DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,
-        formset=BaseDomainFormSet)
-    InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
+    DomainFormSet = modelformset_factory(DomainRequest, extra=1, max_num=10,
+            form=DomainForm, formset=BaseDomainFormSet)
+    DocURLFormSet = formset_factory(DocURLForm, extra=1,
+            formset=BaseDocURLFormSet)
     action = 'add'
+    has_errors = False
 
-    #from nose.tools import set_trace;set_trace()
     if request.method == 'POST': # If the form has been submitted...
         data = request.POST
-        formset = DomainFormSet(request.POST,request.FILES)
+        docurl_formset = DocURLFormSet(request.POST, request.FILES,
+                queryset=DocURL.objects.none())
+        domain_formset = DomainFormSet(request.POST, request.FILES,
+                queryset=DomainRequest.objects.none())
         # did the user fill in a full form, or are they just asking for some
         # domains to be registered
         if data['asking_or_adding'] == 'asking':
-            config_form = ConfigForm()
+            config_form = ConfigForm(domain_formset=domain_formset,
+                                     docurl_formset=docurl_formset)
             action = 'ask'
-            if formset.is_valid():
-                domains = []
-                num_domains = int(data['form-TOTAL_FORMS'])
-                for i in range(num_domains):
-                    domains.append(data['form-' + unicode(i) + '-name'])
-                # we'll create (unclaimed) domains if they don't exist, otherwise
-                # register the vote
-                for domain in domains:
-                    exists = Domain.objects.filter(name=domain) or \
-                             DomainRequest.objects.filter(name=domain)
+            if domain_formset.is_valid():
+                domain_formset.save(commit=False)
+                for form in domain_formset:
+                    name = form.instance.name
+                    exists = DomainRequest.objects.filter(name=name)
                     if exists:
-                        d = exists[0]
-                        if isinstance(d, DomainRequest):
-                            d.votes += 1
-                            d.save()
+                        domain = exists[0]
+                        domain.votes += 1
+                        domain.save()
                     else:
-                        d = DomainRequest(name=domain,
-                                          votes=1)
-                        d.save()
+                        form.save()
                 return HttpResponseRedirect('/') # Redirect after POST
         else:
             config = Config(owner=request.user, status='requested')
             # A form bound to the POST data
             config_form = ConfigForm(request.POST,
                                      request.FILES,
-                                     instance=config)
+                                     instance=config,
+                                     domain_formset=domain_formset,
+                                     docurl_formset=docurl_formset)
             # All validation rules pass
-            if config_form.is_valid() and formset.is_valid():
-                config_form.save()
-                for form in formset:
-                    # discard deleted forms
-                    if not form.cleaned_data or form.cleaned_data['delete']:
-                        continue
-                    domain = form.cleaned_data['name']
-                    unclaimed = DomainRequest.objects.filter(name=domain,
-                                                             config=None)
-                    if unclaimed:
-                        claimed = unclaimed[0]
-                        claimed.config = config
-                    else:
-                        claimed = DomainRequest(name=domain,
-                                                votes=1,
-                                                config=config)
-                    claimed.save()
+            if config_form.is_valid_all():
+                config_form.save_all()
                 return HttpResponseRedirect(reverse('ispdb_details',
                                                     args=[config.id]))
+            else:
+                has_errors = True
     else:
-        config_form = ConfigForm()
-        formset = DomainFormSet(initial=[{'name': domain}])
+        docurl_formset = DocURLFormSet(queryset=DocURL.objects.none())
+        domain_formset = DomainFormSet(initial=[{'name': domain}],
+                queryset=DomainRequest.objects.none())
+        config_form = ConfigForm(domain_formset=domain_formset,
+                                 docurl_formset=docurl_formset)
 
     return render_to_response('config/enter_config.html', {
-        'formset': formset,
         'config_form': config_form,
         'action': action,
         'callback': reverse('ispdb_add'),
+        'has_errors': has_errors
     }, context_instance=RequestContext(request))
 
 def queue(request):
@@ -403,64 +360,92 @@ def delete(request, id):
 @login_required
 def report(request, id):
     config = get_object_or_404(Config, pk=id, status='approved')
-    DomainFormSet = formset_factory(DomainForm, extra=0, max_num=10,
-        formset=BaseDomainFormSet)
-    InlineFormSet = inlineformset_factory(Config, Domain, can_delete=False)
-    initial = []
-    for domain in config.domains.all() or config.domainrequests.all():
-        initial.append({'name': domain.name})
+    has_errors = False
+    # Get initial data
+    if config.domains.all():
+        model = Domain
+    else:
+        model = DomainRequest
+    DomainFormSet = modelformset_factory(model, extra=0, max_num=10,
+            form=DomainForm, formset=BaseDomainFormSet)
+    domain_queryset = config.domains.all() or config.domainrequests.all()
+    DocURLFormSet = modelformset_factory(DocURL, extra=0,
+            form=DocURLForm, formset=BaseDocURLFormSet)
+    docurl_queryset = config.docurl_set.all()
 
     if request.method == 'POST':
         data = request.POST
-        p_config = Config()
-        issue = Issue(config=config)
+        domain_formset = DomainFormSet(request.POST, request.FILES,
+                queryset=domain_queryset)
+        docurl_formset = DocURLFormSet(request.POST, request.FILES,
+                queryset=docurl_queryset)
+        p_config = Config(owner=request.user, status='suggested')
+        issue = Issue(config=config, owner=request.user)
         config_form = ConfigForm(request.POST,
                                  request.FILES,
-                                 instance=p_config)
+                                 instance=p_config,
+                                 domain_formset=domain_formset,
+                                 docurl_formset=docurl_formset)
         issue_form = IssueForm(request.POST, instance=issue)
-        formset = DomainFormSet(request.POST, request.FILES, initial=initial)
         if issue_form.is_valid():
-            issue.owner = request.user
             if issue_form.cleaned_data['show_form']:
-                if config_form.is_valid() and formset.is_valid():
-                    p_config.status = 'suggested'
-                    p_config.owner = request.user
+                if config_form.is_valid_all():
+                    # save forms manually because we don't want to update the
+                    # original objects
                     config_form.save()
+                    # Save domains
+                    for form in domain_formset:
+                        if not form.cleaned_data or (
+                                form.cleaned_data['DELETE']):
+                            continue
+                        name = form.cleaned_data['name']
+                        domain = DomainRequest(name=name,
+                                               config=p_config)
+                        domain.save()
+                    # Save DocURL formset
+                    docurl_formset.save(commit=False)
+                    for form in docurl_formset:
+                        form.instance.pk = None
+                        if not form.cleaned_data or (
+                                form.cleaned_data['DELETE']):
+                            continue
+                        form.instance.config = p_config
+                        for desc_form in form.desc_formset:
+                            desc_form.instance.pk = None
+                            if not desc_form.cleaned_data or (
+                                    desc_form.cleaned_data['DELETE']):
+                                continue
+                    docurl_formset.save()
+                    # Save Issue
                     issue.updated_config = p_config
                     issue_form.save()
-                    for form in formset.forms:
-                        # check if domain is deleted
-                        if not form.cleaned_data or (
-                                form.cleaned_data['delete']):
-                            continue
-                        else:   # create domain requests
-                            domain = form.cleaned_data['name']
-                            claimed = DomainRequest(name=domain,
-                                                    config=p_config)
-                            claimed.save()
                     return HttpResponseRedirect(reverse('ispdb_show_issue',
                                                         args=[issue.id]))
+                else:
+                    has_errors = True
             else:
                 issue_form.save()
                 return HttpResponseRedirect(reverse('ispdb_show_issue',
                                                     args=[issue.id]))
 
     else:
-        formset = DomainFormSet(initial=initial)
-        config_form = ConfigForm(instance=config)
+        domain_formset = DomainFormSet(queryset=domain_queryset)
+        docurl_formset = DocURLFormSet(queryset=docurl_queryset)
+        config_form = ConfigForm(instance=config,
+                                 domain_formset=domain_formset,
+                                 docurl_formset=docurl_formset)
         issue = Issue(config=config)
         issue_form = IssueForm(instance=issue)
     return render_to_response('config/enter_config.html', {
-        'formset': formset,
         'config_form': config_form,
         'issue_form': issue_form,
         'action': 'report',
         'callback': reverse('ispdb_report', args=[id]),
+        'has_errors': has_errors,
     }, context_instance=RequestContext(request))
 
 def show_issue(request, id):
     issue = get_object_or_404(Issue, pk=id)
-    other_fields = []
     incoming = []
     outgoing = []
     base = []
@@ -468,29 +453,33 @@ def show_issue(request, id):
     removed_domains = set()
     added_domains = set()
     error = ""
+    new_docurl_formset = []
 
     up_conf = issue.updated_config
-    for field in issue.config._meta.fields:
-        data = {'name': field.name,
-                'verbose_name': field.verbose_name,
-                'choices': field.choices,
-                'value': getattr(issue.config, field.name)}
-        if up_conf and field in up_conf._meta.fields:
-            new_value = getattr(up_conf, field.name)
-            if data['value'] != new_value:
-                data['new_value'] = new_value
-        if field.name in ('display_name', 'display_short_name'):
-            base.append(data)
-        elif field.name.startswith('incoming'):
-            incoming.append(data)
-        elif field.name.startswith('outgoing'):
-            if field.name not in ('outgoing_add_this_server'
-                                  'outgoing_use_global_preferred_server'):
-                outgoing.append(data)
-        elif field.name in ('settings_page_url', 'settings_page_language'):
-            other_fields.append(data)
+    if up_conf:
+        for field in issue.config._meta.fields:
+            data = {'name': field.name,
+                    'verbose_name': field.verbose_name,
+                    'choices': field.choices,
+                    'value': getattr(issue.config, field.name)}
+            if up_conf and field in up_conf._meta.fields:
+                new_value = getattr(up_conf, field.name)
+                if data['value'] != new_value:
+                    data['new_value'] = new_value
+            if field.name in ('display_name', 'display_short_name'):
+                base.append(data)
+            elif field.name.startswith('incoming'):
+                incoming.append(data)
+            elif field.name.startswith('outgoing'):
+                if field.name not in ('outgoing_add_this_server'
+                                      'outgoing_use_global_preferred_server'):
+                    outgoing.append(data)
+        # Doc URLs
+        DocURLFormSet = modelformset_factory(DocURL, extra=0,
+                form=DocURLForm, formset=BaseDocURLFormSet)
+        docurl_formset = DocURLFormSet(queryset=issue.config.docurl_set.all())
+        new_docurl_formset = DocURLFormSet(queryset=up_conf.docurl_set.all())
 
-    if issue.updated_config:
         # get removed/added domains
         original_domains = []
         updated_domains = []
@@ -527,6 +516,7 @@ def show_issue(request, id):
                                     configuration.""" % (domain)
                             break;
                 if not error:
+                    # update domains
                     for domain in removed_domains:
                         d = Domain.objects.filter(name=domain)[0]
                         d.delete()
@@ -539,10 +529,16 @@ def show_issue(request, id):
                             claimed = Domain(name=domain,
                                              config=issue.config)
                             claimed.save()
-                    all_fields = base + incoming + outgoing + other_fields
+                    # update config fields
+                    all_fields = base + incoming + outgoing
                     for field in all_fields:
                         if field.has_key('new_value'):
                             setattr(issue.config, field['name'], field['new_value'])
+                    # update docurls
+                    docurl_formset.delete()
+                    for docurl in new_docurl_formset:
+                        docurl.instance.config = issue.config
+                        docurl.instance.save()
                     issue.updated_config.status = 'deleted'
                     issue.updated_config.save()
                     issue.config.save()
@@ -556,9 +552,9 @@ def show_issue(request, id):
             'base': base,
             'incoming': incoming,
             'outgoing': outgoing,
-            'other_fields': other_fields,
             'non_modified_domains': non_modified_domains,
             'removed_domains': removed_domains,
             'added_domains': added_domains,
+            'new_docurl_formset': new_docurl_formset,
             'error': error,
         }, context_instance=RequestContext(request))

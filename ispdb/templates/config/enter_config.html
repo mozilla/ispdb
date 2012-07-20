@@ -12,23 +12,77 @@
 {% block bodystart %}
 <script type="text/javascript">
 $(document).ready(function() {
-    var i = $("#id_form-TOTAL_FORMS").val();
-    var template = jQuery.format($("#template").val());
-    for (var aux=0; aux<i; aux++){
-    	var text = "Remove";
-        if ($('#id_form-'+aux+'-delete').val() == "True"){
-            $('#id_form-'+aux+'-name').attr("readonly", "readonly");
-            text = "Undo";
-	}
-        $('#id_form-'+aux+'-name').parent('td')
-		.after('<td><a class="link delete_domain" value="'+aux+'">'+text+'</a></td>!');
+    // add functions
+    function addRow(prefix, template_selector, appendto_selector) {
+      var template = jQuery.format($(template_selector).val());
+      var i = $("#id_"+prefix+"-TOTAL_FORMS").val();
+      if (i === undefined){
+        i = 0;
+      }
+      $(template(i++, prefix)).appendTo(appendto_selector);
+      $("#id_"+prefix+"-TOTAL_FORMS").val(i);
     }
-    $('.delete_domain').hide();
-
-    function addRow() {
-      $(template(i++)).appendTo("#domain_list table");
-      $("#id_form-TOTAL_FORMS").val(i);
-    }
+    $("#add_docurl").click(function() {
+      var i = $("#id_{{config_form.docurl_formset.prefix}}-TOTAL_FORMS").val();
+      addRow('{{config_form.docurl_formset.prefix}}', '#docurl_template', '#configform table:first');
+      var desc_prefix = 'desc_'+i;
+      addRow(desc_prefix, '#desc_full_template', '#configform table:first');
+    });
+    $("#add_domain").click(function() {
+      addRow('{{config_form.domain_formset.prefix}}', '#domain_template', '#domain_list table');
+    });
+    $("#configform").on("click", "a.add_desc", function() {
+      var prefix = $(this).attr('value');
+      addRow(prefix, '#desc_template', '#'+prefix+' table');
+    });
+     
+    // delete functions
+    $("#domain_list").on("click", "a.delete", function(){
+      var prefix = $(this).attr('value');
+      var check = $('#id_'+prefix+'-DELETE');
+      if (check.val() == "True"){
+        check.val("False");
+        $('#id_'+prefix+'-name').removeAttr("readonly");
+        $(this).text("Remove");
+      }else{
+        check.val("True");
+        $('#id_'+prefix+'-name').attr("readonly", "readonly");
+        $(this).text("Undo");
+      }
+    });
+    $("#configform").on("click", "a.delete.desc", function(){
+      var prefix = $(this).attr('value');
+      var check = $('#id_'+prefix+'-DELETE');
+      if (check.val() == "True"){
+        check.val("False");
+        $('#id_'+prefix+'-description').removeAttr("readonly");
+        $('#id_'+prefix+'-language').removeAttr("disabled");
+        $(this).text("Remove");
+      }else{
+        check.val("True");
+        $('#id_'+prefix+'-description').attr("readonly", "readonly");
+        $('#id_'+prefix+'-language').attr("disabled", "disabled");
+        $(this).text("Undo");
+      }
+    });
+    $("#configform").on("click", "a.delete.docurl", function(){
+      var prefix = $(this).attr('value');
+      var check = $('#id_'+prefix+'-DELETE');
+      if (check.val() == "True"){
+        check.val("False");
+        $('#id_'+prefix+'-url').removeAttr("readonly");
+        $(this).closest('tr').next('tr').show();
+        $(this).closest('tr').next('tr').next('tr').show();
+        $(this).text("Remove");
+      }else{
+        check.val("True");
+        $('#id_'+prefix+'-url').attr("readonly", "readonly");
+        $(this).closest('tr').next('tr').hide();
+        $(this).closest('tr').next('tr').next('tr').hide();
+        $(this).text("Undo");
+      }
+    });
+ 
     function showForm() {
       $("#question").hide();
       $("#submit").show();
@@ -38,46 +92,27 @@ $(document).ready(function() {
       $("#add_domain").show();
       $(".delete_domain").show();
     }
-
-    $("#add_domain").click(function() {
-      addRow();
-    });
-    
-    $("#domain_list").on("click", "a.delete_domain", function(){
-	var value = $(this).attr('value');
-	var input = $('#id_form-'+value+'-name');
-	var check = $('#id_form-'+value+'-delete');
-	if (input.attr("readonly") == "readonly"){
-	    check.val("False");
-            input.removeAttr("readonly");
-            $(this).text("Remove");
-        }else{
-	    check.val("True");
-            input.attr("readonly", "readonly");
-	    $(this).text("Undo");
-        }
-    });
-    
+   
     $("#report_link").click(function(event) {
       if($("#id_show_form").val() == "False"){
         $("#domain_list").show();
         $("#add_domain").show();
         $(".delete_domain").show();
         showForm();
-	$("#id_show_form").val("True");
-	$("#report_link").text("Don't send configuration");
+        $("#id_show_form").val("True");
+        $("#report_link").text("Don't send configuration");
       }else{
-	$("#domain_list").hide();
+        $("#domain_list").hide();
         $("#add_domain").hide();
         $(".delete_domain").hide();
-	$("#configform").hide();
-	$("#id_show_form").val("False");
-	$("#report_link").text("Send an updated configuration");
+        $("#configform").hide();
+        $("#id_show_form").val("False");
+        $("#report_link").text("Send an updated configuration");
       }
     });
 
     $("#id_incoming_username_form").focusout(function(event){
-    	$("#id_outgoing_username_form").val($(this).val());
+      $("#id_outgoing_username_form").val($(this).val());
     });
 
     {% if action == 'report' %}  
@@ -86,7 +121,7 @@ $(document).ready(function() {
       $("#submit").show();
     {% endif %}
 
-    {% if config_form.errors or formset.errors or formset.non_form_errors or action == 'edit' %}
+    {% if has_errors or action == 'edit' %}
       $("#submit").show();
       $("#question").hide();
       $("#encouragement").hide();
@@ -95,9 +130,10 @@ $(document).ready(function() {
         $("#dataful").val('asking');
         $("#voteforit").show();
       {% else %}{% if action == 'report' %}
-	if ($("#id_show_form").val() == "True"){
-          $("#report_link").click();
+      	if ($("#id_show_form").val() == "True"){
           $("#domain_list").show();
+          showForm();
+          $("#report_link").text("Don't send configuration");
         }
       {% else %}   
         $("#add_domain").show();
@@ -176,17 +212,60 @@ function AutoFillOutgoing() {
 {% endblock %}
 
 {% block content %}
-<textarea style="display:none" id="template">
+<textarea style="display:none" id="domain_template">
   <tr>
     <th>
-      <label for="id_form-{0}-name">Email domain:</label>
+        <label for="id_{1}-{0}-name">Email domain:</label>
     </th>
-    <td><input id="id_form-{0}-name" type="text" name="form-{0}-name" maxlength="100" />
-    <input type="hidden" name="form-{0}-delete" value="False" id="id_form-{0}-delete" />
+    <td><input id="id_{1}-{0}-name" type="text" name="{1}-{0}-name" maxlength="100" />
+      <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
     </td>
-    <td><a class="link delete_domain" value="{0}">Remove</a>
+    <td><a class="link delete" value="{1}-{0}">Remove</a>
     </td>
   </tr>
+</textarea>
+<textarea style="display:none" id="docurl_template">
+  <tr>
+    <th class="noborder"><label for="id_{1}-{0}-url">URL of the page describing these settings:</label></th>
+    <td class="noborder">
+      <input id="id_{1}-{0}-url" type="text" name="{1}-{0}-url" maxlength="200" />
+      <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
+      <a class="link delete docurl" value="{1}-{0}">Remove</a>
+    </td>
+  </tr>
+</textarea>
+<textarea style="display:none" id="desc_template">
+  <tr>
+    <th><label for="id_{1}-{0}-description">Description of the settings page</label>:</th>
+    <td><select name="{1}-{0}-language" id="id_{1}-{0}-language">
+      <option value="" selected="selected">---------</option>
+      <option value="en">English</option>
+      <option value="fr">Francais</option>
+    </select></td>
+    <td>
+      <input id="id_{1}-{0}-description" type="text" name="{1}-{0}-description" maxlength="100" />
+      <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
+      <a class="link delete desc" value="{1}-{0}">Remove</a>
+    </td>
+  </tr>
+</textarea>
+<textarea style="display:none" id="desc_full_template">
+  <tr><td class="noborder"><td class="noborder"><div id="{1}"><table class="tab_descs">
+    <input type="hidden" name="{1}-TOTAL_FORMS" value="1" id="id_{1}-TOTAL_FORMS" /><input type="hidden" name="{1}-INITIAL_FORMS" value="0" id="{1}-INITIAL_FORMS" /><input type="hidden" name="{1}-MAX_NUM_FORMS" id="id_{1}-MAX_NUM_FORMS" />
+    <tr>
+      <th><label for="id_{1}-{0}-description">Description of the settings page</label>:</th>
+      <td><select name="{1}-{0}-language" id="id_{1}-{0}-language">
+        <option value="" selected="selected">---------</option>
+        <option value="en">English</option>
+        <option value="fr">Francais</option>
+      </select></td>
+      <td>
+        <input id="id_{1}-{0}-description" type="text" name="{1}-{0}-description" maxlength="100" />
+        <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
+      </td>
+    </tr>
+  </table></div></td></td></tr>
+  <tr><td><td><a class="link add_desc" value="{1}">add another description</a></td></td></tr>
 </textarea>
 
 <form action="{{ callback }}" method="POST">{% csrf_token %}
@@ -208,8 +287,8 @@ function AutoFillOutgoing() {
   <div class="fieldWrapper">
     {{ issue_form.description.errors }}
     {{ issue_form.description }}
+    {{ issue_form.show_form }}
   </div>
-  {{ issue_form.show_form }}
   <div id="div_report_link"><a id="report_link" class="link">Send an updated configuration</a></div>
 {% endif %}{% endif %}{% endif %}
 
@@ -217,8 +296,27 @@ function AutoFillOutgoing() {
 
 <div id="domain_list">
   <table>
-    {{ formset.non_form_errors }}
-    {{ formset }}
+    {{ config_form.domain_formset.non_form_errors }}
+    {{ config_form.domain_formset.management_form }}
+    {% for form in  config_form.domain_formset %}
+      {{ form.non_field_errors }}
+      {{ form.id }}
+      <tr>{{ form.name.errors }}</tr>
+      <tr>
+        <th>{{ form.name.label_tag }}:</th>
+        <td>
+          {{ form.name }}
+          {{ form.DELETE }}
+        </td>
+        {% if forloop.counter0 > 0 %}
+          {% if form.DELETE.value == "True" %}
+            <td><a class="link delete" value="{{form.prefix}}">Undo</a></td>
+          {% else %}
+            <td><a class="link delete" value="{{form.prefix}}">Remove</a></td>
+          {% endif %}
+        {% endif %}
+      </tr>
+    {% endfor %}
   </table>
   <div id="add_domain" class="hidden"><a class="link">add another domain</a></div>
 </div>
@@ -232,9 +330,57 @@ function AutoFillOutgoing() {
 <div id="configform" class="hidden">
   <h3 id="encouragement">Great! Please fill in this form:</h3>
   <h3 class="hidden" id="problem">There are missing or incorrect values in the form, please fix them:</h3>
-    <table>
-      {{ config_form }}
-    </table>
+  <table>
+    {{ config_form }}
+    {{ config_form.docurl_formset.management_form }}
+    <tr><td>{{ config_form.docurl_formset.non_form_errors }}</td></tr>
+    {% for form in config_form.docurl_formset %}
+      <tr><td class="noborder">{{ form.non_field_errors }}</td></tr>
+      {{ form.id }}
+      <tr>
+        <th class="noborder">{{ form.url.label_tag }}:</th>
+        <td class="noborder">
+          {{ form.url.errors }}
+          {{ form.url }}
+          {{ form.DELETE }}
+          {% if forloop.counter0 > 0 %}
+            {% if form.DELETE.value == "True" %}
+              <a class="link delete docurl" value="{{form.prefix}}">Undo</a>
+            {% else %}
+              <a class="link delete docurl" value="{{form.prefix}}">Remove</a>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      <tr><td class="noborder"><td class="noborder"><div id="{{form.desc_formset.prefix}}"><table class="tab_descs">
+        {{ form.desc_formset.management_form }}
+        <tr><td>{{ form.desc_formset.non_form_errors }}</td></tr>
+        {% for error in form.desc_formset.non_field_errors %}
+          <tr><td>{{ error }}</td></tr>
+        {% endfor %}
+        {% for desc_form in  form.desc_formset %}
+          {{ desc_form.id }}
+          <tr>
+            <th>{{ desc_form.description.label_tag }}:</th>
+            <td>{{ desc_form.language.errors }}{{ desc_form.language }}</td>
+            <td>
+              {{ desc_form.description.errors }}{{ desc_form.description }}
+              {{ desc_form.DELETE }}
+              {% if forloop.counter0 > 0 %}
+                {% if desc_form.DELETE.value == "True" %}
+                  <a class="link delete desc" value="{{desc_form.prefix}}">Undo</a>
+                {% else %}
+                  <a class="link delete desc" value="{{desc_form.prefix}}">Remove</a>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </table></div></td></td></tr>
+      <tr><td><td><a class="link add_desc" value="{{form.desc_formset.prefix}}">add another description</a></td></td></tr>
+    {% endfor %}
+  </table>
+  <div id="add_docurl"><a class="link">add another settings page</a></div>
 </div>
 
 <div id="voteforit" class="hidden">

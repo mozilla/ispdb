@@ -13,9 +13,9 @@ success_code = httplib.FOUND
 fail_code = httplib.OK
 
 class IssueTest(TestCase):
-    fixtures = ['login_testdata', 'domain_testdata']
+    fixtures = ['login_testdata', 'issue_testdata']
 
-    def add_issue(self, updated_config=False, config_id=2):
+    def add_issue(self, updated_config=False, config_id=1):
         self.client.login(username='test', password='test')
         issue = models.Issue.objects.filter(title='Test')
         assert_false(issue)
@@ -84,18 +84,25 @@ class IssueTest(TestCase):
                                follow=True)
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "closed")
-        assert_equal("test.com", issue.config.domains.all()[0].name)
         assert_equal(issue.config.display_name, "Test")
+        assert_equal(1, len(issue.config.domains.all()))
+        assert_equal("test2.com", issue.config.domains.all()[0].name)
+        assert_equal(1, len(issue.config.docurl_set.all()))
+        docurl = issue.config.docurl_set.all()[0]
+        assert_equal("http://test2.com/", docurl.url)
+        assert_equal(len(docurl.descriptions.all()), 1)
 
 def adding_issue_form():
     return {
-            "form-TOTAL_FORMS":"2",
-            "form-INITIAL_FORMS":"1",
-            "form-MAX_NUM_FORMS": "10",
-            "form-0-name":"validdomain.com",
-            "form-0-delete":"True",
-            "form-1-name":"test.com",
-            "form-1-delete":"False",
+            "domain-TOTAL_FORMS":"2",
+            "domain-INITIAL_FORMS":"1",
+            "domain-MAX_NUM_FORMS": "10",
+            "domain-0-id":"1",
+            "domain-0-name":"test.com",
+            "domain-0-DELETE":"True",
+            "domain-1-id":"",
+            "domain-1-name":"test2.com",
+            "domain-1-DELETE":"False",
             "incoming_username_form":"%EMAILLOCALPART%",
             "outgoing_username_form":"%EMAILLOCALPART%",
             "incoming_socket_type": "plain",
@@ -104,13 +111,38 @@ def adding_issue_form():
             "display_name": "Test",
             "outgoing_socket_type": "plain",
             "outgoing_authentication": "password-encrypted",
-            "incoming_hostname": "Valid Domain",
-            "settings_page_url": "http://test.com/",
-            "display_short_name": "Valid Domain",
+            "incoming_hostname": "test.com",
+            "display_short_name": "Test",
             "incoming_port": 143,
-            "settings_page_language": "en",
-            "outgoing_hostname": "Valid Domain",
+            "outgoing_hostname": "test.com",
             "incoming_type": "imap",
+            "docurl-INITIAL_FORMS": "1",
+            "docurl-TOTAL_FORMS": "2",
+            "docurl-MAX_NUM_FORMS": "",
+            "docurl-0-id": "1",
+            "docurl-0-DELETE": "True",
+            "docurl-0-url": "http://test.com/",
+            "desc_0-INITIAL_FORMS": "1",
+            "desc_0-TOTAL_FORMS": "1",
+            "desc_0-MAX_NUM_FORMS": "",
+            "desc_0-0-id": "1",
+            "desc_0-0-DELETE": "False",
+            "desc_0-0-language": "en",
+            "desc_0-0-description": "test",
+            "docurl-1-id": "",
+            "docurl-1-DELETE": "False",
+            "docurl-1-url": "http://test2.com/",
+            "desc_1-INITIAL_FORMS": "0",
+            "desc_1-TOTAL_FORMS": "2",
+            "desc_1-MAX_NUM_FORMS": "",
+            "desc_1-0-id": "",
+            "desc_1-0-DELETE": "False",
+            "desc_1-0-language": "fr",
+            "desc_1-0-description": "test2",
+            "desc_1-1-id": "",
+            "desc_1-1-DELETE": "True",
+            "desc_1-1-language": "en",
+            "desc_1-1-description": "test3",
             "show_form":"False",
             "title":"Test",
             "description":"Test",

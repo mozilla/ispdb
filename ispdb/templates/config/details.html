@@ -260,6 +260,22 @@ $(document).ready(function() {
     </tr>
     {% endfor %}
   </table>
+  {% for docurl in docurls %}
+   <table>
+    <tr>
+      <td>{{ docurl.url.label}}:</td><td>{{ docurl.url.value}}</td>
+    </tr>
+   </table>
+    {% for desc in docurl.desc_formset %}
+       <table class="tab_desc">
+        <tr>
+          <td>{{ desc.language.label }}:</td><td>{{ desc.language|data_verbose_field }}</td>
+          <td>{{ desc.description.label }}:</td><td>{{ desc.description.value }}</td>
+        </tr>
+      </table>
+      {% endfor %}
+    {% endfor %}
+  </table>
 </div>
 </td>
 <td>

@@ -19,10 +19,11 @@ from ispdb.config import models
 def make_config(value):
     "Get the dictionary for a sample config."
     return {"asking_or_adding":"adding",
-            "form-TOTAL_FORMS":"1",
-            "form-INITIAL_FORMS":"1",
-            "form-0-name":"test%s.com" % value,
-            "form-0-delete":"False",
+            "domain-TOTAL_FORMS":"1",
+            "domain-INITIAL_FORMS":"0",
+            "domain-0-id":"",
+            "domain-0-name":"test%s.com" % value,
+            "domain-0-DELETE":"False",
             "display_name":"test%s" % value,
             "display_short_name":"test%s" % value,
             "incoming_type":"imap",
@@ -36,8 +37,19 @@ def make_config(value):
             "outgoing_socket_type":"STARTTLS",
             "outgoing_username_form":"%EMAILLOCALPART%",
             "outgoing_authentication":"password-cleartext",
-            "settings_page_url":"http://google.com/",
-            "settings_page_language":"en"}
+            "docurl-INITIAL_FORMS": "0",
+            "docurl-TOTAL_FORMS": "1",
+            "docurl-MAX_NUM_FORMS": "",
+            "docurl-0-id": "",
+            "docurl-0-DELETE": "False",
+            "docurl-0-url": "http://test%s.com/" % value,
+            "desc_0-INITIAL_FORMS": "0",
+            "desc_0-TOTAL_FORMS": "1",
+            "desc_0-MAX_NUM_FORMS": "",
+            "desc_0-0-id": "",
+            "desc_0-0-DELETE": "False",
+            "desc_0-0-language": "en",
+            "desc_0-0-description": "test%s" % value}
 
 def check_returned_xml(response, id_count):
     "Make sure the response xml has the right values."

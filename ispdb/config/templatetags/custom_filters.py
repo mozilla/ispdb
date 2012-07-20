@@ -7,7 +7,7 @@ register = template.Library()
 @register.filter
 def data_verbose(boundField, attr_name="value"):
     """
-    Returns field's data or it's verbose version 
+    Returns field's data or it's verbose version
     for a field with choices defined.
 
     Usage::
@@ -21,6 +21,21 @@ def data_verbose(boundField, attr_name="value"):
     if field.has_key("choices") and dict(field['choices']).get(data, ''):
         rv = dict(field["choices"]).get(data, "")
     return rv
+
+@register.filter
+def data_verbose_field(boundField, attr_name="value"):
+    """
+    Returns field's data or it's verbose version
+    for a field with choices defined.
+
+    Usage::
+
+        {{form.some_field|data_verbose_field}}
+    """
+    data = boundField.value()
+    field = boundField.field
+    return hasattr(field, 'choices') and dict(field.choices).get(data,'') or \
+            data
 
 @register.filter
 def is_undo_available(self):

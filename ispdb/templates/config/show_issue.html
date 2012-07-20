@@ -83,15 +83,15 @@ $(document).ready(function() {
       <h4>Base data</h4>
       <table>
         {% for field in base %}
-	<tr>
-	  {% if field.new_value %}
+          <tr>
+          {% if field.new_value %}
             <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
-	    <td><strike>{{field|data_verbose}}</strike></td>
-	    <td>{{field|data_verbose:"new_value"}}</td>
-	  {% else %}
+            <td><strike>{{field|data_verbose}}</strike></td>
+            <td>{{field|data_verbose:"new_value"}}</td>
+          {% else %}
             <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
-	  {% endif %}
-        </tr>
+          {% endif %}
+          </tr>
         {% endfor %}
       </table>
     </div>
@@ -101,13 +101,13 @@ $(document).ready(function() {
       <table>
         {% for field in incoming %}
         <tr>
-	  {% if field.new_value %}
-            <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
-	    <td><strike>{{field|data_verbose}}</strike></td>
-	    <td>{{field|data_verbose:"new_value"}}</td>
-	  {% else %}
-            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
-	  {% endif %}
+        {% if field.new_value %}
+          <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
+          <td><strike>{{field|data_verbose}}</strike></td>
+          <td>{{field|data_verbose:"new_value"}}</td>
+        {% else %}
+          <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
+        {% endif %}
         </tr>
         {% endfor %}
       </table>
@@ -118,35 +118,39 @@ $(document).ready(function() {
       <table>
         {% for field in outgoing %}
           <tr>
-	  {% if field.new_value %}
+        {% if field.new_value %}
             <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
-	    <td><strike>{{field|data_verbose}}</strike></td>
-	    <td>{{field|data_verbose:"new_value"}}</td>
-	  {% else %}
-            <td>{{ field.verbose_name|capfirst }}:</td>
-            <td>{{field|data_verbose}}</td>
-	  {% endif %}
+            <td><strike>{{field|data_verbose}}</strike></td>
+            <td>{{field|data_verbose:"new_value"}}</td>
+        {% else %}
+          <td>{{ field.verbose_name|capfirst }}:</td>
+          <td>{{field|data_verbose}}</td>
+        {% endif %}
           </tr>
         {% endfor %}
       </table>
     </div>
 
-    <div id="other_data">
-      <h4>Other Fields</h4>
-      <table>
-        {% for field in other_fields %}
+    <div id="docurl">
+      <h4>Documentation</h4>
+        {% for docurl in new_docurl_formset %}
+        <table>
           <tr>
-	  {% if field.new_value %}
-            <td class="config_changed">{{ field.verbose_name|capfirst }}:</td>
-	    <td><strike>{{field|data_verbose}}</strike></td>
-	    <td>{{field|data_verbose:"new_value"}}</td>
-	  {% else %}
-            <td>{{ field.verbose_name|capfirst }}:</td><td>{{field|data_verbose}}</td>
-	  {% endif %}
+            <td>{{ docurl.url.label}}:</td><td>{{ docurl.url.value}}</td>
           </tr>
+        </table>
+        <table class="tab_desc">
+        {% for desc in docurl.desc_formset %}
+          <tr>
+            <td>{{ desc.language.label }}:</td><td>{{ desc.language|data_verbose_field }}</td>
+            <td>{{ desc.description.label }}:</td><td>{{ desc.description.value }}</td>
+          </tr>
+        {% endfor %}
+        </table>
         {% endfor %}
       </table>
     </div>
+
   </div>
 </div>
 {% endif %}

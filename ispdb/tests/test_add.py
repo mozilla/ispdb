@@ -73,7 +73,7 @@ class AddTest(TestCase):
             dom = models.DomainRequest.objects.filter(name=name)
             assert_false(dom)
             domain_form = adding_domain_form()
-            domain_form["form-0-name"] = name
+            domain_form["domain-0-name"] = name
             res = self.client.post(reverse("ispdb_add"), domain_form)
             assert_equal(res.status_code, success_code)
             domain = models.DomainRequest.objects.get(name=name)
@@ -127,14 +127,14 @@ class AddTest(TestCase):
         assert_false(unclaimed_after)
 
         asking_form = asking_domain_form()
-        asking_form["form-0-name"] = name
+        asking_form["domain-0-name"] = name
         self.client.post(reverse("ispdb_add"), asking_form)
         unclaimed = models.DomainRequest.objects.get(name=name,
                                                      config=None)
         assert_true(unclaimed)
 
         domain_form = adding_domain_form()
-        domain_form["form-0-name"] = name
+        domain_form["domain-0-name"] = name
         self.client.post(reverse("ispdb_add"), domain_form)
         unclaimed_after = models.DomainRequest.objects.filter(name=name,
                                                               config=None)
@@ -146,10 +146,10 @@ class AddTest(TestCase):
         self.client.login(username='test', password='test')
         num_domains = 10
         domain_form = adding_domain_form()
-        domain_form["form-TOTAL_FORMS"] = num_domains
+        domain_form["domain-TOTAL_FORMS"] = num_domains
         for i in range(num_domains):
-            domain_form["form-%d-name" % i] = "test%d.com" % i
-            domain_form["form-%d-delete" % i] = "False"
+            domain_form["domain-%d-name" % i] = "test%d.com" % i
+            domain_form["domain-%d-DELETE" % i] = "False"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
         for i in range(num_domains):
@@ -161,9 +161,9 @@ class AddTest(TestCase):
         self.client.login(username='test', password='test')
         num_domains = 9
         domain_form = adding_domain_form()
-        domain_form["form-TOTAL_FORMS"] = "09"
+        domain_form["domain-TOTAL_FORMS"] = "09"
         for i in range(num_domains):
-            domain_form["form-%d-name" % i] = "test%d.com" % i
+            domain_form["domain-%d-name" % i] = "test%d.com" % i
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
         for i in range(num_domains):
@@ -174,7 +174,7 @@ class AddTest(TestCase):
         self.client.login(username='test', password='test')
         before = models.DomainRequest.objects.all().count()
         domain_form = adding_domain_form()
-        domain_form["form-TOTAL_FORMS"] = "aaa"
+        domain_form["domain-TOTAL_FORMS"] = "aaa"
         assert_raises(ValidationError,
                       self.client.post,
                       reverse("ispdb_add"),
@@ -186,10 +186,10 @@ class AddTest(TestCase):
         self.client.login(username='test', password='test')
         num_domains = 11
         domain_form = adding_domain_form()
-        domain_form["form-TOTAL_FORMS"] = num_domains
+        domain_form["domain-TOTAL_FORMS"] = num_domains
         for i in range(num_domains):
-            domain_form["form-%d-name" % i] = "test%d.com" % i
-            domain_form["form-%d-delete" % i] = "False"
+            domain_form["domain-%d-name" % i] = "test%d.com" % i
+            domain_form["domain-%d-DELETE" % i] = "False"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, fail_code)
         for i in range(num_domains):
@@ -214,7 +214,7 @@ class AddTest(TestCase):
         ]
         for domain in domains:
             domain_form = adding_domain_form()
-            domain_form["form-0-name"] = domain
+            domain_form["domain-0-name"] = domain
             res = self.client.post(reverse("ispdb_add"), domain_form)
             assert_equal(res.status_code, fail_code)
             assert_false(models.DomainRequest.objects.filter(name=domain))
@@ -222,7 +222,7 @@ class AddTest(TestCase):
     def test_add_only_deleted_domains(self):
         self.client.login(username='test', password='test')
         domain_form = adding_domain_form()
-        domain_form["form-0-delete"] = "True"
+        domain_form["domain-0-DELETE"] = "True"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, fail_code)
         model = models.DomainRequest.objects.filter(name="test.com")
@@ -231,11 +231,11 @@ class AddTest(TestCase):
     def test_add_one_deleted_domain(self):
         self.client.login(username='test', password='test')
         domain_form = adding_domain_form()
-        domain_form["form-TOTAL_FORMS"] = "2",
-        domain_form["form-0-name"] = "test.com"
-        domain_form["form-0-delete"] = "True"
-        domain_form["form-1-name"] = "test2.com"
-        domain_form["form-1-delete"] = "False"
+        domain_form["domain-TOTAL_FORMS"] = "2",
+        domain_form["domain-0-name"] = "test.com"
+        domain_form["domain-0-DELETE"] = "True"
+        domain_form["domain-1-name"] = "test2.com"
+        domain_form["domain-1-DELETE"] = "False"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
         model = models.DomainRequest.objects.filter(name="test.com")
@@ -246,30 +246,81 @@ class AddTest(TestCase):
     def test_add_duplicated_domain_names(self):
         self.client.login(username='test', password='test')
         domain_form = adding_domain_form()
-        domain_form["form-TOTAL_FORMS"] = "2",
-        domain_form["form-0-name"] = "test.com"
-        domain_form["form-0-delete"] = "False"
-        domain_form["form-1-name"] = "test.com"
-        domain_form["form-1-delete"] = "False"
+        domain_form["domain-TOTAL_FORMS"] = "2",
+        domain_form["domain-0-name"] = "test.com"
+        domain_form["domain-0-DELETE"] = "False"
+        domain_form["domain-1-name"] = "test.com"
+        domain_form["domain-1-DELETE"] = "False"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, fail_code)
         model = models.DomainRequest.objects.filter(name="test.com")
         assert_false(model)
 
+    def test_add_one_deleted_docurl(self):
+        self.client.login(username='test', password='test')
+        domain_form = adding_domain_form()
+        domain_form["docurl-TOTAL_FORMS"] = "2",
+        domain_form["docurl-0-url"] = "http://test.com"
+        domain_form["docurl-0-DELETE"] = "False"
+        domain_form["docurl-1-id"] = ""
+        domain_form["docurl-1-url"] = "http://test2.com"
+        domain_form["docurl-1-DELETE"] = "True"
+        domain_form["desc_1-INITIAL_FORMS"] = "0"
+        domain_form["desc_1-TOTAL_FORMS"] = "1"
+        domain_form["desc_1-MAX_NUM_FORMS"] = ""
+        domain_form["desc_1-0-id"] = ""
+        domain_form["desc_1-0-DELETE"] = "False"
+        domain_form["desc_1-0-language"] = "en"
+        domain_form["desc_1-0-description"] = "test2"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, success_code)
+        model = models.DocURL.objects.filter(url="http://test.com/")
+        assert_true(model)
+        model = models.DocURL.objects.filter(url="http://test2.com/")
+        assert_false(model)
+        model = models.DocURLDesc.objects.filter(description="test2")
+        assert_false(model)
+
+    def test_add_one_deleted_desc(self):
+        self.client.login(username='test', password='test')
+        domain_form = adding_domain_form()
+        domain_form["desc_0-TOTAL_FORMS"] = "2",
+        domain_form["desc_0-1-id"] = ""
+        domain_form["desc_0-1-DELETE"] = "True"
+        domain_form["desc_0-1-language"] = "en"
+        domain_form["desc_0-1-description"] = "test2"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, success_code)
+        model = models.DocURLDesc.objects.filter(description="test")
+        assert_true(model)
+        model = models.DocURLDesc.objects.filter(description="test2")
+        assert_false(model)
+
 def asking_domain_form():
     return {"asking_or_adding":"asking",
-            "form-TOTAL_FORMS":"1",
-            "form-INITIAL_FORMS":"1",
-            "form-0-name":"test.com",
-            "form-0-delete":"False"}
+            "domain-TOTAL_FORMS":"1",
+            "domain-INITIAL_FORMS":"0",
+            "domain-0-id": "",
+            "domain-0-name":"test.com",
+            "domain-0-DELETE":"False",
+            "docurl-INITIAL_FORMS": "0",
+            "docurl-TOTAL_FORMS": "1",
+            "docurl-MAX_NUM_FORMS": "",
+            "docurl-0-id": "",
+            "desc_0-INITIAL_FORMS": "0",
+            "desc_0-TOTAL_FORMS": "1",
+            "desc_0-MAX_NUM_FORMS": "",
+            "docurl-0-id": "",
+           }
 
 def adding_domain_form():
     return {"asking_or_adding":"adding",
-            "form-TOTAL_FORMS":"1",
-            "form-INITIAL_FORMS":"1",
-            "form-MAX_NUM_FORMS": "10",
-            "form-0-name":"test.com",
-            "form-0-delete":"False",
+            "domain-TOTAL_FORMS":"1",
+            "domain-INITIAL_FORMS":"0",
+            "domain-MAX_NUM_FORMS": "10",
+            "domain-0-id": "",
+            "domain-0-name":"test.com",
+            "domain-0-DELETE":"False",
             "display_name":"test",
             "display_short_name":"test",
             "incoming_type":"imap",
@@ -283,8 +334,19 @@ def adding_domain_form():
             "outgoing_socket_type":"STARTTLS",
             "outgoing_username_form":"%25EMAILLOCALPART%25",
             "outgoing_authentication":"password-cleartext",
-            "settings_page_url":"http://google.com/",
-            "settings_page_language":"en"}
+            "docurl-INITIAL_FORMS": "0",
+            "docurl-TOTAL_FORMS": "1",
+            "docurl-MAX_NUM_FORMS": "",
+            "docurl-0-id": "",
+            "docurl-0-DELETE": "False",
+            "docurl-0-url": "http://test.com/",
+            "desc_0-INITIAL_FORMS": "0",
+            "desc_0-TOTAL_FORMS": "1",
+            "desc_0-MAX_NUM_FORMS": "",
+            "desc_0-0-id": "",
+            "desc_0-0-DELETE": "False",
+            "desc_0-0-language": "en",
+            "desc_0-0-description": "test"}
 
 class ModelTest(TestCase):
     def test_simple_domain(self):
