@@ -10,6 +10,8 @@ from django.forms.formsets import BaseFormSet
 from django.forms.models import modelformset_factory
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.utils.translation import get_language_info
 import ispdb.audit as audit
 
 class Domain(models.Model):
@@ -194,14 +196,10 @@ class DocURL(models.Model):
     def __unicode__(self): return self.url
 
 class DocURLDesc(models.Model):
-    LANGUAGE_CHOICES = (
-        ('en', "English"),
-        ('fr', "Francais"),
-    )
     language = models.CharField(
-        max_length=3,
+        max_length=10,
         verbose_name="Language",
-        choices=LANGUAGE_CHOICES)
+        choices=settings.LANGUAGES)
     description = models.CharField(
         max_length=100,
         verbose_name="Description of the settings page")
@@ -242,6 +240,16 @@ class DocURLDescForm(ModelForm):
         self.empty_permitted = False
         if self.data.get(self.prefix+'-DELETE', '') == "True":
             self.disable_fields()
+        # Redefine our choices, so we can add the translated language names and
+        # sort the list by language name
+        choices = []
+        choices.append(self.fields['language'].choices[0])
+        langs = self.fields['language'].choices[1:]
+        langs.sort(key=lambda l: l[1].lower())
+        for code, lang in langs:
+            li = get_language_info(code)
+            choices.append((code, lang + ' - ' + li['name_local']))
+        self.fields['language'].choices = choices
 
     def save(self, commit=True):
         super(DocURLDescForm, self).save(commit=False)
@@ -279,7 +287,8 @@ class BaseDocURLDescFormSet(BaseModelFormSet):
             # Check for repeated languages
             if form.cleaned_data['language'] in languages:
                 raise ValidationError("Duplicated language found.")
-            languages.append(form.cleaned_data['language'])
+            if form.cleaned_data['language'] != "Other":
+                languages.append(form.cleaned_data['language'])
 
     def save(self, *args, **kwargs):
         for form in self.forms:
