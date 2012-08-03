@@ -2,23 +2,12 @@ experimental django front-end to figure out workflow of ISP database info
 for the Thunderbird autoconfig database
 
 ## Dependencies
-   *  django-1.4
-   *  django-browserid
-   *  django-nose 
-   *  lxml
-   *  dnspython
-   *  tldextract
-   *  pytz (optional)
 
-    You can install all of the above with:
+  You can install all of the dependencies with:
 
-    pip install django django-browserid django-nose lxml pytz
+  pip install -r requirements.txt
 
-    or 
-
-    pip install -r requirements.txt
-
-    Note: You may have to do an "easy_install pip" first
+  Note: You may have to do an "easy_install pip" first. See requirements.txt for details on what we depend on.
 
 ## Getting Started
 1. python ../manage.py syncdb
