@@ -252,7 +252,7 @@ class SanityTest(TestCase):
                                'password-encrypted': None
                               })
 
-    def test_sanity_view_no_erros(self):
+    def test_sanity_view_no_errors(self):
         # Set up our mock expectations.
         # _do_domain_checks for test.org and test.com
         name = dns.name.from_text('test.org.')
