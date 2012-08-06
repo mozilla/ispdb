@@ -301,3 +301,61 @@ class SanityTest(TestCase):
         self.mox.VerifyAll()
         assert_equal(len(warnings), 0)
         assert_equal(len(errors), 0)
+
+    def test_do_config_checks(self):
+        # Set up our mock expectations.
+        #plain
+        server = smtplib.SMTP('smtp.test.org', 465, timeout=TIMEOUT)
+        res = server.ehlo().AndReturn((250,
+            'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
+            '31457280\nETRN\nAUTH LOGIN PLAIN'
+            '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
+        server.quit()
+        #STARTTLS
+        server = smtplib.SMTP('smtp.test.org', 465, timeout=TIMEOUT)
+        server.ehlo()
+        server.starttls().AndReturn((220, ''))
+        res = server.ehlo().AndReturn((250,
+            'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
+            '31457280\nETRN\nAUTH LOGIN'
+            'PLAIN\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
+        server.quit()
+        #SSL
+        server = smtplib.SMTP_SSL('smtp.test.org', 465, timeout=TIMEOUT)
+        res = server.ehlo().AndReturn((250,
+            'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
+            '31457280\nETRN\nAUTH LOGIN PLAIN NTLM CRAM-MD5 GSSAPI UNSUPPORTED'
+            '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
+        server.quit()
+        self.mox.ReplayAll()
+
+        #Test methods
+        ret_plain = smtp_check_plain('smtp.test.org', 465)
+        ret_starttls = smtp_check_starttls('smtp.test.org', 465)
+        ret_ssl = smtp_check_ssl('smtp.test.org', 465)
+
+        # Verify the results (and the mock expectations.)
+        self.mox.VerifyAll()
+        assert_equal(ret_plain, {'password_cleartext': 'PLAIN',
+                                 'NTLM': None,
+                                 'password_encrypted': None,
+                                 'GSSAPI': None,
+                                 'password-cleartext': 'PLAIN',
+                                 'password-encrypted': None
+                                })
+        assert_equal(ret_starttls, {'password_cleartext': 'PLAIN',
+                                    'NTLM': None,
+                                    'password_encrypted': None,
+                                    'GSSAPI': None,
+                                    'password-cleartext': 'PLAIN',
+                                    'password-encrypted': None
+                                   })
+        assert_equal(ret_ssl, {'password_cleartext': 'PLAIN',
+                               'NTLM': 'NTLM',
+                               'password_encrypted': 'CRAM-MD5',
+                               'GSSAPI': 'GSSAPI',
+                               'password-cleartext': 'PLAIN',
+                               'password-encrypted': 'CRAM-MD5'
+                              })
+
+

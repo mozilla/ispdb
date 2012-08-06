@@ -306,15 +306,15 @@ def do_domain_checks(domains):
                 domain_warnings.append("Name servers of domain '%s' differ"
                                        " from name servers of the main "
                                        "domain '%s'."
-                                       % (domains[0], domain))
-     # Check MX records
+                                       % (domains[0].name, domain.name))
+    # Check MX records
     tlds = set()
     extract = tldextract.TLDExtract(fetch=False)
     for domain in domains:
         mxservers = get_mxservers(domain.name)
         # check if domain is valid and add it to tlds
         tld = extract(domain.name)
-        if (not tld.tld) or tld.subdomain:
+        if not (tld.tld and tld.domain):
             domain_errors.append("Domain '%s' is not valid." %
                                  (domain.name))
         else:
@@ -322,7 +322,7 @@ def do_domain_checks(domains):
         # get domain and tld from MX servers
         for server in mxservers:
             tld = extract(server)
-            if tld.tld:
+            if tld.tld and tld.domain:
                 tlds.add(tld.domain + '.' + tld.tld)
         # Check if domain has at least one MX server
         if not mxservers or len(mxservers) < 1:
@@ -330,17 +330,25 @@ def do_domain_checks(domains):
                                  (domain,))
     # Compare incoming/outgoing server TLD with tlds
     tld = extract(domains[0].config.incoming_hostname)
-    d = tld.domain + '.' + tld.tld
-    if not d in tlds:
-        domain_errors.append("Incoming server domain '%s' is different"
-                             " from the configured domains and its MX "
-                             "servers domains." % (d))
+    if not (tld.tld and tld.domain):
+        domain_errors.append("Domain '%s' is not valid." %
+                             (domains[0].config.incoming_hostname))
+    else:
+        d = tld.domain + '.' + tld.tld
+        if not d in tlds:
+            domain_errors.append("Incoming server domain '%s' is different"
+                                 " from the configured domains and its MX "
+                                 "servers domains." % (d))
     tld = extract(domains[0].config.outgoing_hostname)
-    d = tld.domain + '.' + tld.tld
-    if not d in tlds:
-        domain_errors.append("Outgoing server domain '%s' is different"
-                             " from the configured domains and its MX "
-                             "servers domains." % (d))
+    if not (tld.tld and tld.domain):
+        domain_errors.append("Domain '%s' is not valid." %
+                             (domains[0].config.outgoing_hostname))
+    else:
+        d = tld.domain + '.' + tld.tld
+        if not d in tlds:
+            domain_errors.append("Outgoing server domain '%s' is different"
+                                 " from the configured domains and its MX "
+                                 "servers domains." % (d))
     return (domain_errors, domain_warnings)
 
 
