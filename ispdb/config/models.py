@@ -215,6 +215,70 @@ def clean_port(self,field):
         raise ValidationError("Port number cannot be larger than 65535")
     return data
 
+class DynamicModelForm(ModelForm):
+    """
+    Class that represents a ModelForm which can work with our dynamic forms
+    system
+    """
+    DELETE = BooleanField(required=False, initial=False, widget=HiddenInput)
+
+    def disable_fields(self):
+        for k, field in self.fields.iteritems():
+            if k == "DELETE":
+                continue
+            field.required = False
+            w = field.widget
+            if (hasattr(w, 'input_type')) and (w.input_type in
+                    ["text", "password"]):
+                w.attrs['readonly'] = "readonly"
+            else:
+                w.attrs['disabled'] = "disabled"
+
+    def __init__(self, *args, **kwargs):
+        super(DynamicModelForm, self).__init__(*args, **kwargs)
+        self.empty_permitted = False
+        if self.data.get(self.prefix+'-DELETE', '') == "True":
+            self.disable_fields()
+
+    def clean(self, **kwargs):
+        cleaned_data = super(DynamicModelForm, self).clean(**kwargs)
+        # if form is deleted, clear errors
+        if cleaned_data['DELETE']:
+            self.errors.clear()
+        return cleaned_data
+
+
+class DynamicBaseModelFormSet(BaseModelFormSet):
+    """
+    Class that represents a BaseModelFormSet which can work with our dynamic
+    forms system
+    """
+    def __init__(self, *args, **kwargs):
+        super(DynamicBaseModelFormSet, self).__init__(*args, **kwargs)
+        self.can_delete = True
+
+    def save(self, *args, **kwargs):
+        for form in self.forms:
+            # discard unchanged empty forms
+            if (not hasattr(form, 'cleaned_data')) or (not form.cleaned_data):
+                continue
+            # discard deleted new forms
+            if form.cleaned_data['DELETE'] and not form in self.initial_forms:
+                continue
+            form.save(*args, **kwargs)
+
+    def _get_empty_form(self, **kwargs):
+        defaults = {
+            'auto_id': 'id_%s',
+            'prefix': '{1}-{0}',
+            'empty_permitted': True,
+        }
+        defaults.update(kwargs)
+        form = self.form(**defaults)
+        return form
+    empty_form = property(_get_empty_form)
+
+
 class IssueForm(ModelForm):
     show_form = BooleanField(required=False, initial=False, widget=HiddenInput)
 
@@ -222,24 +286,14 @@ class IssueForm(ModelForm):
         model = Issue
         fields = ['title', 'description']
 
-class DocURLDescForm(ModelForm):
-    DELETE = BooleanField(required=False, initial=False, widget=HiddenInput)
 
+class DocURLDescForm(DynamicModelForm):
     class Meta:
         model = DocURLDesc
         exclude = ['docurl']
 
-    def disable_fields(self):
-        self.fields['description'].required = False
-        self.fields['description'].widget.attrs['readonly'] = "readonly"
-        self.fields['language'].required = False
-        self.fields['language'].widget.attrs['disabled'] = "disabled"
-
     def __init__(self, *args, **kwargs):
         super(DocURLDescForm, self).__init__(*args, **kwargs)
-        self.empty_permitted = False
-        if self.data.get(self.prefix+'-DELETE', '') == "True":
-            self.disable_fields()
         # Redefine our choices, so we can add the translated language names and
         # sort the list by language name
         choices = []
@@ -263,56 +317,47 @@ class DocURLDescForm(ModelForm):
             super(DocURLDescForm, self).save()
         return self.instance
 
-class BaseDocURLDescFormSet(BaseModelFormSet):
+
+class BaseDocURLDescFormSet(DynamicBaseModelFormSet):
     model = DocURLDesc
 
     def __init__(self, *args, **kwargs):
-        delete = kwargs.pop('delete', False)
+        self.docurl_delete = kwargs.pop('delete', False)
         super(BaseDocURLDescFormSet, self).__init__(*args, **kwargs)
-        self.can_delete = True
-        if delete:
+        # if docurl is deleted, set required to false so they don't
+        # need to be filled
+        if self.docurl_delete:
             for form in self.forms:
-                form.disable_fields()
-                form.fields['DELETE'].initial = True
+                for k, field in form.fields.iteritems():
+                    field.required = False
 
     def clean(self, **kwargs):
         super(BaseDocURLDescFormSet, self).clean(**kwargs)
         if any(self.errors):
             return
+        deleted_forms = 0
         languages = []
         for i in range(0, self.total_form_count()):
             form = self.forms[i]
             if (not form.cleaned_data) or form.cleaned_data['DELETE']:
+                deleted_forms += 1
                 continue
             # Check for repeated languages
             if form.cleaned_data['language'] in languages:
                 raise ValidationError("Duplicated language found.")
             if form.cleaned_data['language'] != "Other":
                 languages.append(form.cleaned_data['language'])
+        # Check if all forms are deleted
+        if (not self.docurl_delete) and (self.total_form_count() == 0 or
+                self.total_form_count() == deleted_forms):
+            raise ValidationError("At least one description should be "
+                                  "specified.")
 
-    def save(self, *args, **kwargs):
-        for form in self.forms:
-            # discard unchanged empty forms
-            if (not hasattr(form, 'cleaned_data')) or (not form.cleaned_data):
-                continue
-            # discard deleted new forms
-            if form.cleaned_data['DELETE'] and not form in self.initial_forms:
-                continue
-            form.save(*args, **kwargs)
 
-class DocURLForm(ModelForm):
-    DELETE = BooleanField(required=False, initial=False, widget=HiddenInput)
-
+class DocURLForm(DynamicModelForm):
     class Meta:
         model = DocURL
         fields = ['url']
-
-    def __init__(self, *args, **kwargs):
-        super(DocURLForm, self).__init__(*args, **kwargs)
-        self.empty_permitted = False
-        if self.data.get(self.prefix+'-DELETE', '') == "True":
-            self.fields['url'].required = False
-            self.fields['url'].widget.attrs['readonly'] = "readonly"
 
     def save(self, commit=True):
         m = super(DocURLForm, self).save(commit=False)
@@ -332,14 +377,12 @@ class DocURLForm(ModelForm):
             self.desc_formset.save()
         return m
 
-class BaseDocURLFormSet(BaseModelFormSet):
+class BaseDocURLFormSet(DynamicBaseModelFormSet):
     model = DocURL
 
     def __init__(self, *args, **kwargs):
         kwargs['prefix'] = 'docurl'
         super(BaseDocURLFormSet, self).__init__(*args, **kwargs)
-        self.can_delete = True
-
         # construct description formsets
         self.DocURLDescFormSet = modelformset_factory(DocURLDesc,
                 extra=self.extra, form=DocURLDescForm,
@@ -360,6 +403,12 @@ class BaseDocURLFormSet(BaseModelFormSet):
                                                        prefix=prefix,
                                                        delete=delete,
                                                        queryset=queryset)
+        # create a empty_desc_form
+        if self.forms:
+            self.empty_desc_form = self.forms[0].desc_formset.empty_form
+        else:
+            formset = self.DocURLDescFormSet()
+            self.empty_desc_form = formset.empty_form
 
     def clean(self, **kwargs):
         super(BaseDocURLFormSet, self).clean(**kwargs)
@@ -381,25 +430,13 @@ class BaseDocURLFormSet(BaseModelFormSet):
             result = result and form.desc_formset.is_valid()
         return result
 
-    def save(self, *args, **kwargs):
-        for form in self.forms:
-            # discard unchanged empty forms
-            if (not hasattr(form, 'cleaned_data')) or (not form.cleaned_data):
-                continue
-            # discard deleted new forms
-            if form.cleaned_data['DELETE'] and not form in self.initial_forms:
-                continue
-            form.save(*args, **kwargs)
-
     def delete(self):
         for form in self.forms:
             for desc in form.desc_formset:
                 desc.instance.delete()
             form.instance.delete()
 
-class DomainForm(ModelForm):
-    DELETE = BooleanField(required=False, initial=False, widget=HiddenInput)
-
+class DomainForm(DynamicModelForm):
     class Meta:
         fields = ('name',)
 
@@ -408,13 +445,11 @@ class DomainForm(ModelForm):
             self._meta.model = DomainRequest
         super(DomainForm, self).__init__(*args, **kwargs)
         self.fields['name'].required = False
-        self.empty_permitted = False
 
     def clean(self, *args, **kwargs):
         cleaned_data = super(DomainForm, self).clean(*args, **kwargs)
         # if it is going to be deleted, dont need to to check it
         if cleaned_data["DELETE"]:
-            self.fields['name'].widget.attrs['readonly'] = "readonly"
             return cleaned_data
         if not cleaned_data.has_key('name'):
             return cleaned_data
@@ -473,13 +508,12 @@ class DomainForm(ModelForm):
             super(DomainForm, self).save()
         return self.instance
 
-class BaseDomainFormSet(BaseModelFormSet):
+class BaseDomainFormSet(DynamicBaseModelFormSet):
     model = DomainRequest
 
     def __init__(self, *args, **kwargs):
         kwargs['prefix'] = 'domain'
         super(BaseDomainFormSet, self).__init__(*args, **kwargs)
-        self.can_delete = True
 
     def clean(self):
         """Checks that at least one domain is not deleted."""
@@ -492,12 +526,12 @@ class BaseDomainFormSet(BaseModelFormSet):
         for i in range(0, self.total_form_count()):
             form = self.forms[i]
             if (not form.cleaned_data) or form.cleaned_data['DELETE']:
-                deleted_forms = deleted_forms + 1
-            else:
-                # Check for repeated domain names
-                if form.cleaned_data['name'] in names:
-                    raise ValidationError("Duplicated domain name found.")
-                names.append(form.cleaned_data['name'])
+                deleted_forms += 1
+                continue
+            # Check for repeated domain names
+            if form.cleaned_data['name'] in names:
+                raise ValidationError("Duplicated domain name found.")
+            names.append(form.cleaned_data['name'])
         # Check if all forms are deleted
         if (self.total_form_count() == 0 or
                 self.total_form_count() == deleted_forms):
@@ -505,12 +539,6 @@ class BaseDomainFormSet(BaseModelFormSet):
         # Check if number of non deleted forms is greater then max_num
         if (self.total_form_count() - deleted_forms) > self.max_num:
             raise ValidationError("Number of domains exceeded.")
-
-    def save(self, *args, **kwargs):
-        for form in self.forms:
-            if form.cleaned_data['DELETE'] and not form in self.initial_forms:
-                continue
-            form.save(*args, **kwargs)
 
 class ConfigForm(ModelForm):
     class Meta:

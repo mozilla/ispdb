@@ -12,6 +12,14 @@
 {% block bodystart %}
 <script type="text/javascript">
 $(document).ready(function() {
+    // hides
+    $(".delete").hide();
+    {% for docurl in config_form.docurl_formset %}
+    {% if docurl.DELETE.value == "True" %}
+    $("#{{docurl.desc_formset.prefix}}").hide();
+    {% endif %}
+    {% endfor %}
+
     // add functions
     function addRow(prefix, template_selector, appendto_selector) {
       var template = jQuery.format($(template_selector).val());
@@ -33,7 +41,7 @@ $(document).ready(function() {
     });
     $("#configform").on("click", "a.add_desc", function() {
       var prefix = $(this).attr('value');
-      addRow(prefix, '#desc_template', '#'+prefix+' table');
+      addRow(prefix, '#desc_template', '#'+prefix+' table.tab_descs');
     });
      
     // delete functions
@@ -71,14 +79,12 @@ $(document).ready(function() {
       if (check.val() == "True"){
         check.val("False");
         $('#id_'+prefix+'-url').removeAttr("readonly");
-        $(this).closest('tr').next('tr').show();
-        $(this).closest('tr').next('tr').next('tr').show();
+        $(this).closest('tr').next().find('div').show();
         $(this).text("Remove");
       }else{
         check.val("True");
         $('#id_'+prefix+'-url').attr("readonly", "readonly");
-        $(this).closest('tr').next('tr').hide();
-        $(this).closest('tr').next('tr').next('tr').hide();
+        $(this).closest('tr').next().find('div').hide();
         $(this).text("Undo");
       }
     });
@@ -90,21 +96,21 @@ $(document).ready(function() {
       $("#dataful").val('adding');
       $("#configform").show("fast");
       $("#add_domain").show();
-      $(".delete_domain").show();
+      $(".delete").show();
     }
    
     $("#report_link").click(function(event) {
       if($("#id_show_form").val() == "False"){
         $("#domain_list").show();
         $("#add_domain").show();
-        $(".delete_domain").show();
+        $(".delete").show();
         showForm();
         $("#id_show_form").val("True");
         $("#report_link").text("Don't send configuration");
       }else{
         $("#domain_list").hide();
         $("#add_domain").hide();
-        $(".delete_domain").hide();
+        $(".delete").hide();
         $("#configform").hide();
         $("#id_show_form").val("False");
         $("#report_link").text("Send an updated configuration");
@@ -137,7 +143,7 @@ $(document).ready(function() {
         }
       {% else %}   
         $("#add_domain").show();
-        $(".delete_domain").show();
+        $(".delete").show();
         $("#configform").show();
       {% endif %}{% endif %}
     {% endif %}
@@ -213,77 +219,59 @@ function AutoFillOutgoing() {
 
 {% block content %}
 <textarea style="display:none" id="domain_template">
+{% with config_form.domain_formset.empty_form as form %}
   <tr>
-    <th>
-        <label for="id_{1}-{0}-name">Email domain:</label>
-    </th>
-    <td><input id="id_{1}-{0}-name" type="text" name="{1}-{0}-name" maxlength="100" />
-      <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
+    <th>{{ form.name.label_tag }}:</th>
+    <td>
+      {{ form.name }}
+      {{ form.DELETE }}
     </td>
     <td><a class="link delete" value="{1}-{0}">Remove</a>
     </td>
   </tr>
+{% endwith %}
 </textarea>
 <textarea style="display:none" id="docurl_template">
+{% with config_form.docurl_formset.empty_form as form %}
   <tr>
-    <th class="noborder"><label for="id_{1}-{0}-url">URL of the page describing these settings:</label></th>
+    <th class="noborder">{{ form.url.label_tag }}:</th>
     <td class="noborder">
-      <input id="id_{1}-{0}-url" type="text" name="{1}-{0}-url" maxlength="200" />
-      <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
+      {{ form.url }}
+      {{ form.DELETE }}
       <a class="link delete docurl" value="{1}-{0}">Remove</a>
     </td>
   </tr>
+{% endwith %}
 </textarea>
 <textarea style="display:none" id="desc_template">
+{% with config_form.docurl_formset.empty_desc_form as form %}
   <tr>
-    <th><label for="id_{1}-{0}-description">Description of the settings page</label>:</th>
-    <td><select name="{1}-{0}-language" id="id_{1}-{0}-language">
-      <option value="" selected="selected">---------</option>
-      <option value="en">English</option>
-      <option value="fr">Français</option>
-      <option value="de">Deutsch</option>
-      <option value="it">Italiano</option>
-      <option value="zh">中國的</option>
-      <option value="ar">العربية</option>
-      <option value="jp">日本の</option>
-      <option value="kr">한국의</option>
-      <option value="pt">Português</option>
-      <option value="ru">русский</option>
-      <option value="es">Español</option>
-    </select></td>
+    <th>{{ form.description.label_tag }}:</th>
+    <td>{{ form.language }}</td>
     <td>
-      <input id="id_{1}-{0}-description" type="text" name="{1}-{0}-description" maxlength="100" />
-      <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
+      {{ form.description }}
+      {{ form.DELETE }}
       <a class="link delete desc" value="{1}-{0}">Remove</a>
     </td>
   </tr>
+{% endwith %}
 </textarea>
 <textarea style="display:none" id="desc_full_template">
+{% with config_form.docurl_formset.empty_desc_form as form %}
   <tr><td class="noborder"><td class="noborder"><div id="{1}"><table class="tab_descs">
     <input type="hidden" name="{1}-TOTAL_FORMS" value="1" id="id_{1}-TOTAL_FORMS" /><input type="hidden" name="{1}-INITIAL_FORMS" value="0" id="{1}-INITIAL_FORMS" /><input type="hidden" name="{1}-MAX_NUM_FORMS" id="id_{1}-MAX_NUM_FORMS" />
     <tr>
-      <th><label for="id_{1}-{0}-description">Description of the settings page</label>:</th>
-      <td><select name="{1}-{0}-language" id="id_{1}-{0}-language">
-        <option value="" selected="selected">---------</option>
-        <option value="en">English</option>
-        <option value="fr">Français</option>
-        <option value="de">Deutsch</option>
-        <option value="it">Italiano</option>
-        <option value="zh">中國的</option>
-        <option value="ar">العربية</option>
-        <option value="jp">日本の</option>
-        <option value="kr">한국의</option>
-        <option value="pt">Português</option>
-        <option value="ru">русский</option>
-        <option value="es">Español</option>
-      </select></td>
+      <th>{{ form.description.label_tag }}:</th>
+      <td>{{ form.language }}</td>
       <td>
-        <input id="id_{1}-{0}-description" type="text" name="{1}-{0}-description" maxlength="100" />
-        <input type="hidden" name="{1}-{0}-DELETE" value="False" id="id_{1}-{0}-DELETE" />
+        {{ form.description }}
+        {{ form.DELETE }}
+        <a class="link delete desc" value="{1}-{0}">Remove</a>
       </td>
     </tr>
-  </table></div></td></td></tr>
-  <tr><td><td><a class="link add_desc" value="{1}">add another description</a></td></td></tr>
+  <table><tr><td><a class="link add_desc" value="{1}">add another description</a></td></tr></table>
+  </div></td></td></tr>
+{% endwith %}
 </textarea>
 
 <form action="{{ callback }}" method="POST">{% csrf_token %}
@@ -326,12 +314,10 @@ function AutoFillOutgoing() {
           {{ form.name }}
           {{ form.DELETE }}
         </td>
-        {% if forloop.counter0 > 0 %}
-          {% if form.DELETE.value == "True" %}
-            <td><a class="link delete" value="{{form.prefix}}">Undo</a></td>
-          {% else %}
-            <td><a class="link delete" value="{{form.prefix}}">Remove</a></td>
-          {% endif %}
+        {% if form.DELETE.value == "True" %}
+          <td><a class="link delete" value="{{form.prefix}}">Undo</a></td>
+        {% else %}
+          <td><a class="link delete" value="{{form.prefix}}">Remove</a></td>
         {% endif %}
       </tr>
     {% endfor %}
@@ -361,12 +347,10 @@ function AutoFillOutgoing() {
           {{ form.url.errors }}
           {{ form.url }}
           {{ form.DELETE }}
-          {% if forloop.counter0 > 0 %}
-            {% if form.DELETE.value == "True" %}
-              <a class="link delete docurl" value="{{form.prefix}}">Undo</a>
-            {% else %}
-              <a class="link delete docurl" value="{{form.prefix}}">Remove</a>
-            {% endif %}
+          {% if form.DELETE.value == "True" %}
+            <a class="link delete docurl" value="{{form.prefix}}">Undo</a>
+          {% else %}
+            <a class="link delete docurl" value="{{form.prefix}}">Remove</a>
           {% endif %}
         </td>
       </tr>
@@ -384,18 +368,17 @@ function AutoFillOutgoing() {
             <td>
               {{ desc_form.description.errors }}{{ desc_form.description }}
               {{ desc_form.DELETE }}
-              {% if forloop.counter0 > 0 %}
-                {% if desc_form.DELETE.value == "True" %}
-                  <a class="link delete desc" value="{{desc_form.prefix}}">Undo</a>
-                {% else %}
-                  <a class="link delete desc" value="{{desc_form.prefix}}">Remove</a>
-                {% endif %}
+              {% if desc_form.DELETE.value == "True" %}
+                <a class="link delete desc" value="{{desc_form.prefix}}">Undo</a>
+              {% else %}
+                <a class="link delete desc" value="{{desc_form.prefix}}">Remove</a>
               {% endif %}
             </td>
           </tr>
         {% endfor %}
-      </table></div></td></td></tr>
-      <tr><td><td><a class="link add_desc" value="{{form.desc_formset.prefix}}">add another description</a></td></td></tr>
+      </table>
+      <table><tr><td><a class="link add_desc" value="{{form.desc_formset.prefix}}">add another description</a></td></tr></table>
+      </div></td></td></tr>
     {% endfor %}
   </table>
   <div id="add_docurl"><a class="link">add another settings page</a></div>

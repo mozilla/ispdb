@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
-from django.forms.formsets import formset_factory
 from django.forms.models import modelformset_factory
 from django.contrib.auth import logout
 from django.template import RequestContext
@@ -190,7 +189,7 @@ def edit(request, config_id):
 def add(request, domain=None):
     DomainFormSet = modelformset_factory(DomainRequest, extra=1, max_num=10,
             form=DomainForm, formset=BaseDomainFormSet)
-    DocURLFormSet = formset_factory(DocURLForm, extra=1,
+    DocURLFormSet = modelformset_factory(DocURL, extra=1, form=DocURLForm,
             formset=BaseDocURLFormSet)
     action = 'add'
     has_errors = False
