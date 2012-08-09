@@ -14,6 +14,8 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from nose.tools import *
 from ispdb.config.configChecks import *
+from ispdb.config.models import Config
+
 
 def ns_message_text(domain, ndomain):
     return ('id 1234\n'
@@ -29,6 +31,7 @@ def ns_message_text(domain, ndomain):
             ';ADDITIONAL\n'
             % {'domain': domain, 'ndomain': ndomain})
 
+
 def mx_message_text(domain, ndomain):
     return ('id 1234\n'
             'opcode QUERY\n'
@@ -42,6 +45,7 @@ def mx_message_text(domain, ndomain):
             '%(domain)s. 600 IN  MX 300  mail3.%(ndomain)s.\n'
             ';ADDITIONAL\n'
             % {'domain': domain, 'ndomain': ndomain})
+
 
 class SanityTest(TestCase):
     "A class to test the sanity view."
@@ -302,7 +306,55 @@ class SanityTest(TestCase):
         assert_equal(len(warnings), 0)
         assert_equal(len(errors), 0)
 
-    def test_do_config_checks(self):
+    def test_do_domain_checks_errors(self):
+        """ Test all import error/warnings returned by do_domain_checks
+        """
+        # Set up our mock expectations.
+        # do_domain_checks compares first name servers of the first domain
+        # with name servers of other domains. It will create a warning if we
+        # return different name servers
+        name = dns.name.from_text('test.org.')
+        message = dns.message.from_text(ns_message_text('test.org','test.org'))
+        answer = dns.resolver.Answer(name, dns.rdatatype.NS,
+                                     dns.rdataclass.IN, message)
+        dns.resolver.query('test.org', 'NS').AndReturn(answer)
+        name = dns.name.from_text('test.com.')
+        message = dns.message.from_text(ns_message_text('test.com','test.com'))
+        answer = dns.resolver.Answer(name, dns.rdatatype.NS,
+                                     dns.rdataclass.IN, message)
+        dns.resolver.query('test.com', 'NS').AndReturn(answer)
+        # now do_domain_checks will get domain name of all Domain objects and
+        # its MX servers and compare against domain names of incoming server
+        # and outgoing server. If they are different it will create an error
+        # for each server
+        name = dns.name.from_text('test.org.')
+        message = dns.message.from_text(mx_message_text('test.org','test.org'))
+        answer = dns.resolver.Answer(name, dns.rdatatype.MX,
+                                     dns.rdataclass.IN, message)
+        dns.resolver.query('test.org', 'MX').AndReturn(answer)
+        name = dns.name.from_text('test.com.')
+        message = dns.message.from_text(mx_message_text('test.com','test.com'))
+        answer = dns.resolver.Answer(name, dns.rdatatype.MX,
+                                     dns.rdataclass.IN, message)
+        dns.resolver.query('test.com', 'MX').AndReturn(answer)
+
+
+        self.mox.ReplayAll()
+
+        #Test methods
+        config = Config.objects.get(pk=1)
+        # change to a different domain
+        config.incoming_hostname = "mail.test.us"
+        config.outgoing_hostname = "mail.test.us"
+        config.save()
+        errors, warnings = do_domain_checks(config.domains.all())
+
+        # Verify the results (and the mock expectations.)
+        self.mox.VerifyAll()
+        assert_equal(len(errors), 2)
+        assert_equal(len(warnings), 1)
+
+    def test_do_config_checks_no_errors(self):
         # Set up our mock expectations.
         #plain
         server = smtplib.SMTP('smtp.test.org', 465, timeout=TIMEOUT)
@@ -357,5 +409,84 @@ class SanityTest(TestCase):
                                'password-cleartext': 'PLAIN',
                                'password-encrypted': 'CRAM-MD5'
                               })
+
+    def test_do_config_checks_socket_type_errors(self):
+        # Set up our mock expectations.
+        # Our configuration is using STARTTLS. If we return it supports SSL and
+        # it doesn't support STARTTLS, do_config_checks should return 1 error
+        # and 1 warning for each server (incoming and outgoing)
+        # IMAP SSL
+        server = imaplib.IMAP4_SSL('mail.test.com', 993)
+        server.capabilities = ('IMAP4REV1', 'SASL-IR', 'SORT',
+                'THREAD=REFERENCES', 'MULTIAPPEND',
+                'UNSELECT', 'LITERAL+', 'IDLE', 'CHILDREN', 'NAMESPACE',
+                'LOGIN-REFERRALS', 'QUOTA', 'AUTH=PLAIN', 'AUTH=LOGIN')
+        server.shutdown()
+        # IMAP STARTTLS
+        server = imaplib.IMAP4('mail.test.com', 995)
+        server.starttls().AndRaise(Exception("STARTTLS extension not supported"
+                "by server."))
+        server.shutdown()
+        # SMTP SSL
+        server = smtplib.SMTP_SSL('mail.test.com', 465, timeout=TIMEOUT)
+        res = server.ehlo().AndReturn((250,
+            'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
+            '31457280\nETRN\nAUTH LOGIN PLAIN NTLM CRAM-MD5 GSSAPI UNSUPPORTED'
+            '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
+        server.quit()
+        # SMTP STARTTLS
+        server = smtplib.SMTP('mail.test.com', 465, timeout=TIMEOUT)
+        server.ehlo()
+        server.starttls().AndRaise(smtplib.SMTPException("STARTTLS extension"
+                "not supported by server."))
+        server.quit()
+        self.mox.ReplayAll()
+
+        #Test methods
+        config = Config.objects.get(pk=1)
+        config.incoming_socket_type = 'STARTTLS'
+        config.outgoing_socket_type = 'STARTTLS'
+        config.save()
+        errors, warnings = do_config_checks(config)
+
+        # Verify the results (and the mock expectations.)
+        self.mox.VerifyAll()
+        assert_equal(len(errors), 2)
+        assert_equal(len(warnings), 2)
+
+    def test_do_config_checks_capabilities_errors(self):
+        # Set up our mock expectations.
+        # Our configuration is using password-encrypted. If we return it
+        # supports GSSAPI and doesn't support password-encrypted,
+        # do_config_checks should return 1 error and 1 warning for each server
+        # incoming and outgoing)
+        # IMAP SSL
+        server = imaplib.IMAP4_SSL('mail.test.com', 995)
+        server.capabilities = ('IMAP4REV1', 'SASL-IR', 'SORT',
+                'THREAD=REFERENCES', 'MULTIAPPEND',
+                'UNSELECT', 'LITERAL+', 'IDLE', 'CHILDREN', 'NAMESPACE',
+                'LOGIN-REFERRALS', 'QUOTA', 'AUTH=PLAIN', 'AUTH=LOGIN',
+                'AUTH=GSSAPI')
+        server.shutdown()
+        # SMTP SSL
+        server = smtplib.SMTP_SSL('mail.test.com', 465, timeout=TIMEOUT)
+        res = server.ehlo().AndReturn((250,
+            'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
+            '31457280\nETRN\nAUTH LOGIN PLAIN NTLM GSSAPI UNSUPPORTED'
+            '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
+        server.quit()
+        self.mox.ReplayAll()
+
+        #Test methods
+        config = Config.objects.get(pk=1)
+        config.incoming_authentication = 'password-encrypted'
+        config.outgoing_authentication = 'password-encrypted'
+        config.save()
+        errors, warnings = do_config_checks(config)
+
+        # Verify the results (and the mock expectations.)
+        self.mox.VerifyAll()
+        assert_equal(len(errors), 2)
+        assert_equal(len(warnings), 2)
 
 
