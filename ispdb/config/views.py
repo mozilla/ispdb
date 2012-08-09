@@ -165,9 +165,9 @@ def edit(request, config_id):
         domain_formset = DomainFormSet(request.POST, request.FILES,
                 queryset=domain_queryset)
         docurl_formset = DocURLFormSet(request.POST, request.FILES,
-                queryset=docurl_queryset)
+                queryset=docurl_queryset, meta=request.META)
         enableurl_formset = EnableURLFormSet(request.POST, request.FILES,
-                queryset=enableurl_queryset)
+                queryset=enableurl_queryset, meta=request.META)
         config_form = ConfigForm(request.POST,
                                  request.FILES,
                                  instance=config,
@@ -183,8 +183,10 @@ def edit(request, config_id):
             return HttpResponseRedirect(reverse('ispdb_details',
                                                 args=[config.id]))
     else:
-        docurl_formset = DocURLFormSet(queryset=docurl_queryset)
-        enableurl_formset = EnableURLFormSet(queryset=enableurl_queryset)
+        docurl_formset = DocURLFormSet(queryset=docurl_queryset,
+                meta=request.META)
+        enableurl_formset = EnableURLFormSet(queryset=enableurl_queryset,
+                meta=request.META)
         domain_formset = DomainFormSet(queryset=domain_queryset)
         config_form = ConfigForm(instance=config,
                                  domain_formset=domain_formset,
@@ -213,9 +215,9 @@ def add(request, domain=None):
     if request.method == 'POST': # If the form has been submitted...
         data = request.POST
         docurl_formset = DocURLFormSet(request.POST, request.FILES,
-                queryset=DocURL.objects.none())
+                queryset=DocURL.objects.none(), meta=request.META)
         enableurl_formset = EnableURLFormSet(request.POST, request.FILES,
-                queryset=EnableURL.objects.none())
+                queryset=EnableURL.objects.none(), meta=request.META)
         domain_formset = DomainFormSet(request.POST, request.FILES,
                 queryset=DomainRequest.objects.none())
         # did the user fill in a full form, or are they just asking for some
@@ -254,14 +256,15 @@ def add(request, domain=None):
             else:
                 has_errors = True
     else:
-        docurl_formset = DocURLFormSet(queryset=DocURL.objects.none())
-        enableurl_formset = EnableURLFormSet(queryset=EnableURL.objects.none())
+        docurl_formset = DocURLFormSet(queryset=DocURL.objects.none(),
+                meta=request.META)
+        enableurl_formset = EnableURLFormSet(queryset=EnableURL.objects.none(),
+                meta=request.META)
         domain_formset = DomainFormSet(initial=[{'name': domain}],
                 queryset=DomainRequest.objects.none())
         config_form = ConfigForm(domain_formset=domain_formset,
                                  docurl_formset=docurl_formset,
                                  enableurl_formset=enableurl_formset)
-
     return render_to_response('config/enter_config.html', {
         'config_form': config_form,
         'action': action,
@@ -402,9 +405,9 @@ def report(request, id):
         domain_formset = DomainFormSet(request.POST, request.FILES,
                 queryset=domain_queryset)
         docurl_formset = DocURLFormSet(request.POST, request.FILES,
-                queryset=docurl_queryset)
+                queryset=docurl_queryset, meta=request.META)
         enableurl_formset = EnableURLFormSet(request.POST, request.FILES,
-                queryset=enableurl_queryset)
+                queryset=enableurl_queryset, meta=request.META)
         p_config = Config(owner=request.user, status='suggested')
         issue = Issue(config=config, owner=request.user)
         config_form = ConfigForm(request.POST,
@@ -472,8 +475,10 @@ def report(request, id):
 
     else:
         domain_formset = DomainFormSet(queryset=domain_queryset)
-        docurl_formset = DocURLFormSet(queryset=docurl_queryset)
-        enableurl_formset = EnableURLFormSet(queryset=enableurl_queryset)
+        docurl_formset = DocURLFormSet(queryset=docurl_queryset,
+                meta=request.META)
+        enableurl_formset = EnableURLFormSet(queryset=enableurl_queryset,
+                meta=request.META)
         config_form = ConfigForm(instance=config,
                                  domain_formset=domain_formset,
                                  docurl_formset=docurl_formset,

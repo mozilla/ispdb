@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.utils.translation import get_language_info
+from django.utils.functional import curry
 import ispdb.audit as audit
 
 class Domain(models.Model):
@@ -317,11 +318,21 @@ class DocURLDescForm(DynamicModelForm):
         exclude = ['docurl']
 
     def __init__(self, *args, **kwargs):
+        http_accept_language = kwargs.pop('http_accept_language', '')
         super(DocURLDescForm, self).__init__(*args, **kwargs)
         self.fields['description'].widget.attrs.update({'rows': 2, 'cols': 20})
+        choices = []
+        # add HTTP_ACCEPTED_LANG first
+        if http_accept_language:
+            codes = re.split(';|,', http_accept_language)
+            for code in codes:
+                try:
+                    li = get_language_info(code)
+                except:
+                    continue
+                choices.append((code, li['name'] + ' - ' + li['name_local']))
         # Redefine our choices, so we can add the translated language names and
         # sort the list by language name
-        choices = []
         choices.append(self.fields['language'].choices[0])
         langs = self.fields['language'].choices[1:]
         langs.sort(key=lambda l: l[1].lower())
@@ -407,11 +418,17 @@ class BaseDocURLFormSet(DynamicBaseModelFormSet):
 
     def __init__(self, *args, **kwargs):
         kwargs['prefix'] = 'docurl'
+        # get request.META to add HTTP_ACCEPT_LANGUAGE on top of languages
+        # choices
+        meta = kwargs.pop('meta', {})
+        accept_lang = meta.get('HTTP_ACCEPT_LANGUAGE', '')
         super(BaseDocURLFormSet, self).__init__(*args, **kwargs)
         # construct description formsets
         self.DocURLDescFormSet = modelformset_factory(DocURLDesc,
                 extra=self.extra, form=DocURLDescForm,
                 formset=BaseDocURLDescFormSet)
+        self.DocURLDescFormSet.form = staticmethod(curry(DocURLDescForm,
+                http_accept_language=accept_lang))
         for index, form in enumerate(self.forms):
             prefix = 'desc_%s' % index
             data = self.data or None
@@ -468,10 +485,20 @@ class EnableURLInstForm(DynamicModelForm):
         exclude = ['enableurl']
 
     def __init__(self, *args, **kwargs):
+        http_accept_language = kwargs.pop('http_accept_language', '')
         super(EnableURLInstForm, self).__init__(*args, **kwargs)
+        choices = []
+        # add HTTP_ACCEPTED_LANG first
+        if http_accept_language:
+            codes = re.split(';|,', http_accept_language)
+            for code in codes:
+                try:
+                    li = get_language_info(code)
+                except:
+                    continue
+                choices.append((code, li['name'] + ' - ' + li['name_local']))
         # Redefine our choices, so we can add the translated language names and
         # sort the list by language name
-        choices = []
         choices.append(self.fields['language'].choices[0])
         langs = self.fields['language'].choices[1:]
         langs.sort(key=lambda l: l[1].lower())
@@ -557,11 +584,17 @@ class BaseEnableURLFormSet(DynamicBaseModelFormSet):
 
     def __init__(self, *args, **kwargs):
         kwargs['prefix'] = 'enableurl'
+        # get request.META to add HTTP_ACCEPT_LANGUAGE on top of languages
+        # choices
+        meta = kwargs.pop('meta', {})
+        accept_lang = meta.get('HTTP_ACCEPT_LANGUAGE', '')
         super(BaseEnableURLFormSet, self).__init__(*args, **kwargs)
         # construct instructions formsets
         self.EnableURLInstFormSet = modelformset_factory(EnableURLInst,
                 extra=self.extra, form=EnableURLInstForm,
                 formset=BaseEnableURLInstFormSet)
+        self.EnableURLInstFormSet.form = staticmethod(curry(EnableURLInstForm,
+                http_accept_language=accept_lang))
         for index, form in enumerate(self.forms):
             prefix = 'inst_%s' % index
             data = self.data or None
