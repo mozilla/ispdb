@@ -25,7 +25,8 @@ from django.conf import settings
 
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
     DomainRequest, BaseDomainFormSet, Issue, IssueForm, DocURL, DocURLDesc,
-    BaseDocURLFormSet, DocURLForm, DocURLDescForm, BaseDocURLDescFormSet)
+    BaseDocURLFormSet, DocURLForm, DocURLDescForm, BaseDocURLDescFormSet,
+    EnableURL, EnableURLForm, BaseEnableURLFormSet)
 from ispdb.config import serializers
 from ispdb.config.configChecks import do_domain_checks
 from ispdb.config.configChecks import do_config_checks
@@ -107,6 +108,10 @@ def details(request, id, error=None):
     DocURLFormSet = modelformset_factory(DocURL, extra=0,
             form=DocURLForm, formset=BaseDocURLFormSet)
     docurl_formset = DocURLFormSet(queryset=config.docurl_set.all())
+    # Enable URLs
+    EnableURLFormSet = modelformset_factory(EnableURL, extra=0,
+            form=EnableURLForm, formset=BaseEnableURLFormSet)
+    enableurl_formset = EnableURLFormSet(queryset=config.enableurl_set.all())
     return render_to_response("config/details.html", {
             'config': config,
             'incoming': incoming,
@@ -114,7 +119,8 @@ def details(request, id, error=None):
             'other_fields': other_fields,
             'error': error,
             'issues': config.reported_issues.filter(status="open"),
-            'docurls': docurl_formset},
+            'docurls': docurl_formset,
+            'enableurls': enableurl_formset},
         context_instance=RequestContext(request))
 
 def export_xml(request, version=None, id=None, domain=None):
@@ -149,6 +155,9 @@ def edit(request, config_id):
     DocURLFormSet = modelformset_factory(DocURL, extra=0,
             form=DocURLForm, formset=BaseDocURLFormSet)
     docurl_queryset = config.docurl_set.all()
+    EnableURLFormSet = modelformset_factory(EnableURL, extra=0,
+            form=EnableURLForm, formset=BaseEnableURLFormSet)
+    enableurl_queryset = config.enableurl_set.all()
 
     if request.method == 'POST':
         data = request.POST
@@ -157,11 +166,14 @@ def edit(request, config_id):
                 queryset=domain_queryset)
         docurl_formset = DocURLFormSet(request.POST, request.FILES,
                 queryset=docurl_queryset)
+        enableurl_formset = EnableURLFormSet(request.POST, request.FILES,
+                queryset=enableurl_queryset)
         config_form = ConfigForm(request.POST,
                                  request.FILES,
                                  instance=config,
                                  domain_formset=domain_formset,
-                                 docurl_formset=docurl_formset)
+                                 docurl_formset=docurl_formset,
+                                 enableurl_formset=enableurl_formset)
         if config_form.is_valid_all():
             config_form.save_all()
             if config.status == 'suggested':
@@ -172,10 +184,12 @@ def edit(request, config_id):
                                                 args=[config.id]))
     else:
         docurl_formset = DocURLFormSet(queryset=docurl_queryset)
+        enableurl_formset = EnableURLFormSet(queryset=enableurl_queryset)
         domain_formset = DomainFormSet(queryset=domain_queryset)
         config_form = ConfigForm(instance=config,
                                  domain_formset=domain_formset,
-                                 docurl_formset=docurl_formset)
+                                 docurl_formset=docurl_formset,
+                                 enableurl_formset=enableurl_formset)
 
     return render_to_response('config/enter_config.html', {
         'config_form': config_form,
@@ -191,6 +205,8 @@ def add(request, domain=None):
             form=DomainForm, formset=BaseDomainFormSet)
     DocURLFormSet = modelformset_factory(DocURL, extra=1, form=DocURLForm,
             formset=BaseDocURLFormSet)
+    EnableURLFormSet = modelformset_factory(EnableURL, extra=1,
+            form=EnableURLForm, formset=BaseEnableURLFormSet)
     action = 'add'
     has_errors = False
 
@@ -198,13 +214,16 @@ def add(request, domain=None):
         data = request.POST
         docurl_formset = DocURLFormSet(request.POST, request.FILES,
                 queryset=DocURL.objects.none())
+        enableurl_formset = EnableURLFormSet(request.POST, request.FILES,
+                queryset=EnableURL.objects.none())
         domain_formset = DomainFormSet(request.POST, request.FILES,
                 queryset=DomainRequest.objects.none())
         # did the user fill in a full form, or are they just asking for some
         # domains to be registered
         if data['asking_or_adding'] == 'asking':
             config_form = ConfigForm(domain_formset=domain_formset,
-                                     docurl_formset=docurl_formset)
+                                     docurl_formset=docurl_formset,
+                                     enableurl_formset=enableurl_formset)
             action = 'ask'
             if domain_formset.is_valid():
                 domain_formset.save(commit=False)
@@ -225,7 +244,8 @@ def add(request, domain=None):
                                      request.FILES,
                                      instance=config,
                                      domain_formset=domain_formset,
-                                     docurl_formset=docurl_formset)
+                                     docurl_formset=docurl_formset,
+                                     enableurl_formset=enableurl_formset)
             # All validation rules pass
             if config_form.is_valid_all():
                 config_form.save_all()
@@ -235,10 +255,12 @@ def add(request, domain=None):
                 has_errors = True
     else:
         docurl_formset = DocURLFormSet(queryset=DocURL.objects.none())
+        enableurl_formset = EnableURLFormSet(queryset=EnableURL.objects.none())
         domain_formset = DomainFormSet(initial=[{'name': domain}],
                 queryset=DomainRequest.objects.none())
         config_form = ConfigForm(domain_formset=domain_formset,
-                                 docurl_formset=docurl_formset)
+                                 docurl_formset=docurl_formset,
+                                 enableurl_formset=enableurl_formset)
 
     return render_to_response('config/enter_config.html', {
         'config_form': config_form,
@@ -371,6 +393,9 @@ def report(request, id):
     DocURLFormSet = modelformset_factory(DocURL, extra=0,
             form=DocURLForm, formset=BaseDocURLFormSet)
     docurl_queryset = config.docurl_set.all()
+    EnableURLFormSet = modelformset_factory(EnableURL, extra=0,
+            form=EnableURLForm, formset=BaseEnableURLFormSet)
+    enableurl_queryset = config.enableurl_set.all()
 
     if request.method == 'POST':
         data = request.POST
@@ -378,13 +403,16 @@ def report(request, id):
                 queryset=domain_queryset)
         docurl_formset = DocURLFormSet(request.POST, request.FILES,
                 queryset=docurl_queryset)
+        enableurl_formset = EnableURLFormSet(request.POST, request.FILES,
+                queryset=enableurl_queryset)
         p_config = Config(owner=request.user, status='suggested')
         issue = Issue(config=config, owner=request.user)
         config_form = ConfigForm(request.POST,
                                  request.FILES,
                                  instance=p_config,
                                  domain_formset=domain_formset,
-                                 docurl_formset=docurl_formset)
+                                 docurl_formset=docurl_formset,
+                                 enableurl_formset=enableurl_formset)
         issue_form = IssueForm(request.POST, instance=issue)
         if issue_form.is_valid():
             if issue_form.cleaned_data['show_form']:
@@ -415,6 +443,21 @@ def report(request, id):
                                     desc_form.cleaned_data['DELETE']):
                                 continue
                     docurl_formset.save()
+                    # Save EnableURL formset
+                    enableurl_formset.save(commit=False)
+                    for form in enableurl_formset:
+                        form.instance.pk = None
+                        if not form.cleaned_data or (
+                                form.cleaned_data['DELETE']):
+                            continue
+                        form.instance.config = p_config
+                        for inst_form in form.inst_formset:
+                            inst_form.instance.pk = None
+                            if not inst_form.cleaned_data or (
+                                    inst_form.cleaned_data['DELETE']):
+                                continue
+                    enableurl_formset.save()
+
                     # Save Issue
                     issue.updated_config = p_config
                     issue_form.save()
@@ -430,9 +473,11 @@ def report(request, id):
     else:
         domain_formset = DomainFormSet(queryset=domain_queryset)
         docurl_formset = DocURLFormSet(queryset=docurl_queryset)
+        enableurl_formset = EnableURLFormSet(queryset=enableurl_queryset)
         config_form = ConfigForm(instance=config,
                                  domain_formset=domain_formset,
-                                 docurl_formset=docurl_formset)
+                                 docurl_formset=docurl_formset,
+                                 enableurl_formset=enableurl_formset)
         issue = Issue(config=config)
         issue_form = IssueForm(instance=issue)
     return render_to_response('config/enter_config.html', {
@@ -453,6 +498,7 @@ def show_issue(request, id):
     added_domains = set()
     error = ""
     new_docurl_formset = []
+    new_enableurl_formset = []
 
     up_conf = issue.updated_config
     if up_conf:
@@ -478,6 +524,13 @@ def show_issue(request, id):
                 form=DocURLForm, formset=BaseDocURLFormSet)
         docurl_formset = DocURLFormSet(queryset=issue.config.docurl_set.all())
         new_docurl_formset = DocURLFormSet(queryset=up_conf.docurl_set.all())
+        # Enable URLs
+        EnableURLFormSet = modelformset_factory(EnableURL, extra=0,
+                form=EnableURLForm, formset=BaseEnableURLFormSet)
+        enableurl_formset = EnableURLFormSet(
+                queryset=issue.config.enableurl_set.all())
+        new_enableurl_formset = EnableURLFormSet(
+                queryset=up_conf.enableurl_set.all())
 
         # get removed/added domains
         original_domains = []
@@ -538,6 +591,12 @@ def show_issue(request, id):
                     for docurl in new_docurl_formset:
                         docurl.instance.config = issue.config
                         docurl.instance.save()
+                    # update enableurls
+                    enableurl_formset.delete()
+                    for enableurl in new_enableurl_formset:
+                        enableurl.instance.config = issue.config
+                        enableurl.instance.save()
+                    # update issue
                     issue.updated_config.status = 'deleted'
                     issue.updated_config.save()
                     issue.config.save()
@@ -555,5 +614,6 @@ def show_issue(request, id):
             'removed_domains': removed_domains,
             'added_domains': added_domains,
             'new_docurl_formset': new_docurl_formset,
+            'new_enableurl_formset': new_enableurl_formset,
             'error': error,
         }, context_instance=RequestContext(request))

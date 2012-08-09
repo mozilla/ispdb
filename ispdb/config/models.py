@@ -208,6 +208,30 @@ class DocURLDesc(models.Model):
     def __str__(self): return str(self.description)
     def __unicode__(self): return self.description
 
+
+class EnableURL(models.Model):
+    url = models.URLField(
+        verbose_name="URL of the page with enable instructions")
+    config = models.ForeignKey(Config)
+
+    def __str__(self): return str(self.url)
+    def __unicode__(self): return self.url
+
+
+class EnableURLInst(models.Model):
+    language = models.CharField(
+        max_length=10,
+        verbose_name="Language",
+        choices=settings.LANGUAGES)
+    instruction = models.CharField(
+        max_length=100,
+        verbose_name="Instruction")
+    enableurl = models.ForeignKey(EnableURL, related_name="instructions")
+
+    def __str__(self): return str(self.instruction)
+    def __unicode__(self): return self.instruction
+
+
 # Forms
 def clean_port(self,field):
     data = self.cleaned_data[field]
@@ -437,6 +461,157 @@ class BaseDocURLFormSet(DynamicBaseModelFormSet):
                 desc.instance.delete()
             form.instance.delete()
 
+
+class EnableURLInstForm(DynamicModelForm):
+    class Meta:
+        model = EnableURLInst
+        exclude = ['enableurl']
+
+    def __init__(self, *args, **kwargs):
+        super(EnableURLInstForm, self).__init__(*args, **kwargs)
+        # Redefine our choices, so we can add the translated language names and
+        # sort the list by language name
+        choices = []
+        choices.append(self.fields['language'].choices[0])
+        langs = self.fields['language'].choices[1:]
+        langs.sort(key=lambda l: l[1].lower())
+        for code, lang in langs:
+            li = get_language_info(code)
+            choices.append((code, lang + ' - ' + li['name_local']))
+        self.fields['language'].choices = choices
+
+    def save(self, commit=True):
+        super(EnableURLInstForm, self).save(commit=False)
+        if commit:
+            # delete if exists
+            if self.cleaned_data and self.cleaned_data['DELETE']:
+                if self.instance.pk:
+                    return self.instance.delete()
+                else:
+                    return None
+            super(EnableURLInstForm, self).save()
+        return self.instance
+
+
+class BaseEnableURLInstFormSet(DynamicBaseModelFormSet):
+    model = EnableURLInst
+
+    def __init__(self, *args, **kwargs):
+        self.enableurl_delete = kwargs.pop('delete', False)
+        super(BaseEnableURLInstFormSet, self).__init__(*args, **kwargs)
+        # if enableurl is deleted, set required to false so they don't
+        # need to be filled
+        if self.enableurl_delete:
+            for form in self.forms:
+                for k, field in form.fields.iteritems():
+                    field.required = False
+
+    def clean(self, **kwargs):
+        super(BaseEnableURLInstFormSet, self).clean(**kwargs)
+        if any(self.errors):
+            return
+        deleted_forms = 0
+        languages = []
+        for i in range(0, self.total_form_count()):
+            form = self.forms[i]
+            if (not form.cleaned_data) or form.cleaned_data['DELETE']:
+                deleted_forms += 1
+                continue
+            # Check for repeated languages
+            if form.cleaned_data['language'] in languages:
+                raise ValidationError("Duplicated language found.")
+            if form.cleaned_data['language'] != "Other":
+                languages.append(form.cleaned_data['language'])
+        # Check if all forms are deleted
+        if (not self.enableurl_delete) and (self.total_form_count() == 0 or
+                self.total_form_count() == deleted_forms):
+            raise ValidationError("At least one instruction should be "
+                                  "specified.")
+
+
+class EnableURLForm(DynamicModelForm):
+    class Meta:
+        model = EnableURL
+        fields = ['url']
+
+    def save(self, commit=True):
+        m = super(EnableURLForm, self).save(commit=False)
+        self.inst_formset.save(commit=False)
+        if commit:
+            if self.cleaned_data and self.cleaned_data['DELETE']:
+                # delete enableurl and instruction forms
+                if self.instance.pk:
+                    for form in self.inst_formset:
+                        if form.instance.pk:
+                            form.instance.delete()
+                    self.instance.delete()
+                return None
+            m = super(EnableURLForm, self).save()
+            for form in self.inst_formset:
+                form.instance.enableurl = m
+            self.inst_formset.save()
+        return m
+
+class BaseEnableURLFormSet(DynamicBaseModelFormSet):
+    model = EnableURL
+
+    def __init__(self, *args, **kwargs):
+        kwargs['prefix'] = 'enableurl'
+        super(BaseEnableURLFormSet, self).__init__(*args, **kwargs)
+        # construct instructions formsets
+        self.EnableURLInstFormSet = modelformset_factory(EnableURLInst,
+                extra=self.extra, form=EnableURLInstForm,
+                formset=BaseEnableURLInstFormSet)
+        for index, form in enumerate(self.forms):
+            prefix = 'inst_%s' % index
+            data = self.data or None
+            delete = False
+            if self.queryset:
+                qs = EnableURLInst.objects.filter(enableurl=form.instance)
+            else:
+                qs = EnableURLInst.objects.none()
+            # if form is deleted, delete the instructions
+            if (self.data and
+                    self.data.get(form.prefix+'-DELETE', '') == "True"):
+                delete = True
+            form.inst_formset = self.EnableURLInstFormSet(data=data,
+                                                          prefix=prefix,
+                                                          delete=delete,
+                                                          queryset=qs)
+        # create a empty_inst_form
+        if self.forms:
+            self.empty_inst_form = self.forms[0].inst_formset.empty_form
+        else:
+            formset = self.EnableURLInstFormSet()
+            self.empty_inst_form = formset.empty_form
+
+    def clean(self, **kwargs):
+        super(BaseEnableURLFormSet, self).clean(**kwargs)
+        if any(self.errors):
+            return
+        urls = []
+        for i in range(0, self.total_form_count()):
+            form = self.forms[i]
+            if (not form.cleaned_data) or form.cleaned_data['DELETE']:
+                continue
+            # Check for repeated urls
+            if form.cleaned_data['url'] in urls:
+                raise ValidationError("Duplicated URL found.")
+            urls.append(form.cleaned_data['url'])
+
+    def is_valid(self, *args, **kwargs):
+        result = super(BaseEnableURLFormSet, self).is_valid(*args, **kwargs)
+        for form in self.forms:
+            result = result and form.inst_formset.is_valid()
+        return result
+
+    def delete(self):
+        for form in self.forms:
+            for inst in form.inst_formset:
+                inst.instance.delete()
+            form.instance.delete()
+
+
 class DomainForm(DynamicModelForm):
     class Meta:
         fields = ('name',)
@@ -560,10 +735,13 @@ class ConfigForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.domain_formset = kwargs.pop('domain_formset', None)
         self.docurl_formset = kwargs.pop('docurl_formset', None)
+        self.enableurl_formset = kwargs.pop('enableurl_formset', None)
         if not self.domain_formset:
             raise(Exception('Domain formset required.'))
         if not self.docurl_formset:
             raise(Exception('DocURL formset required.'))
+        if not self.enableurl_formset:
+            raise(Exception('EnableURL formset required.'))
         super(ConfigForm, self).__init__(*args, **kwargs)
 
     def clean_incoming_port(self):
@@ -575,7 +753,8 @@ class ConfigForm(ModelForm):
     def is_valid_all(self, *args, **kwargs):
         return (self.is_valid(*args, **kwargs) and
                 self.domain_formset.is_valid(*args, **kwargs) and
-                self.docurl_formset.is_valid(*args, **kwargs))
+                self.docurl_formset.is_valid(*args, **kwargs) and
+                self.enableurl_formset.is_valid(*args, **kwargs))
 
     def save_all(self, *args, **kwargs):
         super(ConfigForm, self).save(*args, **kwargs)
@@ -589,3 +768,8 @@ class ConfigForm(ModelForm):
         for form in self.docurl_formset:
             form.instance.config = self.instance
         self.docurl_formset.save()
+        # Save EnableURL formset
+        self.enableurl_formset.save(commit=False)
+        for form in self.enableurl_formset:
+            form.instance.config = self.instance
+        self.enableurl_formset.save()

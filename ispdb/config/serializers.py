@@ -69,6 +69,14 @@ def xmlOneDotOne(data):
         text = unicode(text)
 
       e.text = text
+    # EnableURL
+    for enableurl in data.enableurl_set.all():
+        enable = ET.SubElement(emailProvider, "enable")
+        enable.attrib["visiturl"] = enableurl.url
+        for inst in enableurl.instructions.all():
+            d = ET.SubElement(enable, "instruction")
+            d.attrib["lang"] = inst.language
+            d.text = unicode(inst.instruction)
     # DocURL
     for docurl in data.docurl_set.all():
         doc = ET.SubElement(emailProvider, "documentation")

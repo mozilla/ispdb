@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 
-import httplib
 from urllib import quote_plus
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from nose.tools import *
 from ispdb.config import models
+from ispdb.tests.common import adding_domain_form
+from ispdb.tests.common import success_code, fail_code
 
-# Redirect to /add/ on success
-success_code = httplib.FOUND
-# Return with form errors if form is invalid
-fail_code = httplib.OK
+def adding_issue_form():
+    form = adding_domain_form()
+    form['show_form'] = 'False'
+    form['title'] = 'Test'
+    form['description'] = 'Test'
+    return form
+
 
 class IssueTest(TestCase):
     fixtures = ['login_testdata', 'issue_testdata']
@@ -20,6 +24,22 @@ class IssueTest(TestCase):
         issue = models.Issue.objects.filter(title='Test')
         assert_false(issue)
         form = adding_issue_form()
+        form["domain-INITIAL_FORMS"] = "1"
+        form["domain-0-id"] = "1"
+        form["domain-0-name"] = "test1.com"
+        form["display_name"] = "testing2"
+        form["docurl-INITIAL_FORMS"] = "1"
+        form["docurl-0-id"] = "1"
+        form["docurl-0-url"] = "http://test1.com/"
+        form["desc_0-INITIAL_FORMS"] = "1"
+        form["desc_0-0-id"] = "1"
+        form["desc_0-0-description"] = "test1"
+        form["enableurl-INITIAL_FORMS"] = "1"
+        form["enableurl-0-id"] = "1"
+        form["enableurl-0-url"] = "http://test1.com/"
+        form["inst_0-INITIAL_FORMS"] = "1"
+        form["inst_0-0-id"] = "1"
+        form["inst_0-0-instruction"] = "test1"
         if updated_config:
             form['show_form'] = 'True'
         res = self.client.post(reverse("ispdb_report", args=[config_id]), form)
@@ -84,67 +104,20 @@ class IssueTest(TestCase):
                                follow=True)
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "closed")
-        assert_equal(issue.config.display_name, "Test")
+        assert_equal(issue.config.display_name, "testing2")
         assert_equal(1, len(issue.config.domains.all()))
-        assert_equal("test2.com", issue.config.domains.all()[0].name)
-        assert_equal(1, len(issue.config.docurl_set.all()))
+        assert_equal("test1.com", issue.config.domains.all()[0].name)
+        # doc url
+        assert_equal(len(issue.config.docurl_set.all()), 1)
         docurl = issue.config.docurl_set.all()[0]
-        assert_equal("http://test2.com/", docurl.url)
+        assert_equal(docurl.url, 'http://test1.com/')
         assert_equal(len(docurl.descriptions.all()), 1)
-
-def adding_issue_form():
-    return {
-            "domain-TOTAL_FORMS":"2",
-            "domain-INITIAL_FORMS":"1",
-            "domain-MAX_NUM_FORMS": "10",
-            "domain-0-id":"1",
-            "domain-0-name":"test.com",
-            "domain-0-DELETE":"True",
-            "domain-1-id":"",
-            "domain-1-name":"test2.com",
-            "domain-1-DELETE":"False",
-            "incoming_username_form":"%EMAILLOCALPART%",
-            "outgoing_username_form":"%EMAILLOCALPART%",
-            "incoming_socket_type": "plain",
-            "outgoing_port": 587,
-            "incoming_authentication": "password-encrypted",
-            "display_name": "Test",
-            "outgoing_socket_type": "plain",
-            "outgoing_authentication": "password-encrypted",
-            "incoming_hostname": "test.com",
-            "display_short_name": "Test",
-            "incoming_port": 143,
-            "outgoing_hostname": "test.com",
-            "incoming_type": "imap",
-            "docurl-INITIAL_FORMS": "1",
-            "docurl-TOTAL_FORMS": "2",
-            "docurl-MAX_NUM_FORMS": "",
-            "docurl-0-id": "1",
-            "docurl-0-DELETE": "True",
-            "docurl-0-url": "http://test.com/",
-            "desc_0-INITIAL_FORMS": "1",
-            "desc_0-TOTAL_FORMS": "1",
-            "desc_0-MAX_NUM_FORMS": "",
-            "desc_0-0-id": "1",
-            "desc_0-0-DELETE": "False",
-            "desc_0-0-language": "en",
-            "desc_0-0-description": "test",
-            "docurl-1-id": "",
-            "docurl-1-DELETE": "False",
-            "docurl-1-url": "http://test2.com/",
-            "desc_1-INITIAL_FORMS": "0",
-            "desc_1-TOTAL_FORMS": "2",
-            "desc_1-MAX_NUM_FORMS": "",
-            "desc_1-0-id": "",
-            "desc_1-0-DELETE": "False",
-            "desc_1-0-language": "fr",
-            "desc_1-0-description": "test2",
-            "desc_1-1-id": "",
-            "desc_1-1-DELETE": "True",
-            "desc_1-1-language": "en",
-            "desc_1-1-description": "test3",
-            "show_form":"False",
-            "title":"Test",
-            "description":"Test",
-            "asking_or_adding":"adding",
-           }
+        desc = docurl.descriptions.all()[0]
+        assert_equal(desc.description, 'test1')
+        # enable URL
+        assert_equal(len(issue.config.enableurl_set.all()), 1)
+        enableurl = issue.config.enableurl_set.all()[0]
+        assert_equal(enableurl.url, 'http://test1.com/')
+        assert_equal(len(enableurl.instructions.all()), 1)
+        inst = enableurl.instructions.all()[0]
+        assert_equal(inst.instruction, 'test1')

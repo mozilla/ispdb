@@ -18,7 +18,8 @@ from ispdb.config import models
 
 def make_config(value):
     "Get the dictionary for a sample config."
-    return {"asking_or_adding":"adding",
+    return {
+            "asking_or_adding":"adding",
             "domain-TOTAL_FORMS":"1",
             "domain-INITIAL_FORMS":"0",
             "domain-0-id":"",
@@ -49,7 +50,22 @@ def make_config(value):
             "desc_0-0-id": "",
             "desc_0-0-DELETE": "False",
             "desc_0-0-language": "en",
-            "desc_0-0-description": "test%s" % value}
+            "desc_0-0-description": "test%s" % value,
+            "enableurl-INITIAL_FORMS": "0",
+            "enableurl-TOTAL_FORMS": "1",
+            "enableurl-MAX_NUM_FORMS": "",
+            "enableurl-0-id": "",
+            "enableurl-0-DELETE": "False",
+            "enableurl-0-url": "http://test%s.com/" % value,
+            "inst_0-INITIAL_FORMS": "0",
+            "inst_0-TOTAL_FORMS": "1",
+            "inst_0-MAX_NUM_FORMS": "",
+            "inst_0-0-id": "",
+            "inst_0-0-DELETE": "False",
+            "inst_0-0-language": "en",
+            "inst_0-0-instruction": "test%s" % value
+           }
+
 
 def check_returned_xml(response, id_count):
     "Make sure the response xml has the right values."
@@ -69,10 +85,12 @@ def check_returned_xml(response, id_count):
     for (n,i) in enumerate(exports):
         assert_equal(i.text, "/export_xml/%d" % (n+1))
 
+
 def check_returned_html(response, id_count):
     assert_equal(response.template[0].name, "config/list.html")
     configs = response.context[0]["configs"]
     assert_equal(len(configs), id_count)
+
 
 class ListTest(TestCase):
     "A class to test the list view."

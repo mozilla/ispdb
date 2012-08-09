@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import httplib
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.forms import ValidationError
 from django.utils import timezone
 from nose.tools import *
 from ispdb.config import models
-
-# Redirect to /add/ on success
-success_code = httplib.FOUND
-# Return with form errors if form is invalid
-fail_code = httplib.OK
+from ispdb.tests.common import adding_domain_form, asking_domain_form
+from ispdb.tests.common import success_code, fail_code
 
 class AddTest(TestCase):
     fixtures = ['login_testdata.json']
@@ -296,57 +292,46 @@ class AddTest(TestCase):
         model = models.DocURLDesc.objects.filter(description="test2")
         assert_false(model)
 
-def asking_domain_form():
-    return {"asking_or_adding":"asking",
-            "domain-TOTAL_FORMS":"1",
-            "domain-INITIAL_FORMS":"0",
-            "domain-0-id": "",
-            "domain-0-name":"test.com",
-            "domain-0-DELETE":"False",
-            "docurl-INITIAL_FORMS": "0",
-            "docurl-TOTAL_FORMS": "1",
-            "docurl-MAX_NUM_FORMS": "",
-            "docurl-0-id": "",
-            "desc_0-INITIAL_FORMS": "0",
-            "desc_0-TOTAL_FORMS": "1",
-            "desc_0-MAX_NUM_FORMS": "",
-            "docurl-0-id": "",
-           }
+    def test_add_one_deleted_enableurl(self):
+        self.client.login(username='test', password='test')
+        domain_form = adding_domain_form()
+        domain_form["enableurl-TOTAL_FORMS"] = "2",
+        domain_form["enableurl-0-url"] = "http://test.com"
+        domain_form["enableurl-0-DELETE"] = "False"
+        domain_form["enableurl-1-id"] = ""
+        domain_form["enableurl-1-url"] = "http://test2.com"
+        domain_form["enableurl-1-DELETE"] = "True"
+        domain_form["inst_1-INITIAL_FORMS"] = "0"
+        domain_form["inst_1-TOTAL_FORMS"] = "1"
+        domain_form["inst_1-MAX_NUM_FORMS"] = ""
+        domain_form["inst_1-0-id"] = ""
+        domain_form["inst_1-0-DELETE"] = "False"
+        domain_form["inst_1-0-language"] = "en"
+        domain_form["inst_1-0-instruction"] = "test2"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, success_code)
+        model = models.EnableURL.objects.filter(url="http://test.com/")
+        assert_true(model)
+        model = models.EnableURL.objects.filter(url="http://test2.com/")
+        assert_false(model)
+        model = models.EnableURLInst.objects.filter(instruction="test2")
+        assert_false(model)
 
-def adding_domain_form():
-    return {"asking_or_adding":"adding",
-            "domain-TOTAL_FORMS":"1",
-            "domain-INITIAL_FORMS":"0",
-            "domain-MAX_NUM_FORMS": "10",
-            "domain-0-id": "",
-            "domain-0-name":"test.com",
-            "domain-0-DELETE":"False",
-            "display_name":"test",
-            "display_short_name":"test",
-            "incoming_type":"imap",
-            "incoming_hostname":"foo",
-            "incoming_port":"333",
-            "incoming_socket_type":"plain",
-            "incoming_authentication":"password-cleartext",
-            "incoming_username_form":"%25EMAILLOCALPART%25",
-            "outgoing_hostname":"bar",
-            "outgoing_port":"334",
-            "outgoing_socket_type":"STARTTLS",
-            "outgoing_username_form":"%25EMAILLOCALPART%25",
-            "outgoing_authentication":"password-cleartext",
-            "docurl-INITIAL_FORMS": "0",
-            "docurl-TOTAL_FORMS": "1",
-            "docurl-MAX_NUM_FORMS": "",
-            "docurl-0-id": "",
-            "docurl-0-DELETE": "False",
-            "docurl-0-url": "http://test.com/",
-            "desc_0-INITIAL_FORMS": "0",
-            "desc_0-TOTAL_FORMS": "1",
-            "desc_0-MAX_NUM_FORMS": "",
-            "desc_0-0-id": "",
-            "desc_0-0-DELETE": "False",
-            "desc_0-0-language": "en",
-            "desc_0-0-description": "test"}
+    def test_add_one_deleted_inst(self):
+        self.client.login(username='test', password='test')
+        domain_form = adding_domain_form()
+        domain_form["inst_0-TOTAL_FORMS"] = "2",
+        domain_form["inst_0-1-id"] = ""
+        domain_form["inst_0-1-DELETE"] = "True"
+        domain_form["inst_0-1-language"] = "en"
+        domain_form["inst_0-1-instruction"] = "test2"
+        res = self.client.post(reverse("ispdb_add"), domain_form)
+        assert_equal(res.status_code, success_code)
+        model = models.EnableURLInst.objects.filter(instruction="test")
+        assert_true(model)
+        model = models.EnableURLInst.objects.filter(instruction="test2")
+        assert_false(model)
+
 
 class ModelTest(TestCase):
     def test_simple_domain(self):

@@ -76,6 +76,22 @@
             "description": "test2",
             "language": "fr"
         }
+    },
+    {
+        "pk": 1,
+        "model": "config.enableurl",
+        "fields": {
+            "url": "http://test.com/",
+            "config": 1
+        }
+    },
+    {
+        "pk": 1,
+        "model": "config.enableurlinst",
+        "fields": {
+            "enableurl": 1,
+            "instruction": "test",
+            "language": "en"
+        }
     }
-
 ]

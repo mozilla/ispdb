@@ -248,18 +248,11 @@ $(document).ready(function() {
     </td>
     </tr>
   </table>
-
 </div>
 
-<div id="other_data">
-  <h4>Other Fields</h4>
-  <table>
-    {% for field in other_fields %}
-    <tr>
-      <td>{{ field.verbose_name|capfirst }}:</td><td>{{field.value}}</td>
-    </tr>
-    {% endfor %}
-  </table>
+{% if docurls %}
+<div id="docurl">
+  <h4>Documentation</h4>
   {% for docurl in docurls %}
    <table>
     <tr>
@@ -274,6 +267,39 @@ $(document).ready(function() {
       </table>
     {% endfor %}
   {% endfor %}
+</div>
+{% endif %}
+
+{% if enableurls %}
+<div id="enableurl">
+  <h4>Enable Instructions</h4>
+  {% for enableurl in enableurls %}
+    <table>
+      <tr>
+        <td>{{ enableurl.url.label}}:</td><td>{{ enableurl.url.value}}</td>
+      </tr>
+    </table>
+    {% for inst in enableurl.inst_formset %}
+      <table class="tab_inst">
+        <tr>
+          <td>{{ inst.language.label }}:</td><td>{{ inst.language|data_verbose_field }}</td>
+          <td>{{ inst.instruction.label }}:</td><td>{{ inst.instruction.value }}</td>
+        </tr>
+      </table>
+    {% endfor %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<div id="other_data">
+  <h4>Other Fields</h4>
+  <table>
+    {% for field in other_fields %}
+    <tr>
+      <td>{{ field.verbose_name|capfirst }}:</td><td>{{field.value}}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </div>
 </td>
 <td>

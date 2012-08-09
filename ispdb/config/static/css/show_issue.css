@@ -63,6 +63,6 @@
   float: right;
 }
 
-.tab_desc {
+.tab_desc, .tab_inst {
   margin-left: 10px;
 }
