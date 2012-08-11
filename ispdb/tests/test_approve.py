@@ -22,6 +22,17 @@ class ApproveTest(TestCase):
         goodRedirect = "/login/?next=%s" % (quote_plus("/approve/1"))
         self.assertRedirects(result, goodRedirect)
 
+    def test_locked_config(self):
+        config = Config.objects.get(id=1)
+        config.locked = True
+        config.save()
+        result = self.client.post("/approve/1", {
+                                "approved": True,
+                            }, follow=True)
+        config = Config.objects.get(id=1)
+        # Should not have changed the config
+        assert_equal(config.status, 'requested')
+
     def test_authenticated_user(self):
         user_info = {"username": "test_admin", "password": "test"}
         self.client.login(**user_info)

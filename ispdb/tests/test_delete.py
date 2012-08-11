@@ -42,6 +42,19 @@ class DeleteTest(TestCase):
         goodRedirect = "/login/"
         self.assertRedirects(res, goodRedirect)
 
+    def test_delete_locked_config(self):
+        config = models.Config.objects.get(pk=1)
+        config.locked = True
+        config.save()
+        self.client.login(username='test_admin', password='test')
+        config = models.Config.objects.get(pk=1)
+        assert_true(config.status != 'deleted')
+        res = self.client.post(reverse("ispdb_delete", args=[1]),
+                               {'delete':'delete'})
+        self.client.logout()
+        config = models.Config.objects.get(pk=1)
+        assert_true(config.status != 'deleted')
+
     def test_delete_domainrequest(self):
         self.delete_domain(1)
         config = models.Config.objects.get(pk=1)

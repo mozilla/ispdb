@@ -77,7 +77,7 @@ class Config(models.Model):
                               on_delete=models.SET_NULL)
     last_update_datetime = models.DateTimeField(auto_now=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
-    deleted_datetime = models.DateTimeField(null=True)
+    deleted_datetime = models.DateTimeField(null=True, blank=True)
     CONFIG_CHOICES = [
         ("requested", "requested"),
         ("suggested", "suggested"),
@@ -86,8 +86,9 @@ class Config(models.Model):
         ("deleted", "deleted"),
     ]
     status = models.CharField(max_length=20, choices = CONFIG_CHOICES)
-    last_status = models.CharField(max_length=20, choices = CONFIG_CHOICES)
-    email_provider_id = models.CharField(max_length=50)
+    last_status = models.CharField(max_length=20, choices = CONFIG_CHOICES,
+            blank=True)
+    email_provider_id = models.CharField(max_length=50, blank=True)
     display_name = models.CharField(
         max_length=100,
         verbose_name="The name of this ISP",
@@ -171,6 +172,7 @@ class Config(models.Model):
 
     flagged_as_incorrect = models.BooleanField()
     flagged_by_email = models.EmailField(blank=True)
+    locked = models.BooleanField()
 
     history = audit.AuditTrail()
 
@@ -739,6 +741,7 @@ class ConfigForm(ModelForm):
                    'outgoing_add_this_server',
                    'outgoing_use_global_preferred_server',
                    'owner',
+                   'locked',
                    ]
     incoming_type = ChoiceField(widget=RadioSelect,
                                 choices=Config.INCOMING_TYPE_CHOICES)
