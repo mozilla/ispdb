@@ -19,7 +19,7 @@ def get_nameservers(domain):
     try:
         answers = dns.resolver.query(domain, 'NS')
     except:
-        return None
+        return []
     nservers = []
     for ns in answers:
         nservers.append(str(ns))
@@ -30,7 +30,7 @@ def get_mxservers(domain):
     try:
         answers = dns.resolver.query(domain, 'MX')
     except:
-        return None
+        return []
     mxservers = []
     for server in answers:
         srv = str(server).split(' ')[1]
