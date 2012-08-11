@@ -27,6 +27,8 @@ from django.conf import settings
 from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
     DomainRequest, BaseDomainFormSet, Issue, IssueForm)
 from ispdb.config import serializers
+from ispdb.config.configChecks import do_domain_checks
+from ispdb.config.configChecks import do_config_checks
 
 @login_required
 def comment_post_wrapper(request):
@@ -360,6 +362,17 @@ def approve(request, id):
         comment.save()
 
     return HttpResponseRedirect('/details/' + id) # Redirect after POST
+
+@permission_required("config.can_approve")
+def sanity(request, id):
+    config = get_object_or_404(Config, pk=id)
+    domains = config.domains.all() or config.domainrequests.all()
+    domain_errors, domain_warnings = do_domain_checks(domains)
+    config_errors, config_warnings = do_config_checks(config)
+    data = simplejson.dumps({"errors" : domain_errors + config_errors,
+                             "warnings" : domain_warnings + config_warnings,
+                            })
+    return HttpResponse(data, mimetype='application/json')
 
 @login_required
 def delete(request, id):

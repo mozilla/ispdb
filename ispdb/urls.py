@@ -42,6 +42,8 @@ urlpatterns = patterns('',
     url(r'^report/(?P<id>\d+)', 'ispdb.config.views.report', name='ispdb_report'),
     url(r'^show_issue/(?P<id>\d+)', 'ispdb.config.views.show_issue',
         name='ispdb_show_issue'),
+    url(r'^sanity/(?P<id>\d+)', 'ispdb.config.views.sanity',
+        name='ispdb_sanity'),
 )
 
 urlpatterns += staticfiles_urlpatterns()

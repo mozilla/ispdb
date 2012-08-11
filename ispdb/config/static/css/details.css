@@ -65,3 +65,28 @@
   font-size: 12px;
 }
 
+#sanity_checks{
+  margin-top: 15px;
+}
+
+.error {
+  background:url(../img/error-icon.png);
+  background-size:15px 15px;
+  background-repeat: no-repeat;
+  padding: 0px 0 3px 23px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.warning {
+  background:url(../img/warning-icon.png);
+  background-size:15px 15px;
+  background-repeat: no-repeat;
+  padding: 2px 0 3px 23px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+#sanity_results {
+  margin-top: 10px;
+} 
