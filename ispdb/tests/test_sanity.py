@@ -67,11 +67,13 @@ class SanityTest(TestCase):
     def test_dns_methods(self):
         # Set up our mock expectations.
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(ns_message_text('test.org','test.org'))
+        message = dns.message.from_text(ns_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'NS').AndReturn(answer)
-        message = dns.message.from_text(mx_message_text('test.org','test.org'))
+        message = dns.message.from_text(mx_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'MX').AndReturn(answer)
@@ -259,22 +261,26 @@ class SanityTest(TestCase):
         # Set up our mock expectations.
         # _do_domain_checks for test.org and test.com
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(ns_message_text('test.org','test.org'))
+        message = dns.message.from_text(ns_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'NS').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(ns_message_text('test.com','test.org'))
+        message = dns.message.from_text(ns_message_text('test.com',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'NS').AndReturn(answer)
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(mx_message_text('test.org','test.org'))
+        message = dns.message.from_text(mx_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'MX').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(mx_message_text('test.com','test.org'))
+        message = dns.message.from_text(mx_message_text('test.com',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'MX').AndReturn(answer)
@@ -313,12 +319,14 @@ class SanityTest(TestCase):
         # with name servers of other domains. It will create a warning if we
         # return different name servers
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(ns_message_text('test.org','test.org'))
+        message = dns.message.from_text(ns_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'NS').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(ns_message_text('test.com','test.com'))
+        message = dns.message.from_text(ns_message_text('test.com',
+                                                        'test.com'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'NS').AndReturn(answer)
@@ -327,16 +335,17 @@ class SanityTest(TestCase):
         # and outgoing server. If they are different it will create an error
         # for each server
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(mx_message_text('test.org','test.org'))
+        message = dns.message.from_text(mx_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'MX').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(mx_message_text('test.com','test.com'))
+        message = dns.message.from_text(mx_message_text('test.com',
+                                                        'test.com'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'MX').AndReturn(answer)
-
 
         self.mox.ReplayAll()
 
@@ -487,5 +496,3 @@ class SanityTest(TestCase):
         self.mox.VerifyAll()
         assert_equal(len(errors), 2)
         assert_equal(len(warnings), 2)
-
-

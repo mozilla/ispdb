@@ -7,6 +7,7 @@ from ispdb.config.models import Config
 from urllib import quote_plus
 from nose.tools import *
 
+
 class ApproveTest(TestCase):
     fixtures = ['xml_testdata', 'login_testdata']
 

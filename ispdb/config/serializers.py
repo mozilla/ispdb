@@ -7,9 +7,11 @@ from ispdb.config.models import Domain, DomainRequest
 
 # The serializers in reverse order, newest at the top.
 
+
 def xmlOneDotOne(data):
     """
-    Return the configuration using the XML document that Thunderbird is expecting.
+    Return the configuration using the XML document that Thunderbird is
+    expecting.
     """
     desiredOutput = {
       "display_name": "displayName",
@@ -33,42 +35,42 @@ def xmlOneDotOne(data):
     qs = Domain.objects.filter(config=data) or (
         DomainRequest.objects.filter(config=data))
     for domain in qs:
-      if not data.email_provider_id:
-        data.email_provider_id = domain.name
-      ET.SubElement(emailProvider, "domain").text = domain.name
+        if not data.email_provider_id:
+            data.email_provider_id = domain.name
+        ET.SubElement(emailProvider, "domain").text = domain.name
     emailProvider.attrib["id"] = data.email_provider_id
     for field in data._meta.fields:
-      if field.name not in desiredOutput:
-        continue
-      if field.name.startswith("incoming"):
-        if incoming is None:
-            incoming = ET.SubElement(emailProvider, "incomingServer")
-            incoming.attrib["type"] = data.incoming_type
-        name = field.name
-        currParent = incoming
-      elif field.name.startswith("outgoing"):
-        if outgoing is None:
-            outgoing = ET.SubElement(emailProvider, "outgoingServer")
-            outgoing.attrib["type"] = "smtp"
-        name = field.name
-        currParent = outgoing
-      else:
-        name = field.name
-        currParent = emailProvider
-      if name == "incoming_username_form" and data.incoming_username_form == "":
-        data.incoming_username_form = data.outgoing_username_form
-      name = desiredOutput[name]
-      e = ET.SubElement(currParent, name)
-      text = getattr(data, field.name)
+        if field.name not in desiredOutput:
+            continue
+        if field.name.startswith("incoming"):
+            if incoming is None:
+                incoming = ET.SubElement(emailProvider, "incomingServer")
+                incoming.attrib["type"] = data.incoming_type
+            name = field.name
+            currParent = incoming
+        elif field.name.startswith("outgoing"):
+            if outgoing is None:
+                outgoing = ET.SubElement(emailProvider, "outgoingServer")
+                outgoing.attrib["type"] = "smtp"
+            name = field.name
+            currParent = outgoing
+        else:
+            name = field.name
+            currParent = emailProvider
+        if (name == "incoming_username_form") and (
+                data.incoming_username_form == ""):
+            data.incoming_username_form = data.outgoing_username_form
+        name = desiredOutput[name]
+        e = ET.SubElement(currParent, name)
+        text = getattr(data, field.name)
 
-      if type(text) is bool:
-        # Force boolean values to use lowercase.
-        text = unicode(text).lower()
-      else:
-        # Force other values to be converted into unicode strings.
-        text = unicode(text)
-
-      e.text = text
+        if type(text) is bool:
+            # Force boolean values to use lowercase.
+            text = unicode(text).lower()
+        else:
+            # Force other values to be converted into unicode strings.
+            text = unicode(text)
+        e.text = text
     # EnableURL
     for enableurl in data.enableurl_set.all():
         enable = ET.SubElement(emailProvider, "enable")
@@ -91,9 +93,11 @@ def xmlOneDotOne(data):
     xml.write(retval, encoding="UTF-8", xml_declaration=True)
     return retval.getvalue()
 
+
 def xmlOneDotZero(data):
     """
-    Return the configuration using the XML document that Thunderbird is expecting.
+    Return the configuration using the XML document that Thunderbird is
+    expecting.
     """
     desiredOutput = {
       "display_name": "displayName",
@@ -123,46 +127,47 @@ def xmlOneDotZero(data):
     config.attrib["version"] = "1.0"
     emailProvider = ET.SubElement(config, "emailProvider")
     for domain in Domain.objects.filter(config=data):
-      ET.SubElement(emailProvider, "domain").text = domain.name
-      if not data.email_provider_id:
-        data.email_provider_id = domain.name
+        ET.SubElement(emailProvider, "domain").text = domain.name
+        if not data.email_provider_id:
+            data.email_provider_id = domain.name
     emailProvider.attrib["id"] = data.email_provider_id
     for field in data._meta.fields:
-      if field.name not in desiredOutput:
-        continue
-      if field.name.startswith("incoming"):
-        if incoming is None:
-            incoming = ET.SubElement(emailProvider, "incomingServer")
-            incoming.attrib["type"] = data.incoming_type
-        name = field.name
-        currParent = incoming
-      elif field.name.startswith("outgoing"):
-        if outgoing is None:
-            outgoing = ET.SubElement(emailProvider, "outgoingServer")
-            outgoing.attrib["type"] = "smtp"
-        name = field.name
-        currParent = outgoing
-      else:
-        name = field.name
-        currParent = emailProvider
-      if name == "incoming_username_form" and data.incoming_username_form == "":
-        data.incoming_username_form = data.outgoing_username_form
-      name = desiredOutput[name]
-      e = ET.SubElement(currParent, name)
-      text = getattr(data, field.name)
+        if field.name not in desiredOutput:
+            continue
+        if field.name.startswith("incoming"):
+            if incoming is None:
+                incoming = ET.SubElement(emailProvider, "incomingServer")
+                incoming.attrib["type"] = data.incoming_type
+            name = field.name
+            currParent = incoming
+        elif field.name.startswith("outgoing"):
+            if outgoing is None:
+                outgoing = ET.SubElement(emailProvider, "outgoingServer")
+                outgoing.attrib["type"] = "smtp"
+            name = field.name
+            currParent = outgoing
+        else:
+            name = field.name
+            currParent = emailProvider
+        if (name == "incoming_username_form") and (
+                data.incoming_username_form == ""):
+            data.incoming_username_form = data.outgoing_username_form
+        name = desiredOutput[name]
+        e = ET.SubElement(currParent, name)
+        text = getattr(data, field.name)
 
-      if type(text) is bool:
-        # Force boolean values to use lowercase.
-        text = unicode(text).lower()
-      else:
-        # Force other values to be converted into unicode strings.
-        text = unicode(text)
+        if type(text) is bool:
+            # Force boolean values to use lowercase.
+            text = unicode(text).lower()
+        else:
+            # Force other values to be converted into unicode strings.
+            text = unicode(text)
 
-      # Fix up the data to make it 1.0 compliant.
-      if name == "authentication":
-        text = authentication_values.get(text, text)
+        # Fix up the data to make it 1.0 compliant.
+        if name == "authentication":
+            text = authentication_values.get(text, text)
 
-      e.text = text
+        e.text = text
 
     retval = StringIO("w")
     xml = ET.ElementTree(config)
@@ -174,13 +179,13 @@ def xmlOneDotZero(data):
 # that breaks old clients, which are hopefully exceptional cases.
 # In other words, this does *not* change with every TB major release.
 _serializers = {
-    "1.0" : xmlOneDotZero,
-    "1.1" : xmlOneDotOne,
+    "1.0": xmlOneDotZero,
+    "1.1": xmlOneDotOne,
 }
+
 
 def get(version):
     # If there is no version requested, return the most recent version.
     if version == None:
-      return xmlOneDotZero
+        return xmlOneDotZero
     return _serializers.get(version, None)
-

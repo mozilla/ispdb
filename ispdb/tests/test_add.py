@@ -9,6 +9,7 @@ from ispdb.config import models
 from ispdb.tests.common import adding_domain_form, asking_domain_form
 from ispdb.tests.common import success_code, fail_code
 
+
 class AddTest(TestCase):
     fixtures = ['login_testdata.json']
 
@@ -150,7 +151,7 @@ class AddTest(TestCase):
         assert_equal(res.status_code, success_code)
         for i in range(num_domains):
             assert_true(models.DomainRequest.objects.filter(
-                name="test%d.com"%i))
+                name="test%d.com" % i))
 
     # Tests correct handling of a leading zero in form-TOTAL_FORMS
     def test_add_09_domains(self):
@@ -164,7 +165,7 @@ class AddTest(TestCase):
         assert_equal(res.status_code, success_code)
         for i in range(num_domains):
             assert_true(models.DomainRequest.objects.filter(
-                name="test%d.com"%i))
+                name="test%d.com" % i))
 
     def test_add_aaa_domains(self):
         self.client.login(username='test', password='test')
@@ -190,7 +191,7 @@ class AddTest(TestCase):
         assert_equal(res.status_code, fail_code)
         for i in range(num_domains):
             assert_false(models.DomainRequest.objects.filter(
-                name="test%d.com"%i))
+                name="test%d.com" % i))
 
     def test_add_invalid_domains(self):
         self.client.login(username='test', password='test')
@@ -198,7 +199,7 @@ class AddTest(TestCase):
             'test',
             'test_test.com',
             'test.c',
-            100*'test'+'.com',
+            100 * 'test' + '.com',
             '127.0.0.1',
             'example.',
             'com.',

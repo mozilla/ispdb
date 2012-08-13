@@ -11,22 +11,23 @@ from lxml import etree
 from nose.tools import *
 import nose.tools
 
-from ispdb.config import views,models,serializers
+from ispdb.config import views, models, serializers
+
 
 def check_content(config_xml):
-    expected = {"domain" : ["test.com", "aim.com"],
-        "displayName" : "NetZero Email",
-        "displayShortName" : "netzero"}
-    expected_incoming = {"hostname" : "hostname_in", "port" : "143",
-        "socketType" : "SSL", "username" : "%EMAILLOCALPART%",
-        "authentication" : "plain"}
-    expected_outgoing = {"hostname" : "hostname_out",
-        "port" : "25", "socketType" : "SSL",
-        "username" : "%EMAILLOCALPART%", "authentication" : "plain",
-        "addThisServer" : "false", "useGlobalPreferredServer" : "false"}
+    expected = {"domain": ["test.com", "aim.com"],
+        "displayName": "NetZero Email",
+        "displayShortName": "netzero"}
+    expected_incoming = {"hostname": "hostname_in", "port": "143",
+        "socketType": "SSL", "username": "%EMAILLOCALPART%",
+        "authentication": "plain"}
+    expected_outgoing = {"hostname": "hostname_out",
+        "port": "25", "socketType": "SSL",
+        "username": "%EMAILLOCALPART%", "authentication": "plain",
+        "addThisServer": "false", "useGlobalPreferredServer": "false"}
     doc = etree.XML(config_xml)
     #gets incoming/outgoing server element root
-    root = doc.getiterator();
+    root = doc.getiterator()
     incoming = doc.find("emailProvider/incomingServer")
     outgoing = doc.find("emailProvider/outgoingServer")
     for element in root:

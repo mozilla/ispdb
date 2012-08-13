@@ -19,25 +19,25 @@ from ispdb.config import models
 def make_config(value):
     "Get the dictionary for a sample config."
     return {
-            "asking_or_adding":"adding",
-            "domain-TOTAL_FORMS":"1",
-            "domain-INITIAL_FORMS":"0",
-            "domain-0-id":"",
-            "domain-0-name":"test%s.com" % value,
-            "domain-0-DELETE":"False",
-            "display_name":"test%s" % value,
-            "display_short_name":"test%s" % value,
-            "incoming_type":"imap",
-            "incoming_hostname":"foo",
-            "incoming_port":"22%s" % value,
-            "incoming_socket_type":"plain",
-            "incoming_authentication":"password-cleartext",
-            "incoming_username_form":"%EMAILLOCALPART%",
-            "outgoing_hostname":"bar",
-            "outgoing_port":"22%s" % value,
-            "outgoing_socket_type":"STARTTLS",
-            "outgoing_username_form":"%EMAILLOCALPART%",
-            "outgoing_authentication":"password-cleartext",
+            "asking_or_adding": "adding",
+            "domain-TOTAL_FORMS": "1",
+            "domain-INITIAL_FORMS": "0",
+            "domain-0-id": "",
+            "domain-0-name": "test%s.com" % value,
+            "domain-0-DELETE": "False",
+            "display_name": "test%s" % value,
+            "display_short_name": "test%s" % value,
+            "incoming_type": "imap",
+            "incoming_hostname": "foo",
+            "incoming_port": "22%s" % value,
+            "incoming_socket_type": "plain",
+            "incoming_authentication": "password-cleartext",
+            "incoming_username_form": "%EMAILLOCALPART%",
+            "outgoing_hostname": "bar",
+            "outgoing_port": "22%s" % value,
+            "outgoing_socket_type": "STARTTLS",
+            "outgoing_username_form": "%EMAILLOCALPART%",
+            "outgoing_authentication": "password-cleartext",
             "docurl-INITIAL_FORMS": "0",
             "docurl-TOTAL_FORMS": "1",
             "docurl-MAX_NUM_FORMS": "",
@@ -77,7 +77,7 @@ def check_returned_xml(response, id_count):
 
     ids = content.findall("provider/id")
     assert_equal(len(ids), id_count)
-    for (n,i) in enumerate(ids):
+    for (n, i) in enumerate(ids):
         assert_equal(int(i.text), n + 1)
 
     exports = content.findall("provider/export")
@@ -107,14 +107,14 @@ class ListTest(TestCase):
     def test_single_xml_reponse(self):
         self.client.login(username='test_admin', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
-        assert_equal(response.status_code,302)
+        assert_equal(response.status_code, 302)
         domain = models.DomainRequest.objects.get(name="test2.com")
-        assert isinstance(domain,models.DomainRequest)
+        assert isinstance(domain, models.DomainRequest)
         response = self.client.post(
-            reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"approved":"mark valid", "comment":"I liked this domain"})
+            reverse("ispdb_approve", kwargs={"id": domain.config.id}),
+            {"approved": "mark valid", "comment": "I liked this domain"})
         domain = models.Domain.objects.get(name="test2.com")
-        assert isinstance(domain,models.Domain)
+        assert isinstance(domain, models.Domain)
         response = self.client.get(reverse("ispdb_list", args=["xml"]), {})
         check_returned_xml(response, 1)
 
@@ -123,29 +123,29 @@ class ListTest(TestCase):
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         domain = models.DomainRequest.objects.get(name="test2.com")
         response = self.client.post(
-            reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"approved":"mark valid", "comment":"I liked this domain"})
+            reverse("ispdb_approve", kwargs={"id": domain.config.id}),
+            {"approved": "mark valid", "comment": "I liked this domain"})
         domain = models.Domain.objects.get(name="test2.com")
-        assert isinstance(domain,models.Domain)
+        assert isinstance(domain, models.Domain)
         response = self.client.post(reverse("ispdb_add"), ListTest.test3dict)
         domain = models.DomainRequest.objects.get(name="test3.com")
         response = self.client.post(
-            reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"approved":"mark valid", "comment":"I liked this domain"})
+            reverse("ispdb_approve", kwargs={"id": domain.config.id}),
+            {"approved": "mark valid", "comment": "I liked this domain"})
         domain = models.Domain.objects.get(name="test3.com")
-        assert isinstance(domain,models.Domain)
+        assert isinstance(domain, models.Domain)
         response = self.client.get(reverse("ispdb_list", args=["xml"]), {})
         check_returned_xml(response, 2)
 
     def test_xml_reponse_invalid_domain(self):
         self.client.login(username='test_admin', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
-        assert_equal(response.status_code,302)
+        assert_equal(response.status_code, 302)
         domain = models.DomainRequest.objects.get(name="test2.com")
-        assert isinstance(domain,models.DomainRequest)
+        assert isinstance(domain, models.DomainRequest)
         response = self.client.post(
-            reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"denied":"mark invalid", "comment":"I didn't like this domain"})
+            reverse("ispdb_approve", kwargs={"id": domain.config.id}),
+            {"denied": "mark invalid", "comment": "I didn't like this domain"})
         response = self.client.get(reverse("ispdb_list", args=["xml"]), {})
         check_returned_xml(response, 0)
 
@@ -156,13 +156,16 @@ class ListTest(TestCase):
     def test_single_reponse(self):
         self.client.login(username='test_admin', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
-        assert_equal(response.status_code,302)
+        assert_equal(response.status_code, 302)
         domain = models.DomainRequest.objects.get(name="test2.com")
-        assert isinstance(domain,models.DomainRequest)
+        assert isinstance(domain, models.DomainRequest)
 
         response = self.client.post(
-            reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"approved":"mark valid", "comment":"Always enter a comment here"})
+            reverse("ispdb_approve", kwargs={"id": domain.config.id}),
+            {"approved": "mark valid",
+             "comment": "Always enter a comment here"
+            }
+        )
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 1)
 
@@ -171,14 +174,14 @@ class ListTest(TestCase):
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         domain = models.DomainRequest.objects.get(name="test2.com")
         response = self.client.post(
-            reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"approved":"mark valid", "comment":"I liked this domain"})
+            reverse("ispdb_approve", kwargs={"id": domain.config.id}),
+            {"approved": "mark valid", "comment": "I liked this domain"})
 
         response = self.client.post(reverse("ispdb_add"), ListTest.test3dict)
         domain = models.DomainRequest.objects.get(name="test3.com")
         response = self.client.post(
-            reverse("ispdb_approve", kwargs={"id":domain.config.id}),
-            {"denied":"mark invalid", "comment":"I didn't like this domain"})
+            reverse("ispdb_approve", kwargs={"id": domain.config.id}),
+            {"denied": "mark invalid", "comment": "I didn't like this domain"})
         response = self.client.get(reverse("ispdb_list"), {})
         check_returned_html(response, 2)
 
@@ -186,23 +189,21 @@ class ListTest(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         domain = models.DomainRequest.objects.get(name="test2.com")
-        assert isinstance(domain,models.DomainRequest)
+        assert isinstance(domain, models.DomainRequest)
 
         response = self.client.post(reverse("ispdb_export_xml",
-                                            kwargs={"id": domain.config.id}));
+                                            kwargs={"id": domain.config.id}))
         doc = etree.XML(response.content)
-
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
                                                      'relaxng_schema.xml'))
+
     def test_one_dot_one_xml_response(self):
         self.client.login(username='test', password='test')
         response = self.client.post(reverse("ispdb_add"), ListTest.test2dict)
         domain = models.DomainRequest.objects.get(name="test2.com")
-        assert isinstance(domain,models.DomainRequest)
-
+        assert isinstance(domain, models.DomainRequest)
         response = self.client.post(reverse("ispdb_export_xml",
-                                            kwargs={"version": "1.1",
-                                                    "id": domain.config.id}));
+                kwargs={"version": "1.1", "id": domain.config.id}))
         doc = etree.XML(response.content)
 
         xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),

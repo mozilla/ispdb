@@ -8,6 +8,7 @@ from ispdb.config import models
 from ispdb.tests.common import adding_domain_form
 from ispdb.tests.common import success_code, fail_code
 
+
 class EditTest(TestCase):
     fixtures = ['login_testdata.json']
 
@@ -25,7 +26,7 @@ class EditTest(TestCase):
 
     def test_edit_no_login(self):
         self.add_domain()
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                adding_domain_form(),
                                follow=True)
         # Make sure it redirects to login page
@@ -35,7 +36,7 @@ class EditTest(TestCase):
     def test_edit_invalid_user(self):
         self.add_domain()
         self.client.login(username='test2', password='test')
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                adding_domain_form(),
                                follow=True)
         # Make sure it redirects to login page
@@ -50,7 +51,7 @@ class EditTest(TestCase):
         form = adding_domain_form()
         form["display_name"] = "testing2"
         self.client.login(username='test', password='test')
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                form,
                                follow=True)
         config = models.Config.objects.get(pk=1)
@@ -118,7 +119,7 @@ class EditTest(TestCase):
         form["inst_0-INITIAL_FORMS"] = "1"
         form["inst_0-0-id"] = "1"
         form["inst_0-0-description"] = "test1"
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                form,
                                follow=True)
         goodRedirect = "/details/1/"
@@ -144,7 +145,7 @@ class EditTest(TestCase):
         form = adding_domain_form()
         form["domain-1-name"] = "test.com"
         form["domain-1-DELETE"] = "False"
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                form,
                                follow=True)
         assert_equal(res.status_code, fail_code)
@@ -160,7 +161,7 @@ class EditTest(TestCase):
         form = adding_domain_form()
         form["domain-1-name"] = "approved.com"
         form["domain-1-DELETE"] = "False"
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                form,
                                follow=True)
         assert_equal(res.status_code, fail_code)
@@ -176,7 +177,7 @@ class EditTest(TestCase):
         self.client.login(username='test', password='test')
         form = adding_domain_form()
         form["incoming_hostname"] = "bar"
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                form,
                                follow=True)
         goodRedirect = "/login/"

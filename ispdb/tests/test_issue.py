@@ -8,6 +8,7 @@ from ispdb.config import models
 from ispdb.tests.common import adding_domain_form
 from ispdb.tests.common import success_code, fail_code
 
+
 def adding_issue_form():
     form = adding_domain_form()
     form['show_form'] = 'False'
@@ -50,7 +51,7 @@ class IssueTest(TestCase):
         self.client.logout()
 
     def test_add_issue_no_login(self):
-        res = self.client.post(reverse("ispdb_report",args=[2]),
+        res = self.client.post(reverse("ispdb_report", args=[2]),
                                adding_issue_form(),
                                follow=True)
         # Make sure it redirects to login page
@@ -66,8 +67,8 @@ class IssueTest(TestCase):
     def test_close_issue_normal_user(self):
         self.add_issue()
         self.client.login(username='test', password='test')
-        res = self.client.post(reverse("ispdb_show_issue",args=[1]),
-                               {"action":"close"},
+        res = self.client.post(reverse("ispdb_show_issue", args=[1]),
+                               {"action": "close"},
                                follow=True)
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "open")
@@ -78,8 +79,8 @@ class IssueTest(TestCase):
     def test_close_issue_superuser(self):
         self.add_issue()
         self.client.login(username='test_admin', password='test')
-        res = self.client.post(reverse("ispdb_show_issue",args=[1]),
-                               {"action":"close"},
+        res = self.client.post(reverse("ispdb_show_issue", args=[1]),
+                               {"action": "close"},
                                follow=True)
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "closed")
@@ -87,8 +88,8 @@ class IssueTest(TestCase):
     def test_merge_issue_normal_user(self):
         self.add_issue(updated_config=True)
         self.client.login(username='test', password='test')
-        res = self.client.post(reverse("ispdb_show_issue",args=[1]),
-                               {"action":"merge"},
+        res = self.client.post(reverse("ispdb_show_issue", args=[1]),
+                               {"action": "merge"},
                                follow=True)
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "open")
@@ -102,8 +103,8 @@ class IssueTest(TestCase):
         issue.config.locked = True
         issue.config.save()
         self.client.login(username='test_admin', password='test')
-        res = self.client.post(reverse("ispdb_show_issue",args=[1]),
-                               {"action":"merge"},
+        res = self.client.post(reverse("ispdb_show_issue", args=[1]),
+                               {"action": "merge"},
                                follow=True)
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "open")
@@ -114,8 +115,8 @@ class IssueTest(TestCase):
     def test_merge_issue_superuser(self):
         self.add_issue(updated_config=True)
         self.client.login(username='test_admin', password='test')
-        res = self.client.post(reverse("ispdb_show_issue",args=[1]),
-                               {"action":"merge"},
+        res = self.client.post(reverse("ispdb_show_issue", args=[1]),
+                               {"action": "merge"},
                                follow=True)
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "closed")

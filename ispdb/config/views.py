@@ -32,11 +32,13 @@ from ispdb.config import serializers
 from ispdb.config.configChecks import do_domain_checks
 from ispdb.config.configChecks import do_config_checks
 
+
 @login_required
 def comment_post_wrapper(request):
     if not request.method == 'POST':
         return HttpResponseRedirect('/')
     return post_comment(request)
+
 
 @permission_required("comments.can_moderate")
 def delete_comment(request, id):
@@ -47,6 +49,7 @@ def delete_comment(request, id):
     redir = request.META.get('HTTP_REFERER', None) or '/'
     return HttpResponseRedirect(redir)
 
+
 def login(request):
     redirect_url = '/'
     if 'next' in request.GET:
@@ -54,14 +57,17 @@ def login(request):
     return render_to_response("config/login.html", {'redir_url': redirect_url},
                               context_instance=RequestContext(request))
 
+
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect('/')
+
 
 def intro(request):
     domains = Domain.objects.all()
     return render_to_response("config/intro.html", {'domains': domains},
                               context_instance=RequestContext(request))
+
 
 def list(request, format="html"):
     if format == "xml":
@@ -70,8 +76,8 @@ def list(request, format="html"):
         for config in configs:
             provider = ET.SubElement(providers, "provider")
             ET.SubElement(provider, "id").text = unicode(config.id)
-            ET.SubElement(provider, "export").text = reverse("ispdb_export_xml",
-                                            kwargs={"id": config.id})
+            ET.SubElement(provider, "export").text = reverse(
+                    "ispdb_export_xml", kwargs={"id": config.id})
             ET.SubElement(provider, "lastUpdated").text = unicode(
                 config.last_update_datetime)
         xml = ET.ElementTree(providers)
@@ -84,6 +90,7 @@ def list(request, format="html"):
     configs = Config.objects.all()
     return render_to_response("config/list.html", {'configs': configs},
                               context_instance=RequestContext(request))
+
 
 def details(request, id, error=None):
     config = get_object_or_404(Config, pk=id)
@@ -124,6 +131,7 @@ def details(request, id, error=None):
             'enableurls': enableurl_formset},
         context_instance=RequestContext(request))
 
+
 def export_xml(request, version=None, id=None, domain=None):
     config = None
     if id is not None:
@@ -135,6 +143,7 @@ def export_xml(request, version=None, id=None, domain=None):
         raise Http404
     data = serialize(config)
     return HttpResponse(data, mimetype='text/xml')
+
 
 @login_required
 def edit(request, config_id):
@@ -205,7 +214,6 @@ def edit(request, config_id):
     }, context_instance=RequestContext(request))
 
 
-
 @login_required
 def add(request, domain=None):
     DomainFormSet = modelformset_factory(DomainRequest, extra=1, max_num=10,
@@ -217,7 +225,7 @@ def add(request, domain=None):
     action = 'add'
     has_errors = False
 
-    if request.method == 'POST': # If the form has been submitted...
+    if request.method == 'POST':  # If the form has been submitted...
         data = request.POST
         docurl_formset = DocURLFormSet(request.POST, request.FILES,
                 queryset=DocURL.objects.none(), meta=request.META)
@@ -243,7 +251,7 @@ def add(request, domain=None):
                         domain.save()
                     else:
                         form.save()
-                return HttpResponseRedirect('/') # Redirect after POST
+                return HttpResponseRedirect('/')  # Redirect after POST
         else:
             config = Config(owner=request.user, status='requested')
             # A form bound to the POST data
@@ -277,6 +285,7 @@ def add(request, domain=None):
         'has_errors': has_errors
     }, context_instance=RequestContext(request))
 
+
 @permission_required("config.can_approve")
 def queue(request):
     domains = DomainRequest.objects.filter(config=None).order_by('-votes')
@@ -289,9 +298,11 @@ def queue(request):
         'invalid_configs': invalid_configs,
     }, context_instance=RequestContext(request))
 
+
 def policy(request):
     return render_to_response('config/policy.html', {},
                               context_instance=RequestContext(request))
+
 
 @permission_required("config.can_approve")
 def approve(request, id):
@@ -302,7 +313,7 @@ def approve(request, id):
         return details(request, config.id, error=error)
     old_status = config.status
     message = ''
-    if request.method == 'POST': # If the form has been submitted...
+    if request.method == 'POST':  # If the form has been submitted...
         data = request.POST
         if data.get('approved', False):
             # check if domains and domains requests are null
@@ -340,7 +351,7 @@ def approve(request, id):
                 message = data['comment']
             config.status = 'invalid'
         else:
-            raise ValueError, "shouldn't get here"
+            raise ValueError("shouldn't get here")
         config.save()
         comment = Comment(user_name='ISPDB System',
                           site_id=settings.SITE_ID)
@@ -352,7 +363,8 @@ def approve(request, id):
         comment.object_pk = config.pk
         comment.save()
 
-    return HttpResponseRedirect('/details/' + id) # Redirect after POST
+    return HttpResponseRedirect('/details/' + id)  # Redirect after POST
+
 
 @permission_required("config.can_approve")
 def sanity(request, id):
@@ -360,10 +372,11 @@ def sanity(request, id):
     domains = config.domains.all() or config.domainrequests.all()
     domain_errors, domain_warnings = do_domain_checks(domains)
     config_errors, config_warnings = do_config_checks(config)
-    data = simplejson.dumps({"errors" : domain_errors + config_errors,
-                             "warnings" : domain_warnings + config_warnings,
+    data = simplejson.dumps({"errors": domain_errors + config_errors,
+                             "warnings": domain_warnings + config_warnings,
                             })
     return HttpResponse(data, mimetype='application/json')
+
 
 @login_required
 def delete(request, id):
@@ -378,22 +391,25 @@ def delete(request, id):
         return details(request, id, error=error)
     if request.method == 'POST':
         data = request.POST
-        if data.has_key('delete') and data['delete'] == "delete":
+        if 'delete' in data and data['delete'] == "delete":
             if not config.status in ("invalid", "requested"):
-                return HttpResponseRedirect(reverse('ispdb_details',args=[id]))
+                return HttpResponseRedirect(reverse('ispdb_details',
+                                                    args=[id]))
             config.last_status = config.status
             config.deleted_datetime = timezone.now()
             config.status = 'deleted'
             config.save()
-        elif data.has_key('delete') and data['delete'] == "undo":
+        elif 'delete' in data and data['delete'] == "undo":
             if not config.status == 'deleted':
-                return HttpResponseRedirect(reverse('ispdb_details',args=[id]))
+                return HttpResponseRedirect(reverse('ispdb_details',
+                                                    args=[id]))
             delta = timezone.now() - config.deleted_datetime
             if not delta.days > 0:
                 config.status = config.last_status
                 config.last_status = ''
                 config.save()
     return HttpResponseRedirect(reverse('ispdb_details', args=[id]))
+
 
 @login_required
 def report(request, id):
@@ -507,6 +523,7 @@ def report(request, id):
         'has_errors': has_errors,
     }, context_instance=RequestContext(request))
 
+
 def show_issue(request, id):
     issue = get_object_or_404(Issue, pk=id)
     incoming = []
@@ -576,8 +593,8 @@ def show_issue(request, id):
             if not issue.config.status == "approved":
                 error = "Can't merge into non approved configurations."
             if issue.config.locked:
-                error = ("This configuration is locked. Only admins can unlock "
-                         "it.")
+                error = ("This configuration is locked. Only admins can unlock"
+                         " it.")
             elif issue.updated_config:
                 # check if any of the added domains are already bound to some
                 # approved configuration
@@ -586,9 +603,9 @@ def show_issue(request, id):
                         if Domain.objects.filter(name=domain,
                                                  config__status="approved"):
                             error = """Can't approve this configuration.
-                                    Domain %s is already used by another approved
-                                    configuration.""" % (domain)
-                            break;
+                                    Domain %s is already used by another
+                                    approved configuration.""" % (domain)
+                            break
                 if not error:
                     # update domains
                     for domain in removed_domains:
@@ -606,8 +623,9 @@ def show_issue(request, id):
                     # update config fields
                     all_fields = base + incoming + outgoing
                     for field in all_fields:
-                        if field.has_key('new_value'):
-                            setattr(issue.config, field['name'], field['new_value'])
+                        if 'new_value' in field:
+                            setattr(issue.config, field['name'],
+                                    field['new_value'])
                     # update docurls
                     docurl_formset.delete()
                     for docurl in new_docurl_formset:
