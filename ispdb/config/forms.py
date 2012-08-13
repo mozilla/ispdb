@@ -503,15 +503,21 @@ class BaseDomainFormSet(DynamicBaseModelFormSet):
 class ConfigForm(ModelForm):
     class Meta:
         model = Config
-        exclude = ['status',
-                   'last_status',
-                   'deleted_datetime',
-                   'email_provider_id',
-                   'outgoing_add_this_server',
-                   'outgoing_use_global_preferred_server',
-                   'owner',
-                   'locked',
-                   ]
+        fields = (
+                  'display_name',
+                  'display_short_name',
+                  'incoming_type',
+                  'incoming_hostname',
+                  'incoming_socket_type',
+                  'incoming_port',
+                  'incoming_username_form',
+                  'incoming_authentication',
+                  'outgoing_hostname',
+                  'outgoing_socket_type',
+                  'outgoing_port',
+                  'outgoing_username_form',
+                  'outgoing_authentication',
+                 )
     incoming_type = ChoiceField(widget=RadioSelect,
                                 choices=Config.INCOMING_TYPE_CHOICES)
 
