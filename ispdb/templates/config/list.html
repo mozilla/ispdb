@@ -18,7 +18,7 @@ $(document).ready(function() {
     <div class="config">
       <h3>{{config.display_name}} ({{ config.incoming_type }})</h3>
       {% for domain in config.domains.all %}
-      <div class="domain"><a href="details/{{domain.config.id}}">{{ domain }}</a></div>
+      <div class="domain"><a href="{% url 'ispdb_details' domain.config.id %}">{{ domain }}</a></div>
       {% endfor %}
     </div>
     {% endif %}
@@ -30,7 +30,7 @@ $(document).ready(function() {
     <div class="config">
       <h3>{{config.display_name}} ({{ config.incoming_type }})</h3>
       {% for domain in config.domainrequests.all %}
-      <div class="domain"><a href="details/{{domain.config.id}}">{{ domain }}</a></div>
+      <div class="domain"><a href="{% url 'ispdb_details' domain.config.id %}">{{ domain }}</a></div>
       {% endfor %}
     </div>
     {% endif %}

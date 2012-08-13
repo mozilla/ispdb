@@ -82,8 +82,8 @@ def check_returned_xml(response, id_count):
 
     exports = content.findall("provider/export")
     assert_equal(len(exports), id_count)
-    for (n,i) in enumerate(exports):
-        assert_equal(i.text, "/export_xml/%d" % (n+1))
+    for (n, i) in enumerate(exports):
+        assert_equal(i.text, "/export_xml/%d/" % (n + 1))
 
 
 def check_returned_html(response, id_count):
