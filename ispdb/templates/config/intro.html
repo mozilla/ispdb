@@ -43,7 +43,7 @@ $(document).ready(function() {
         }
         if (isFilterValid(filter)) {
           if (count == 0) {
-            $("#submit").attr('href', 'add/' + filter);
+            $("#submit").find('a:first').attr('href', 'add/' + filter);
             $("#submit").show();
           } else {
             $("#submit").hide();
