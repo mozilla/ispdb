@@ -22,7 +22,7 @@ $(document).ready(function() {
 
     // add functions
     function addRow(prefix, template_selector, appendto_selector) {
-      var template = jQuery.format($(template_selector).val());
+      var template = jQuery.format($(template_selector).html());
       var i = $("#id_"+prefix+"-TOTAL_FORMS").val();
       if (i === undefined){
         i = 0;
@@ -32,16 +32,16 @@ $(document).ready(function() {
     }
     $("#add_docurl").click(function() {
       var i = $("#id_{{config_form.docurl_formset.prefix}}-TOTAL_FORMS").val();
-      addRow('{{config_form.docurl_formset.prefix}}', '#docurl_template', '#configform table:first');
+      addRow('{{config_form.docurl_formset.prefix}}', '#docurl_template tbody:first', '#configform table:first');
       var desc_prefix = 'desc_'+i;
-      addRow(desc_prefix, '#desc_full_template', '#configform table:first');
+      addRow(desc_prefix, '#desc_full_template tbody:first', '#configform table:first');
     });
     $("#add_domain").click(function() {
-      addRow('{{config_form.domain_formset.prefix}}', '#domain_template', '#domain_list table');
+      addRow('{{config_form.domain_formset.prefix}}', '#domain_template tbody:first', '#domain_list table');
     });
     $("#configform").on("click", "a.add_desc", function() {
       var prefix = $(this).attr('value');
-      addRow(prefix, '#desc_template', '#'+prefix+' table.tab_descs');
+      addRow(prefix, '#desc_template tbody:first', '#'+prefix+' table.tab_descs');
     });
      
     // delete functions
@@ -63,12 +63,12 @@ $(document).ready(function() {
       var check = $('#id_'+prefix+'-DELETE');
       if (check.val() == "True"){
         check.val("False");
-        $('#id_'+prefix+'-description').removeAttr("readonly");
+        $('#id_'+prefix+'-description').removeAttr("disabled");
         $('#id_'+prefix+'-language').removeAttr("disabled");
         $(this).text("Remove");
       }else{
         check.val("True");
-        $('#id_'+prefix+'-description').attr("readonly", "readonly");
+        $('#id_'+prefix+'-description').attr("disabled", "disabled");
         $('#id_'+prefix+'-language').attr("disabled", "disabled");
         $(this).text("Undo");
       }
@@ -218,7 +218,7 @@ function AutoFillOutgoing() {
 {% endblock %}
 
 {% block content %}
-<textarea style="display:none" id="domain_template">
+<table style="display:none" id="domain_template">
 {% with config_form.domain_formset.empty_form as form %}
   <tr>
     <th>{{ form.name.label_tag }}:</th>
@@ -230,8 +230,8 @@ function AutoFillOutgoing() {
     </td>
   </tr>
 {% endwith %}
-</textarea>
-<textarea style="display:none" id="docurl_template">
+</table>
+<table style="display:none" id="docurl_template">
 {% with config_form.docurl_formset.empty_form as form %}
   <tr>
     <th class="noborder">{{ form.url.label_tag }}:</th>
@@ -242,8 +242,8 @@ function AutoFillOutgoing() {
     </td>
   </tr>
 {% endwith %}
-</textarea>
-<textarea style="display:none" id="desc_template">
+</table>
+<table style="display:none" id="desc_template">
 {% with config_form.docurl_formset.empty_desc_form as form %}
   <tr>
     <th>{{ form.description.label_tag }}:</th>
@@ -255,8 +255,8 @@ function AutoFillOutgoing() {
     </td>
   </tr>
 {% endwith %}
-</textarea>
-<textarea style="display:none" id="desc_full_template">
+</table>
+<table style="display:none" id="desc_full_template">
 {% with config_form.docurl_formset.empty_desc_form as form %}
   <tr><td class="noborder"><td class="noborder"><div id="{1}"><table class="tab_descs">
     <input type="hidden" name="{1}-TOTAL_FORMS" value="1" id="id_{1}-TOTAL_FORMS" /><input type="hidden" name="{1}-INITIAL_FORMS" value="0" id="{1}-INITIAL_FORMS" /><input type="hidden" name="{1}-MAX_NUM_FORMS" id="id_{1}-MAX_NUM_FORMS" />
@@ -272,7 +272,7 @@ function AutoFillOutgoing() {
   <table><tr><td><a class="link add_desc" value="{1}">add another description</a></td></tr></table>
   </div></td></td></tr>
 {% endwith %}
-</textarea>
+</table>
 
 <form action="{{ callback }}" method="POST">{% csrf_token %}
 

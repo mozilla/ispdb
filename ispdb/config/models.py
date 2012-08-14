@@ -200,7 +200,7 @@ class DocURLDesc(models.Model):
         max_length=10,
         verbose_name="Language",
         choices=settings.LANGUAGES)
-    description = models.CharField(
+    description = models.TextField(
         max_length=100,
         verbose_name="Description of the settings page")
     docurl = models.ForeignKey(DocURL, related_name="descriptions")
@@ -294,6 +294,7 @@ class DocURLDescForm(DynamicModelForm):
 
     def __init__(self, *args, **kwargs):
         super(DocURLDescForm, self).__init__(*args, **kwargs)
+        self.fields['description'].widget.attrs.update({'rows': 2, 'cols': 20})
         # Redefine our choices, so we can add the translated language names and
         # sort the list by language name
         choices = []
