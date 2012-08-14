@@ -2,12 +2,12 @@
 This file contains methods to do sanity checks on domains and configs
 """
 
-import re
-import smtplib
+import dns.resolver
 import imaplib
 import poplib
+import re
+import smtplib
 import ssl
-import dns.resolver
 import tldextract
 
 TIMEOUT = 10

@@ -1,7 +1,7 @@
-import os
 import lxml.etree as ET
+import os
 
-from ispdb.config.models import Domain, Config
+from ispdb.config.models import Config, Domain
 
 
 def get_username(element):

@@ -3,8 +3,8 @@
 import os
 from lxml import etree
 
-from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.test import TestCase
 from nose.tools import assert_equal
 
 from ispdb.config import models

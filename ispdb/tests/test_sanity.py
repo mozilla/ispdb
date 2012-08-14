@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import dns.resolver
-import mox
-import smtplib
 import imaplib
+import mox
 import poplib
+import smtplib
 
-from django.utils import simplejson
-from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.test import TestCase
+from django.utils import simplejson
 from nose.tools import assert_equal
+
 from ispdb.config.configChecks import (do_domain_checks, do_config_checks,
     get_nameservers, get_mxservers, imap_check_plain, imap_check_ssl,
     imap_check_starttls, pop3_check_plain, pop3_check_ssl, pop3_check_starttls,

@@ -1,5 +1,5 @@
-from ispdb.config.models import Config, Domain, DomainRequest
 from django.contrib import admin
+from ispdb.config.models import Config, Domain, DomainRequest
 
 
 class DomainInline(admin.TabularInline):

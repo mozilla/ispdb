@@ -1,34 +1,30 @@
 # -*- coding: utf-8 -*-
 
-import StringIO
 import lxml.etree as ET
+import StringIO
 
-from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import permission_required
-from django.core.urlresolvers import reverse
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render_to_response
-from django.forms.models import modelformset_factory
-from django.contrib.auth import logout
-from django.template import RequestContext
-from django.utils import simplejson
-from django.utils import timezone
-from django.db.models import Q
-from django.contrib import comments
-from django.contrib.comments.views.comments import post_comment
-from django.contrib.comments.models import Comment
-from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
+from django.contrib import comments
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.comments.models import Comment
+from django.contrib.comments.views.comments import post_comment
+from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
+from django.db.models import Q
+from django.forms.models import modelformset_factory
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render_to_response
+from django.template import RequestContext
+from django.utils import simplejson, timezone
 
-from ispdb.config.models import (Config, Domain, DomainRequest, Issue, DocURL,
-    EnableURL)
-from ispdb.config.forms import (ConfigForm, DomainForm, BaseDomainFormSet,
-    IssueForm, BaseDocURLFormSet, DocURLForm, EnableURLForm,
-    BaseEnableURLFormSet)
 from ispdb.config import serializers
-from ispdb.config.configChecks import do_domain_checks
-from ispdb.config.configChecks import do_config_checks
+from ispdb.config.configChecks import do_config_checks, do_domain_checks
+from ispdb.config.forms import (BaseDocURLFormSet, BaseDomainFormSet,
+    BaseEnableURLFormSet, ConfigForm, DocURLForm, DomainForm, EnableURLForm,
+    IssueForm)
+from ispdb.config.models import (Config, DocURL, Domain, DomainRequest,
+    EnableURL, Issue)
 
 
 @login_required

@@ -1,8 +1,11 @@
-from django.test import TestCase
-from django.contrib.comments.models import Comment
-from ispdb.config.models import Config
+
 from urllib import quote_plus
+
+from django.contrib.comments.models import Comment
+from django.test import TestCase
 from nose.tools import assert_equal, assert_true
+
+from ispdb.config.models import Config
 
 
 class ApproveTest(TestCase):

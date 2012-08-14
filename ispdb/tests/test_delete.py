@@ -2,8 +2,8 @@
 
 import httplib
 
-from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.test import TestCase
 from django.utils import timezone
 from nose.tools import assert_equal, assert_true
 

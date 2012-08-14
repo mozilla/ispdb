@@ -2,17 +2,16 @@
 
 import re
 from django.core.urlresolvers import reverse
-from django.forms import (ChoiceField, BooleanField, HiddenInput, ModelForm,
+from django.forms import (BooleanField, ChoiceField, HiddenInput, ModelForm,
     RadioSelect, ValidationError)
-from django.forms.models import BaseModelFormSet
-from django.forms.models import modelformset_factory
+from django.forms.models import BaseModelFormSet, modelformset_factory
+from django.utils.functional import curry
 from django.utils.safestring import mark_safe
 from django.utils.translation import get_language_info
-from django.utils.functional import curry
 from django.utils.translation.trans_real import parse_accept_lang_header
 
-from ispdb.config.models import (Config, Domain, DomainRequest, DocURL,
-    DocURLDesc, EnableURL, EnableURLInst, Issue)
+from ispdb.config.models import (Config, DocURL, DocURLDesc, Domain,
+    DomainRequest, EnableURL, EnableURLInst, Issue)
 
 
 def clean_port(self, field):

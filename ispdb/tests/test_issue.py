@@ -2,8 +2,8 @@
 
 from urllib import quote_plus
 
-from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.test import TestCase
 from nose.tools import assert_equal, assert_false, assert_true
 
 from ispdb.config import models
