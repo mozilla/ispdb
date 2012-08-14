@@ -31,3 +31,17 @@ input[readonly=readonly] {
 #div_report_link {
  padding: 10px;
 }
+
+table.tab_descs td, table.tab_descs th,
+td.noborder, th.noborder {
+  border-bottom: 0px;
+}
+
+.add_desc {
+  font-size: 12px;
+}
+
+#add_docurl {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}

@@ -20,7 +20,7 @@ class EditTest(TestCase):
         domain = models.DomainRequest.objects.filter(name=name)
         assert_false(domain)
         form = adding_domain_form()
-        form["form-0-name"] = name
+        form["domain-0-name"] = name
         res = self.client.post(reverse("ispdb_add"), form)
         assert_equal(res.status_code, success_code)
         domain = models.DomainRequest.objects.get(name=name)
@@ -50,8 +50,16 @@ class EditTest(TestCase):
         self.add_domain()
         self.client.login(username='test', password='test')
         form = adding_domain_form()
-        form["form-0-name"] = "test1.com"
+        form["domain-INITIAL_FORMS"] = "1"
+        form["domain-0-id"] = "1"
+        form["domain-0-name"] = "test1.com"
         form["display_name"] = "testing2"
+        form["docurl-INITIAL_FORMS"] = "1"
+        form["docurl-0-id"] = "1"
+        form["docurl-0-url"] = "http://test1.com/"
+        form["desc_0-INITIAL_FORMS"] = "1"
+        form["desc_0-0-id"] = "1"
+        form["desc_0-0-description"] = "test1"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -63,13 +71,25 @@ class EditTest(TestCase):
         assert isinstance(domain, models.DomainRequest)
         assert_equal(domain.name, 'test1.com')
         assert_equal(domain.config.display_name, 'testing2')
+        docurl = models.DocURL.objects.get(pk=1)
+        assert_equal(docurl.url, 'http://test1.com/')
+        desc = models.DocURLDesc.objects.get(pk=1)
+        assert_equal(desc.description, 'test1')
 
     def test_edit_staff_user(self):
         self.add_domain()
         self.client.login(username='test_admin', password='test')
         form = adding_domain_form()
-        form["form-0-name"] = "test1.com"
+        form["domain-INITIAL_FORMS"] = "1"
+        form["domain-0-id"] = "1"
+        form["domain-0-name"] = "test1.com"
         form["display_name"] = "testing2"
+        form["docurl-INITIAL_FORMS"] = "1"
+        form["docurl-0-id"] = "1"
+        form["docurl-0-url"] = "http://test1.com/"
+        form["desc_0-INITIAL_FORMS"] = "1"
+        form["desc_0-0-id"] = "1"
+        form["desc_0-0-description"] = "test1"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -81,13 +101,17 @@ class EditTest(TestCase):
         assert isinstance(domain, models.DomainRequest)
         assert_equal(domain.name, 'test1.com')
         assert_equal(domain.config.display_name, 'testing2')
+        docurl = models.DocURL.objects.get(pk=1)
+        assert_equal(docurl.url, 'http://test1.com/')
+        desc = models.DocURLDesc.objects.get(pk=1)
+        assert_equal(desc.description, 'test1')
 
     def test_edit_duplicated_names(self):
         self.add_domain()
         self.client.login(username='test', password='test')
         form = adding_domain_form()
-        form["form-1-name"] = "test.com"
-        form["form-1-delete"] = "False"
+        form["domain-1-name"] = "test.com"
+        form["domain-1-DELETE"] = "False"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -102,8 +126,8 @@ class EditTest(TestCase):
         config = models.Config.objects.get(id=1)
         assert_equal(config.status, 'approved')
         form = adding_domain_form()
-        form["form-1-name"] = "approved.com"
-        form["form-1-delete"] = "False"
+        form["domain-1-name"] = "approved.com"
+        form["domain-1-DELETE"] = "False"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -128,11 +152,12 @@ class EditTest(TestCase):
 
 def adding_domain_form():
     return {"asking_or_adding":"adding",
-            "form-TOTAL_FORMS":"1",
-            "form-INITIAL_FORMS":"1",
-            "form-MAX_NUM_FORMS": "10",
-            "form-0-name":"test.com",
-            "form-0-delete":"False",
+            "domain-TOTAL_FORMS":"1",
+            "domain-INITIAL_FORMS":"0",
+            "domain-MAX_NUM_FORMS": "10",
+            "domain-0-id":"",
+            "domain-0-name":"test.com",
+            "domain-0-DELETE":"False",
             "display_name":"test",
             "display_short_name":"test",
             "incoming_type":"imap",
@@ -146,5 +171,17 @@ def adding_domain_form():
             "outgoing_socket_type":"STARTTLS",
             "outgoing_username_form":"%25EMAILLOCALPART%25",
             "outgoing_authentication":"password-cleartext",
-            "settings_page_url":"http://google.com/",
-            "settings_page_language":"en"}
+            "docurl-INITIAL_FORMS": "0",
+            "docurl-TOTAL_FORMS": "1",
+            "docurl-MAX_NUM_FORMS": "",
+            "docurl-0-id": "",
+            "docurl-0-DELETE": "False",
+            "docurl-0-url": "http://test.com/",
+            "desc_0-INITIAL_FORMS": "0",
+            "desc_0-TOTAL_FORMS": "1",
+            "desc_0-MAX_NUM_FORMS": "",
+            "desc_0-0-id": "",
+            "desc_0-0-DELETE": "False",
+            "desc_0-0-language": "en",
+            "desc_0-0-description": "test"}
+
