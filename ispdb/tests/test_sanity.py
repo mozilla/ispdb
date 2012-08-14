@@ -3,13 +3,12 @@
 import re
 import socket
 import dns.resolver
-import simplejson
 import mox
 import smtplib
 import imaplib
 import poplib
-import simplejson
 
+from django.utils import simplejson
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from nose.tools import *
