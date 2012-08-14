@@ -50,6 +50,32 @@
             "description": "test",
             "language": "en"
         }
+    },
+    {
+        "pk": 2,
+        "model": "config.docurl",
+        "fields": {
+            "url": "http://test.com/",
+            "config": 1
+        }
+    },
+    {
+        "pk": 2,
+        "model": "config.docurldesc",
+        "fields": {
+            "docurl": 1,
+            "description": "test",
+            "language": "en"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "config.docurldesc",
+        "fields": {
+            "docurl": 1,
+            "description": "test2",
+            "language": "fr"
+        }
     }
 
 ]
