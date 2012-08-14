@@ -247,9 +247,9 @@ function AutoFillOutgoing() {
 {% with config_form.docurl_formset.empty_desc_form as form %}
   <tr>
     <th>{{ form.description.label_tag }}:</th>
-    <td>{{ form.language }}</td>
+    <td>{{ form.description }}</td>
     <td>
-      {{ form.description }}
+      {{ form.language }}
       {{ form.DELETE }}
       <a class="link delete desc" value="{1}-{0}">Remove</a>
     </td>
@@ -262,9 +262,9 @@ function AutoFillOutgoing() {
     <input type="hidden" name="{1}-TOTAL_FORMS" value="1" id="id_{1}-TOTAL_FORMS" /><input type="hidden" name="{1}-INITIAL_FORMS" value="0" id="{1}-INITIAL_FORMS" /><input type="hidden" name="{1}-MAX_NUM_FORMS" id="id_{1}-MAX_NUM_FORMS" />
     <tr>
       <th>{{ form.description.label_tag }}:</th>
-      <td>{{ form.language }}</td>
+      <td>{{ form.description }}</td>
       <td>
-        {{ form.description }}
+        {{ form.language }}
         {{ form.DELETE }}
         <a class="link delete desc" value="{1}-{0}">Remove</a>
       </td>
@@ -364,9 +364,9 @@ function AutoFillOutgoing() {
           {{ desc_form.id }}
           <tr>
             <th>{{ desc_form.description.label_tag }}:</th>
-            <td>{{ desc_form.language.errors }}{{ desc_form.language }}</td>
+            <td>{{ desc_form.description.errors }}{{ desc_form.description }}</td>
             <td>
-              {{ desc_form.description.errors }}{{ desc_form.description }}
+              {{ desc_form.language.errors }}{{ desc_form.language }}
               {{ desc_form.DELETE }}
               {% if desc_form.DELETE.value == "True" %}
                 <a class="link delete desc" value="{{desc_form.prefix}}">Undo</a>

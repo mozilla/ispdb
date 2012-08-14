@@ -142,8 +142,7 @@ $(document).ready(function() {
         <table class="tab_desc">
         {% for desc in docurl.desc_formset %}
           <tr>
-            <td>{{ desc.language.label }}:</td><td>{{ desc.language|data_verbose_field }}</td>
-            <td>{{ desc.description.label }}:</td><td>{{ desc.description.value }}</td>
+            <td>{{ desc.description.label }}:</td><td>{{ desc.description.value }}</td><td> {{ desc.language|data_verbose_field }}</td>
           </tr>
         {% endfor %}
         </table>

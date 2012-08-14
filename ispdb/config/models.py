@@ -196,13 +196,13 @@ class DocURL(models.Model):
     def __unicode__(self): return self.url
 
 class DocURLDesc(models.Model):
+    description = models.TextField(
+        max_length=100,
+        verbose_name="Description of the settings page")
     language = models.CharField(
         max_length=10,
         verbose_name="Language",
         choices=settings.LANGUAGES)
-    description = models.TextField(
-        max_length=100,
-        verbose_name="Description of the settings page")
     docurl = models.ForeignKey(DocURL, related_name="descriptions")
 
     def __str__(self): return str(self.description)
