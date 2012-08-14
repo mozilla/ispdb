@@ -100,12 +100,12 @@ $(document).ready(function() {
       var check = $('#id_'+prefix+'-DELETE');
       if (check.val() == "True"){
         check.val("False");
-        $('#id_'+prefix+'-instruction').removeAttr("readonly");
+        $('#id_'+prefix+'-instruction').removeAttr("disabled");
         $('#id_'+prefix+'-language').removeAttr("disabled");
         $(this).text("Remove");
-      }else{
+      } else {
         check.val("True");
-        $('#id_'+prefix+'-instruction').attr("readonly", "readonly");
+        $('#id_'+prefix+'-instruction').attr("disabled", "disabled");
         $('#id_'+prefix+'-language').attr("disabled", "disabled");
         $(this).text("Undo");
       }
@@ -118,7 +118,7 @@ $(document).ready(function() {
         $('#id_'+prefix+'-url').removeAttr("readonly");
         $(this).closest('tr').next().find('div').show();
         $(this).text("Remove");
-      }else{
+      } else {
         check.val("True");
         $('#id_'+prefix+'-url').attr("readonly", "readonly");
         $(this).closest('tr').next().find('div').hide();
@@ -310,7 +310,7 @@ function AutoFillOutgoing() {
   </table></div></td></td></tr>
 {% endwith %}
 </table>
-<textarea style="display:none" id="enableurl_template">
+<table style="display:none" id="enableurl_template">
 {% with config_form.enableurl_formset.empty_form as form %}
   <tr>
     <th class="noborder">{{ form.url.label_tag }}:</th>
@@ -321,29 +321,29 @@ function AutoFillOutgoing() {
     </td>
   </tr>
 {% endwith %}
-</textarea>
-<textarea style="display:none" id="inst_template">
+</table>
+<table style="display:none" id="inst_template">
 {% with config_form.enableurl_formset.empty_inst_form as form %}
   <tr>
     <th>{{ form.instruction.label_tag }}:</th>
-    <td>{{ form.language }}</td>
+    <td>{{ form.instruction }}</td>
     <td>
-      {{ form.instruction }}
+      {{ form.language }}
       {{ form.DELETE }}
       <a class="link delete inst" value="{1}-{0}">Remove</a>
     </td>
   </tr>
 {% endwith %}
-</textarea>
-<textarea style="display:none" id="inst_full_template">
+</table>
+<table style="display:none" id="inst_full_template">
 {% with config_form.enableurl_formset.empty_inst_form as form %}
   <tr><td class="noborder"><td class="noborder"><div id="{1}"><table class="tab_insts">
     <input type="hidden" name="{1}-TOTAL_FORMS" value="1" id="id_{1}-TOTAL_FORMS" /><input type="hidden" name="{1}-INITIAL_FORMS" value="0" id="{1}-INITIAL_FORMS" /><input type="hidden" name="{1}-MAX_NUM_FORMS" id="id_{1}-MAX_NUM_FORMS" />
     <tr>
       <th>{{ form.instruction.label_tag }}:</th>
-      <td>{{ form.language }}</td>
+      <td>{{ form.instruction }}</td>
       <td>
-        {{ form.instruction }}
+        {{ form.language }}
         {{ form.DELETE }}
         <a class="link delete inst" value="{1}-{0}">Remove</a>
       </td>
@@ -351,7 +351,7 @@ function AutoFillOutgoing() {
     <tr><td><a class="link add_inst" value="{1}">add another instruction</a></td></tr>
   </table></div></td></td></tr>
 {% endwith %}
-</textarea>
+</table>
 
 <form action="{{ callback }}" method="POST">{% csrf_token %}
 
@@ -497,9 +497,9 @@ function AutoFillOutgoing() {
           {{ inst_form.id }}
           <tr>
             <th>{{ inst_form.instruction.label_tag }}:</th>
-            <td>{{ inst_form.language.errors }}{{ inst_form.language }}</td>
+            <td>{{ inst_form.instruction.errors }}{{ inst_form.instruction }}</td>
             <td>
-              {{ inst_form.instruction.errors }}{{ inst_form.instruction }}
+              {{ inst_form.language.errors }}{{ inst_form.language }}
               {{ inst_form.DELETE }}
               {% if inst_form.DELETE.value == "True" %}
                 <a class="link delete inst" value="{{inst_form.prefix}}">Undo</a>

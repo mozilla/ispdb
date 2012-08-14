@@ -220,13 +220,13 @@ class EnableURL(models.Model):
 
 
 class EnableURLInst(models.Model):
+    instruction = models.TextField(
+        max_length=100,
+        verbose_name="Instruction")
     language = models.CharField(
         max_length=10,
         verbose_name="Language",
         choices=settings.LANGUAGES)
-    instruction = models.CharField(
-        max_length=100,
-        verbose_name="Instruction")
     enableurl = models.ForeignKey(EnableURL, related_name="instructions")
 
     def __str__(self): return str(self.instruction)
@@ -487,6 +487,7 @@ class EnableURLInstForm(DynamicModelForm):
     def __init__(self, *args, **kwargs):
         http_accept_language = kwargs.pop('http_accept_language', '')
         super(EnableURLInstForm, self).__init__(*args, **kwargs)
+        self.fields['instruction'].widget.attrs.update({'rows': 2, 'cols': 20})
         choices = []
         # add HTTP_ACCEPTED_LANG first
         if http_accept_language:

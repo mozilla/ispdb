@@ -63,7 +63,7 @@
         "pk": 2,
         "model": "config.docurldesc",
         "fields": {
-            "docurl": 1,
+            "docurl": 2,
             "description": "test",
             "language": "en"
         }
@@ -72,7 +72,7 @@
         "pk": 3,
         "model": "config.docurldesc",
         "fields": {
-            "docurl": 1,
+            "docurl": 2,
             "description": "test2",
             "language": "fr"
         }
@@ -92,6 +92,32 @@
             "enableurl": 1,
             "instruction": "test",
             "language": "en"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "config.enableurl",
+        "fields": {
+            "url": "http://test.com/",
+            "config": 1
+        }
+    },
+    {
+        "pk": 2,
+        "model": "config.enableurlinst",
+        "fields": {
+            "enableurl": 2,
+            "instruction": "test",
+            "language": "en"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "config.enableurlinst",
+        "fields": {
+            "enableurl": 2,
+            "instruction": "test2",
+            "language": "fr"
         }
     }
 ]

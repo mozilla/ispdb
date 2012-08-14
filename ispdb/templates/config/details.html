@@ -282,8 +282,7 @@ $(document).ready(function() {
     {% for inst in enableurl.inst_formset %}
       <table class="tab_inst">
         <tr>
-          <td>{{ inst.language.label }}:</td><td>{{ inst.language|data_verbose_field }}</td>
-          <td>{{ inst.instruction.label }}:</td><td>{{ inst.instruction.value }}</td>
+          <td>{{ inst.instruction.label }}:</td><td>{{ inst.instruction.value }}</td><td> {{ inst.language|data_verbose_field }}</td>
         </tr>
       </table>
     {% endfor %}
