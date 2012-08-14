@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from cStringIO import StringIO
-import datetime
 import os
-import re
-import zipfile
+from lxml import etree
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from lxml import etree
-from nose.tools import *
+from nose.tools import assert_equal
 
 from ispdb.config import models
 
@@ -193,9 +189,9 @@ class ListTest(TestCase):
 
         response = self.client.post(reverse("ispdb_export_xml",
                                             kwargs={"id": domain.config.id}))
-        doc = etree.XML(response.content)
-        xml_schema = etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
-                                                     'relaxng_schema.xml'))
+        etree.XML(response.content)
+        etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
+                                        'relaxng_schema.xml'))
 
     def test_one_dot_one_xml_response(self):
         self.client.login(username='test', password='test')

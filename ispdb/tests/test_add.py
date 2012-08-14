@@ -4,7 +4,8 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.forms import ValidationError
 from django.utils import timezone
-from nose.tools import *
+from nose.tools import assert_equal, assert_false, assert_raises, assert_true
+
 from ispdb.config import models
 from ispdb.tests.common import adding_domain_form, asking_domain_form
 from ispdb.tests.common import success_code, fail_code

@@ -1,16 +1,16 @@
 # from http://code.djangoproject.com/wiki/AuditTrail
 
-from django.dispatch import dispatcher
-from django.db import models
-from django.core.exceptions import ImproperlyConfigured
-from django.contrib import admin
 import copy
 import re
-import types
+
+from django.contrib import admin
+from django.core.exceptions import ImproperlyConfigured
+from django.db import models
 try:
     import settings_audit
 except ImportError:
     settings_audit = None
+
 value_error_re = re.compile("^.+'(.+)'$")
 
 
@@ -96,7 +96,7 @@ class AuditTrailDescriptor(object):
         self.pk_attribute = pk_attribute
 
     def __get__(self, instance=None, owner=None):
-        if instance == None:
+        if instance is None:
             return create_audit_manager_class(self.manager)
         else:
             return create_audit_manager_with_pk(self.manager,

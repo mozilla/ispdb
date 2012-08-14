@@ -186,6 +186,6 @@ _serializers = {
 
 def get(version):
     # If there is no version requested, return the most recent version.
-    if version == None:
+    if version is None:
         return xmlOneDotZero
     return _serializers.get(version, None)

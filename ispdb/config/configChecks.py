@@ -3,8 +3,6 @@ This file contains methods to do sanity checks on domains and configs
 """
 
 import re
-import os
-import socket
 import smtplib
 import imaplib
 import poplib
@@ -104,7 +102,7 @@ def IMAP_starttls(self, keyfile=None, certfile=None, cert_reqs=ssl.CERT_NONE,
     if name not in self.capabilities:
         raise self.error("STARTTLS extension not supported by server.")
     if hasattr(self, '_tls_established') and self._tls_established:
-        raise error_proto('TLS session already established')
+        raise self.error('TLS session already established')
     typ, dat = self._simple_command(name)
     if typ == 'OK':
         self.sock = ssl.wrap_socket(self.sock, keyfile, certfile,
@@ -361,14 +359,14 @@ def do_config_checks(config):
         config.incoming_socket_type == 'STARTTLS'):
         if check_socket_type(config.incoming_hostname,
                              config.incoming_type,
-                             'SSL') != None:
+                             'SSL') is not None:
             config_warnings.append("Incoming server '%s' supports SSL "
                                    "using default port." %
                                    (config.incoming_hostname))
         elif config.incoming_socket_type == 'plain':
             if check_socket_type(config.incoming_hostname,
                                  config.incoming_type,
-                                 'STARTTLS') != None:
+                                 'STARTTLS') is not None:
                 config_warnings.append("Incoming server '%s' supports "
                                        "STARTTLS using default port." %
                                        (config.incoming_hostname,))
@@ -377,7 +375,7 @@ def do_config_checks(config):
                              config.incoming_type,
                              config.incoming_socket_type,
                              port=config.incoming_port)
-    if capa == None:
+    if capa is None:
         config_errors.append("Incoming server '%s' does not support "
                              "socket type %s on port %s." %
                               (config.incoming_hostname,
@@ -407,14 +405,14 @@ def do_config_checks(config):
             config.outgoing_socket_type == 'STARTTLS'):
         if check_socket_type(config.outgoing_hostname,
                              'smtp',
-                             'SSL') != None:
+                             'SSL') is not None:
             config_warnings.append("Outgoing server '%s' supports SSL "
                                    "using default port." %
                                    (config.outgoing_hostname))
         elif config.outgoing_socket_type == 'plain':
             if check_socket_type(config.outgoing_hostname,
                                  'smtp',
-                                 'STARTTLS') != None:
+                                 'STARTTLS') is not None:
                 config_warnings.append("Outgoing server supports '%s' "
                                        "STARTTLS using default port." %
                                        (config.outgoing_hostname,))
@@ -423,7 +421,7 @@ def do_config_checks(config):
                              'smtp',
                              config.outgoing_socket_type,
                              port=config.outgoing_port)
-    if capa == None:
+    if capa is None:
         config_errors.append("Outgoing server '%s' does not support "
                              "socket type %s on port %s." %
                              (config.outgoing_hostname,

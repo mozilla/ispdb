@@ -1,5 +1,4 @@
 import os
-import sys
 import lxml.etree as ET
 
 from ispdb.config.models import Domain, Config

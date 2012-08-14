@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from urllib import quote_plus
+
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from nose.tools import *
+from nose.tools import assert_equal, assert_false, assert_true
+
 from ispdb.config import models
 from ispdb.tests.common import adding_domain_form
 from ispdb.tests.common import success_code, fail_code
@@ -52,8 +54,8 @@ class EditTest(TestCase):
         form["display_name"] = "testing2"
         self.client.login(username='test', password='test')
         res = self.client.post(reverse("ispdb_edit", args=[1]),
-                               form,
-                               follow=True)
+                         form,
+                         follow=True)
         config = models.Config.objects.get(pk=1)
         assert_true(config.display_name != "testing2")
         assert_true("This configuration is locked. Only admins can unlock it."
@@ -154,8 +156,8 @@ class EditTest(TestCase):
         self.add_domain(name='approved.com')
         self.add_domain()
         self.client.login(username='test_admin', password='test')
-        result = self.client.post("/approve/1/", {
-                                  "approved": True, })
+        self.client.post("/approve/1/", {
+                "approved": True, })
         config = models.Config.objects.get(id=1)
         assert_equal(config.status, 'approved')
         form = adding_domain_form()
@@ -169,8 +171,8 @@ class EditTest(TestCase):
     def test_owner_edit_approved_domain(self):
         self.add_domain(name='approved.com')
         self.client.login(username='test_admin', password='test')
-        result = self.client.post("/approve/1/", {
-                                  "approved": True, })
+        self.client.post("/approve/1/", {
+                "approved": True, })
         config = models.Config.objects.get(id=1)
         assert_equal(config.status, 'approved')
         self.client.logout()

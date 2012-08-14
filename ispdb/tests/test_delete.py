@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import httplib
-from urllib import quote_plus
+
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.utils import timezone
-from nose.tools import *
+from nose.tools import assert_equal, assert_true
+
 from ispdb.config import models
 
 # Redirect to /add/ on success
@@ -51,7 +52,7 @@ class DeleteTest(TestCase):
         config = models.Config.objects.get(pk=1)
         assert_true(config.status != 'deleted')
         res = self.client.post(reverse("ispdb_delete", args=[1]),
-                               {'delete': 'delete'})
+                         {'delete': 'delete'})
         self.client.logout()
         config = models.Config.objects.get(pk=1)
         assert_true(config.status != 'deleted')
@@ -83,7 +84,6 @@ class DeleteTest(TestCase):
                                follow=True)
         # Make sure it redirects to login page
         goodRedirect = "/login/"
-        print res
         self.assertRedirects(res, goodRedirect)
 
     def test_undo_request_normal_user(self):
@@ -91,9 +91,9 @@ class DeleteTest(TestCase):
         config = models.Config.objects.get(pk=1)
         assert_equal(config.status, 'deleted')
         self.client.login(username='test', password='test')
-        res = self.client.post(reverse("ispdb_delete", args=[1]),
-                               {'delete': 'undo'},
-                               follow=True)
+        self.client.post(reverse("ispdb_delete", args=[1]),
+                         {'delete': 'undo'},
+                         follow=True)
         config = models.Config.objects.get(pk=1)
         assert_equal(config.status, 'requested')
 
@@ -102,9 +102,9 @@ class DeleteTest(TestCase):
         config = models.Config.objects.get(pk=3)
         assert_equal(config.status, 'deleted')
         self.client.login(username='test_admin', password='test')
-        res = self.client.post(reverse("ispdb_delete", args=[3]),
-                               {'delete': 'undo'},
-                               follow=True)
+        self.client.post(reverse("ispdb_delete", args=[3]),
+                         {'delete': 'undo'},
+                         follow=True)
         config = models.Config.objects.get(pk=3)
         assert_equal(config.status, 'invalid')
 
@@ -116,8 +116,8 @@ class DeleteTest(TestCase):
                                                     tzinfo=timezone.utc)
         config.save()
         self.client.login(username='test_admin', password='test')
-        res = self.client.post(reverse("ispdb_delete", args=[4]),
-                               {'delete': 'undo'},
-                               follow=True)
+        self.client.post(reverse("ispdb_delete", args=[4]),
+                         {'delete': 'undo'},
+                         follow=True)
         config = models.Config.objects.get(pk=4)
         assert_equal(config.status, 'deleted')

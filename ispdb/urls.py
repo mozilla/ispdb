@@ -1,7 +1,6 @@
 from django.conf.urls import patterns, include, url
 from django.http import HttpResponse
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from ispdb.config.models import *
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin

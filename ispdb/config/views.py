@@ -14,20 +14,18 @@ from django.contrib.auth import logout
 from django.template import RequestContext
 from django.utils import simplejson
 from django.utils import timezone
-from django.utils.functional import curry
 from django.db.models import Q
 from django.contrib import comments
 from django.contrib.comments.views.comments import post_comment
 from django.contrib.comments.models import Comment
-from django.contrib.comments.views.moderation import delete as delete_comment
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 
 from ispdb.config.models import (Config, Domain, DomainRequest, Issue, DocURL,
-    DocURLDesc, EnableURL)
+    EnableURL)
 from ispdb.config.forms import (ConfigForm, DomainForm, BaseDomainFormSet,
-    IssueForm, BaseDocURLFormSet, DocURLForm, DocURLDescForm,
-    BaseDocURLDescFormSet, EnableURLForm, BaseEnableURLFormSet)
+    IssueForm, BaseDocURLFormSet, DocURLForm, EnableURLForm,
+    BaseEnableURLFormSet)
 from ispdb.config import serializers
 from ispdb.config.configChecks import do_domain_checks
 from ispdb.config.configChecks import do_config_checks
@@ -174,7 +172,6 @@ def edit(request, config_id):
     enableurl_queryset = config.enableurl_set.all()
 
     if request.method == 'POST':
-        data = request.POST
         # A form bound to the POST data
         domain_formset = DomainFormSet(request.POST, request.FILES,
                 queryset=domain_queryset)
@@ -431,7 +428,6 @@ def report(request, id):
     enableurl_queryset = config.enableurl_set.all()
 
     if request.method == 'POST':
-        data = request.POST
         domain_formset = DomainFormSet(request.POST, request.FILES,
                 queryset=domain_queryset)
         docurl_formset = DocURLFormSet(request.POST, request.FILES,

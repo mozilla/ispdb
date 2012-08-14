@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
-import re
+
 import os
-from StringIO import StringIO
+from lxml import etree
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.test.client import Client
+from nose.tools import assert_equal
 
-from lxml import etree
-from nose.tools import *
-import nose.tools
-
-from ispdb.config import views, models, serializers
+from ispdb.config import models, serializers
 
 
 def check_content(config_xml):
