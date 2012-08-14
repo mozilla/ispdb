@@ -7,7 +7,7 @@ register = template.Library()
 @register.filter
 def data_verbose(boundField, attr_name="value"):
     """
-    Returns field's data or it's verbose version
+    Returns field's data or its verbose version
     for a field with choices defined.
 
     Usage::
@@ -25,7 +25,7 @@ def data_verbose(boundField, attr_name="value"):
 @register.filter
 def data_verbose_field(boundField, attr_name="value"):
     """
-    Returns field's data or it's verbose version
+    Returns field's data or its verbose version
     for a field with choices defined.
 
     Usage::

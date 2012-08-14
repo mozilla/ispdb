@@ -23,10 +23,7 @@ $(document).ready(function() {
     // add functions
     function addRow(prefix, template_selector, appendto_selector) {
       var template = jQuery.format($(template_selector).html());
-      var i = $("#id_"+prefix+"-TOTAL_FORMS").val();
-      if (i === undefined){
-        i = 0;
-      }
+      var i = $("#id_"+prefix+"-TOTAL_FORMS").val() | 0;
       $(template(i++, prefix)).appendTo(appendto_selector);
       $("#id_"+prefix+"-TOTAL_FORMS").val(i);
     }
@@ -52,7 +49,7 @@ $(document).ready(function() {
         check.val("False");
         $('#id_'+prefix+'-name').removeAttr("readonly");
         $(this).text("Remove");
-      }else{
+      } else {
         check.val("True");
         $('#id_'+prefix+'-name').attr("readonly", "readonly");
         $(this).text("Undo");
@@ -66,7 +63,7 @@ $(document).ready(function() {
         $('#id_'+prefix+'-description').removeAttr("disabled");
         $('#id_'+prefix+'-language').removeAttr("disabled");
         $(this).text("Remove");
-      }else{
+      } else {
         check.val("True");
         $('#id_'+prefix+'-description').attr("disabled", "disabled");
         $('#id_'+prefix+'-language').attr("disabled", "disabled");
@@ -81,7 +78,7 @@ $(document).ready(function() {
         $('#id_'+prefix+'-url').removeAttr("readonly");
         $(this).closest('tr').next().find('div').show();
         $(this).text("Remove");
-      }else{
+      } else {
         check.val("True");
         $('#id_'+prefix+'-url').attr("readonly", "readonly");
         $(this).closest('tr').next().find('div').hide();
