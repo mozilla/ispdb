@@ -69,6 +69,14 @@ def xmlOneDotOne(data):
         text = unicode(text)
 
       e.text = text
+    # DocURL
+    for docurl in data.docurl_set.all():
+        doc = ET.SubElement(emailProvider, "documentation")
+        doc.attrib["url"] = docurl.url
+        for desc in docurl.descriptions.all():
+            d = ET.SubElement(doc, "descr")
+            d.attrib["lang"] = desc.language
+            d.text = unicode(desc.description)
 
     retval = StringIO("w")
     xml = ET.ElementTree(config)

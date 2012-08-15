@@ -1,7 +1,7 @@
 .box {
   border: 1px solid #CACACA;
   border-radius: 10px;
-  width: 60%;
+  width: 70%;
   overflow: auto;
   word-wrap: break-word;
 }
@@ -61,4 +61,8 @@
 
 #edit {
   float: right;
+}
+
+.tab_desc {
+  margin-left: 10px;
 }

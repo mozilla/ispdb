@@ -1,0 +1,57 @@
+[
+    {
+        "pk": 1, 
+        "model": "config.domain", 
+        "fields": {
+            "config": 1, 
+            "name": "test.com"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "config.config", 
+        "fields": {
+            "outgoing_username_form": "%EMAILLOCALPART%", 
+            "incoming_socket_type": "plain", 
+            "outgoing_port": 587, 
+            "flagged_by_email": "", 
+            "flagged_as_incorrect": false, 
+            "incoming_authentication": "password-encrypted", 
+            "email_provider_id": "", 
+            "owner": 1, 
+            "display_name": "Test", 
+            "outgoing_add_this_server": false, 
+            "outgoing_socket_type": "plain", 
+            "created_datetime": "2012-05-31T21:06:47.613Z", 
+            "outgoing_authentication": "password-encrypted", 
+            "incoming_hostname": "test.com", 
+            "status": "approved", 
+            "display_short_name": "Domain Request",
+            "outgoing_use_global_preferred_server": false, 
+            "incoming_port": 143, 
+            "last_update_datetime": "2012-05-31T21:06:47.613Z", 
+            "incoming_username_form": "%EMAILLOCALPART%", 
+            "outgoing_hostname": "test.com", 
+            "incoming_type": "imap",
+            "deleted_datetime": null,
+            "last_status": ""
+        }
+    }, 
+    {
+        "pk": 1,
+        "model": "config.docurl",
+        "fields": {
+            "url": "http://test.com/",
+            "config": 1
+        }
+    },
+    {
+        "pk": 1,
+        "model": "config.docurldesc",
+        "fields": {
+            "docurl": 1,
+            "description": "test",
+            "language": "en"
+        }
+    }
+]
