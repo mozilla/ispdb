@@ -1,0 +1,15 @@
+<tr><td class="noborder">{{ form.non_field_errors }}</td></tr>
+{{ form.id }}
+<tr>
+  <th class="noborder">{{ form.url.label_tag }}:</th>
+  <td class="noborder">
+    {{ form.url.errors }}
+    {{ form.url }}
+    {{ form.DELETE }}
+    {% if form.DELETE.value == "True" %}
+    <a class="link delete url" value="{{form.prefix}}">Undo</a>
+    {% else %}
+    <a class="link delete url" value="{{form.prefix}}">Remove</a>
+    {% endif %}
+  </td>
+</tr>

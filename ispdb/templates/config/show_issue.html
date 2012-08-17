@@ -132,22 +132,23 @@ $(document).ready(function() {
     </div>
 
     <div id="docurl">
-      <h4>Documentation</h4>
-        {% for docurl in new_docurl_formset %}
-        <table>
-          <tr>
-            <td>{{ docurl.url.label}}:</td><td>{{ docurl.url.value}}</td>
-          </tr>
-        </table>
-        <table class="tab_desc">
-        {% for desc in docurl.desc_formset %}
-          <tr>
-            <td>{{ desc.description.label }}:</td><td>{{ desc.description.value }}</td><td> {{ desc.language|data_verbose_field }}</td>
-          </tr>
+      <h4>Documentation (only the suggested is shown)</h4>
+      {% for form in new_docurl_formset %}
+        {% include "config/urls/url_list.html" %}
+        {% for desc_form in form.desc_formset %}
+          {% include "config/urls/desc_list.html" %}
         {% endfor %}
-        </table>
+      {% endfor %}
+    </div>
+
+    <div id="enableurl">
+      <h4>Enable Instructions (only the suggested is shown)</h4>
+      {% for form in new_enableurl_formset %}
+        {% include "config/urls/url_list.html" %}
+        {% for desc_form in form.inst_formset %}
+          {% include "config/urls/desc_list.html" %}
         {% endfor %}
-      </table>
+      {% endfor %}
     </div>
 
   </div>
