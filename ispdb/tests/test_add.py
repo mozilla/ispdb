@@ -307,14 +307,14 @@ class AddTest(TestCase):
         domain_form["inst_1-0-id"] = ""
         domain_form["inst_1-0-DELETE"] = "False"
         domain_form["inst_1-0-language"] = "en"
-        domain_form["inst_1-0-instruction"] = "test2"
+        domain_form["inst_1-0-description"] = "test2"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
         model = models.EnableURL.objects.filter(url="http://test.com/")
         assert_true(model)
         model = models.EnableURL.objects.filter(url="http://test2.com/")
         assert_false(model)
-        model = models.EnableURLInst.objects.filter(instruction="test2")
+        model = models.EnableURLInst.objects.filter(description="test2")
         assert_false(model)
 
     def test_add_one_deleted_inst(self):
@@ -324,12 +324,12 @@ class AddTest(TestCase):
         domain_form["inst_0-1-id"] = ""
         domain_form["inst_0-1-DELETE"] = "True"
         domain_form["inst_0-1-language"] = "en"
-        domain_form["inst_0-1-instruction"] = "test2"
+        domain_form["inst_0-1-description"] = "test2"
         res = self.client.post(reverse("ispdb_add"), domain_form)
         assert_equal(res.status_code, success_code)
-        model = models.EnableURLInst.objects.filter(instruction="test")
+        model = models.EnableURLInst.objects.filter(description="test")
         assert_true(model)
-        model = models.EnableURLInst.objects.filter(instruction="test2")
+        model = models.EnableURLInst.objects.filter(description="test2")
         assert_false(model)
 
 

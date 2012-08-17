@@ -67,7 +67,7 @@
         "model": "config.enableurlinst",
         "fields": {
             "enableurl": 1,
-            "instruction": "test",
+            "description": "test",
             "language": "en"
         }
     }

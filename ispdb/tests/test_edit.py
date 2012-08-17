@@ -61,7 +61,7 @@ class EditTest(TestCase):
         form["enableurl-0-url"] = "http://test1.com/"
         form["inst_0-INITIAL_FORMS"] = "1"
         form["inst_0-0-id"] = "1"
-        form["inst_0-0-instruction"] = "test1"
+        form["inst_0-0-description"] = "test1"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -80,7 +80,7 @@ class EditTest(TestCase):
         enableurl = models.EnableURL.objects.get(pk=1)
         assert_equal(enableurl.url, 'http://test1.com/')
         inst = models.EnableURLInst.objects.get(pk=1)
-        assert_equal(inst.instruction, 'test1')
+        assert_equal(inst.description, 'test1')
 
     def test_edit_staff_user(self):
         self.add_domain()
@@ -101,7 +101,7 @@ class EditTest(TestCase):
         form["enableurl-0-url"] = "http://test1.com/"
         form["inst_0-INITIAL_FORMS"] = "1"
         form["inst_0-0-id"] = "1"
-        form["inst_0-0-instruction"] = "test1"
+        form["inst_0-0-description"] = "test1"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -120,7 +120,7 @@ class EditTest(TestCase):
         enableurl = models.EnableURL.objects.get(pk=1)
         assert_equal(enableurl.url, 'http://test1.com/')
         inst = models.EnableURLInst.objects.get(pk=1)
-        assert_equal(inst.instruction, 'test1')
+        assert_equal(inst.description, 'test1')
 
     def test_edit_duplicated_names(self):
         self.add_domain()

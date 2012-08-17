@@ -19,6 +19,11 @@ $(document).ready(function() {
     $("#{{docurl.desc_formset.prefix}}").hide();
     {% endif %}
     {% endfor %}
+    {% for enableurl in config_form.enableurl_formset %}
+    {% if enableurl.DELETE.value == "True" %}
+    $("#{{enableurl.inst_formset.prefix}}").hide();
+    {% endif %}
+    {% endfor %}
 
     // add functions
     function addRow(prefix, template_selector, tab_selector) {
@@ -65,6 +70,21 @@ $(document).ready(function() {
         $(this).text("Undo");
       }
     });
+    $("#configform").on("click", "a.delete.url", function(){
+      var prefix = $(this).attr('value');
+      var check = $('#id_'+prefix+'-DELETE');
+      if (check.val() == "True"){
+        check.val("False");
+        $('#id_'+prefix+'-url').removeAttr("readonly");
+        $(this).closest('tr').next().find('div').show();
+        $(this).text("Remove");
+      } else {
+        check.val("True");
+        $('#id_'+prefix+'-url').attr("readonly", "readonly");
+        $(this).closest('tr').next().find('div').hide();
+        $(this).text("Undo");
+      }
+    });
     $("#configform").on("click", "a.delete.desc", function(){
       var prefix = $(this).attr('value');
       var check = $('#id_'+prefix+'-DELETE');
@@ -77,51 +97,6 @@ $(document).ready(function() {
         check.val("True");
         $('#id_'+prefix+'-description').attr("disabled", "disabled");
         $('#id_'+prefix+'-language').attr("disabled", "disabled");
-        $(this).text("Undo");
-      }
-    });
-    $("#configform").on("click", "a.delete.docurl", function(){
-      var prefix = $(this).attr('value');
-      var check = $('#id_'+prefix+'-DELETE');
-      if (check.val() == "True"){
-        check.val("False");
-        $('#id_'+prefix+'-url').removeAttr("readonly");
-        $(this).closest('tr').next().find('div').show();
-        $(this).text("Remove");
-      } else {
-        check.val("True");
-        $('#id_'+prefix+'-url').attr("readonly", "readonly");
-        $(this).closest('tr').next().find('div').hide();
-        $(this).text("Undo");
-      }
-    });
-    $("#configform").on("click", "a.delete.inst", function(){
-      var prefix = $(this).attr('value');
-      var check = $('#id_'+prefix+'-DELETE');
-      if (check.val() == "True"){
-        check.val("False");
-        $('#id_'+prefix+'-instruction').removeAttr("disabled");
-        $('#id_'+prefix+'-language').removeAttr("disabled");
-        $(this).text("Remove");
-      } else {
-        check.val("True");
-        $('#id_'+prefix+'-instruction').attr("disabled", "disabled");
-        $('#id_'+prefix+'-language').attr("disabled", "disabled");
-        $(this).text("Undo");
-      }
-    });
-    $("#configform").on("click", "a.delete.enableurl", function(){
-      var prefix = $(this).attr('value');
-      var check = $('#id_'+prefix+'-DELETE');
-      if (check.val() == "True"){
-        check.val("False");
-        $('#id_'+prefix+'-url').removeAttr("readonly");
-        $(this).closest('tr').next().find('div').show();
-        $(this).text("Remove");
-      } else {
-        check.val("True");
-        $('#id_'+prefix+'-url').attr("readonly", "readonly");
-        $(this).closest('tr').next().find('div').hide();
         $(this).text("Undo");
       }
     });
@@ -268,86 +243,46 @@ function AutoFillOutgoing() {
   </tr>
 {% endwith %}
 </table>
+
 <table style="display:none" id="docurl_template">
 {% with config_form.docurl_formset.empty_form as form %}
-  <tr>
-    <th class="noborder">{{ form.url.label_tag }}:</th>
-    <td class="noborder">
-      {{ form.url }}
-      {{ form.DELETE }}
-      <a class="link delete docurl" value="{1}-{0}">Remove</a>
-    </td>
-  </tr>
+  {% include "config/urls/url_template_form.html" %}
 {% endwith %}
 </table>
+
+<table style="display:none" id="enableurl_template">
+{% with config_form.enableurl_formset.empty_form as form %}
+  {% include "config/urls/url_template_form.html" %}
+{% endwith %}
+</table>
+
 <table style="display:none" id="desc_template">
 {% with config_form.docurl_formset.empty_desc_form as form %}
-  <tr>
-    <th>{{ form.description.label_tag }}:</th>
-    <td>{{ form.description }}</td>
-    <td>
-      {{ form.language }}
-      {{ form.DELETE }}
-      <a class="link delete desc" value="{1}-{0}">Remove</a>
-    </td>
-  </tr>
+  {% include "config/urls/desc_template_form.html" %}
 {% endwith %}
 </table>
+
+<table style="display:none" id="inst_template">
+{% with config_form.enableurl_formset.empty_desc_form as form %}
+  {% include "config/urls/desc_template_form.html" %}
+{% endwith %}
+</table>
+
 <table style="display:none" id="desc_full_template">
 {% with config_form.docurl_formset.empty_desc_form as form %}
   <tr><td class="noborder"><td class="noborder"><div id="{1}"><table class="tab_descs">
     <input type="hidden" name="{1}-TOTAL_FORMS" value="1" id="id_{1}-TOTAL_FORMS" /><input type="hidden" name="{1}-INITIAL_FORMS" value="0" id="{1}-INITIAL_FORMS" /><input type="hidden" name="{1}-MAX_NUM_FORMS" id="id_{1}-MAX_NUM_FORMS" />
-    <tr>
-      <th>{{ form.description.label_tag }}:</th>
-      <td>{{ form.description }}</td>
-      <td>
-        {{ form.language }}
-        {{ form.DELETE }}
-        <a class="link delete desc" value="{1}-{0}">Remove</a>
-      </td>
-    </tr>
+    {% include "config/urls/desc_template_form.html" %}
     <tr><td class="noborder"><a class="link add_desc" value="{1}">add another description</a></td></tr>
   </table></div></td></td></tr>
 {% endwith %}
 </table>
-<table style="display:none" id="enableurl_template">
-{% with config_form.enableurl_formset.empty_form as form %}
-  <tr>
-    <th class="noborder">{{ form.url.label_tag }}:</th>
-    <td class="noborder">
-      {{ form.url }}
-      {{ form.DELETE }}
-      <a class="link delete enableurl" value="{1}-{0}">Remove</a>
-    </td>
-  </tr>
-{% endwith %}
-</table>
-<table style="display:none" id="inst_template">
-{% with config_form.enableurl_formset.empty_inst_form as form %}
-  <tr>
-    <th>{{ form.instruction.label_tag }}:</th>
-    <td>{{ form.instruction }}</td>
-    <td>
-      {{ form.language }}
-      {{ form.DELETE }}
-      <a class="link delete inst" value="{1}-{0}">Remove</a>
-    </td>
-  </tr>
-{% endwith %}
-</table>
+
 <table style="display:none" id="inst_full_template">
-{% with config_form.enableurl_formset.empty_inst_form as form %}
+{% with config_form.enableurl_formset.empty_desc_form as form %}
   <tr><td class="noborder"><td class="noborder"><div id="{1}"><table class="tab_insts">
     <input type="hidden" name="{1}-TOTAL_FORMS" value="1" id="id_{1}-TOTAL_FORMS" /><input type="hidden" name="{1}-INITIAL_FORMS" value="0" id="{1}-INITIAL_FORMS" /><input type="hidden" name="{1}-MAX_NUM_FORMS" id="id_{1}-MAX_NUM_FORMS" />
-    <tr>
-      <th>{{ form.instruction.label_tag }}:</th>
-      <td>{{ form.instruction }}</td>
-      <td>
-        {{ form.language }}
-        {{ form.DELETE }}
-        <a class="link delete inst" value="{1}-{0}">Remove</a>
-      </td>
-    </tr>
+    {% include "config/urls/desc_template_form.html" %}
     <tr><td><a class="link add_inst" value="{1}">add another instruction</a></td></tr>
   </table></div></td></td></tr>
 {% endwith %}
@@ -419,23 +354,9 @@ function AutoFillOutgoing() {
 
   <table id="tab_docurl"> 
     {{ config_form.docurl_formset.management_form }}
-    <tr><tdclass="noborder">{{ config_form.docurl_formset.non_form_errors }}</td></tr>
+    <tr><td class="noborder">{{ config_form.docurl_formset.non_form_errors }}</td></tr>
     {% for form in config_form.docurl_formset %}
-      <tr><td class="noborder">{{ form.non_field_errors }}</td></tr>
-      {{ form.id }}
-      <tr>
-        <th class="noborder">{{ form.url.label_tag }}:</th>
-        <td class="noborder">
-          {{ form.url.errors }}
-          {{ form.url }}
-          {{ form.DELETE }}
-          {% if form.DELETE.value == "True" %}
-            <a class="link delete docurl" value="{{form.prefix}}">Undo</a>
-          {% else %}
-            <a class="link delete docurl" value="{{form.prefix}}">Remove</a>
-          {% endif %}
-        </td>
-      </tr>
+      {% include "config/urls/url_form.html" %}
       <tr><td class="noborder"><td class="noborder"><div id="{{form.desc_formset.prefix}}"><table class="tab_descs">
         {{ form.desc_formset.management_form }}
         <tr><td>{{ form.desc_formset.non_form_errors }}</td></tr>
@@ -443,20 +364,7 @@ function AutoFillOutgoing() {
           <tr><td>{{ error }}</td></tr>
         {% endfor %}
         {% for desc_form in  form.desc_formset %}
-          {{ desc_form.id }}
-          <tr>
-            <th>{{ desc_form.description.label_tag }}:</th>
-            <td>{{ desc_form.description.errors }}{{ desc_form.description }}</td>
-            <td>
-              {{ desc_form.language.errors }}{{ desc_form.language }}
-              {{ desc_form.DELETE }}
-              {% if desc_form.DELETE.value == "True" %}
-                <a class="link delete desc" value="{{desc_form.prefix}}">Undo</a>
-              {% else %}
-                <a class="link delete desc" value="{{desc_form.prefix}}">Remove</a>
-              {% endif %}
-            </td>
-          </tr>
+          {% include "config/urls/desc_form.html" %}
         {% endfor %}
       <tr><td class="noborder"><a class="link add_desc" value="{{form.desc_formset.prefix}}">add another description</a></td></tr>
       </table>
@@ -472,42 +380,15 @@ function AutoFillOutgoing() {
     {{ config_form.enableurl_formset.management_form }}
     <tr><tdclass="noborder">{{ config_form.enableurl_formset.non_form_errors }}</td></tr>
     {% for form in config_form.enableurl_formset %}
-      <tr><td class="noborder">{{ form.non_field_errors }}</td></tr>
-      {{ form.id }}
-      <tr>
-        <th class="noborder">{{ form.url.label_tag }}:</th>
-        <td class="noborder">
-          {{ form.url.errors }}
-          {{ form.url }}
-          {{ form.DELETE }}
-          {% if form.DELETE.value == "True" %}
-            <a class="link delete docurl" value="{{form.prefix}}">Undo</a>
-          {% else %}
-            <a class="link delete docurl" value="{{form.prefix}}">Remove</a>
-          {% endif %}
-        </td>
-      </tr>
+      {% include "config/urls/url_form.html" %}
       <tr><td class="noborder"><td class="noborder"><div id="{{form.inst_formset.prefix}}"><table class="tab_insts">
         {{ form.inst_formset.management_form }}
         <tr><td>{{ form.inst_formset.non_form_errors }}</td></tr>
         {% for error in form.inst_formset.non_field_errors %}
           <tr><td>{{ error }}</td></tr>
         {% endfor %}
-        {% for inst_form in form.inst_formset %}
-          {{ inst_form.id }}
-          <tr>
-            <th>{{ inst_form.instruction.label_tag }}:</th>
-            <td>{{ inst_form.instruction.errors }}{{ inst_form.instruction }}</td>
-            <td>
-              {{ inst_form.language.errors }}{{ inst_form.language }}
-              {{ inst_form.DELETE }}
-              {% if inst_form.DELETE.value == "True" %}
-                <a class="link delete inst" value="{{inst_form.prefix}}">Undo</a>
-              {% else %}
-                <a class="link delete inst" value="{{inst_form.prefix}}">Remove</a>
-              {% endif %}
-            </td>
-          </tr>
+        {% for desc_form in form.inst_formset %}
+          {% include "config/urls/desc_form.html" %}
         {% endfor %}
         <tr><td><a class="link add_inst" value="{{form.inst_formset.prefix}}">add another instruction</a></td></tr>
       </table>

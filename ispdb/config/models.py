@@ -13,6 +13,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.utils.translation import get_language_info
 from django.utils.functional import curry
+from django.utils.translation.trans_real import parse_accept_lang_header
 import ispdb.audit as audit
 
 class Domain(models.Model):
@@ -188,49 +189,56 @@ class Issue(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES,
                               default="open")
 
-class DocURL(models.Model):
+
+class CommonConfigURL(models.Model):
     url = models.URLField(
-        verbose_name="URL of the page describing these settings")
-    config = models.ForeignKey(Config)
+        verbose_name="URL of the page")
+    config = models.ForeignKey(Config, related_name="%(class)s_set")
+
+    class Meta:
+        abstract = True
 
     def __str__(self): return str(self.url)
     def __unicode__(self): return self.url
 
-class DocURLDesc(models.Model):
+
+class CommonURLDesc(models.Model):
     description = models.TextField(
         max_length=100,
-        verbose_name="Description of the settings page")
+        verbose_name="Description")
     language = models.CharField(
         max_length=10,
         verbose_name="Language",
         choices=settings.LANGUAGES)
-    docurl = models.ForeignKey(DocURL, related_name="descriptions")
+
+    class Meta:
+        abstract = True
 
     def __str__(self): return str(self.description)
     def __unicode__(self): return self.description
 
 
-class EnableURL(models.Model):
-    url = models.URLField(
-        verbose_name="URL of the page with enable instructions")
-    config = models.ForeignKey(Config)
-
-    def __str__(self): return str(self.url)
-    def __unicode__(self): return self.url
+class DocURL(CommonConfigURL):
+    pass
+DocURL._meta.get_field('url').verbose_name = ("URL of the page describing "
+    "these settings")
 
 
-class EnableURLInst(models.Model):
-    instruction = models.TextField(
-        max_length=100,
-        verbose_name="Instruction")
-    language = models.CharField(
-        max_length=10,
-        verbose_name="Language",
-        choices=settings.LANGUAGES)
+class DocURLDesc(CommonURLDesc):
+    docurl = models.ForeignKey(DocURL, related_name="descriptions")
+DocURLDesc._meta.get_field('description').verbose_name = ('Description of the '
+    'settings page')
+
+
+class EnableURL(CommonConfigURL):
+    pass
+EnableURL._meta.get_field('url').verbose_name = ("URL of the page with enable "
+    "instructions")
+
+
+class EnableURLInst(CommonURLDesc):
     enableurl = models.ForeignKey(EnableURL, related_name="instructions")
-
-    def __str__(self): return str(self.instruction)
-    def __unicode__(self): return self.instruction
+EnableURLInst._meta.get_field('description').verbose_name = ('Instruction')
 
 
 # Forms
@@ -272,6 +280,18 @@ class DynamicModelForm(ModelForm):
             self.errors.clear()
         return cleaned_data
 
+    def save(self, commit=True):
+        super(DynamicModelForm, self).save(commit=False)
+        if commit:
+            # delete if exists
+            if self.cleaned_data and self.cleaned_data['DELETE']:
+                if self.instance.pk:
+                    return self.instance.delete()
+                else:
+                    return None
+            super(DynamicModelForm, self).save()
+        return self.instance
+
 
 class DynamicBaseModelFormSet(BaseModelFormSet):
     """
@@ -312,20 +332,18 @@ class IssueForm(ModelForm):
         fields = ['title', 'description']
 
 
-class DocURLDescForm(DynamicModelForm):
-    class Meta:
-        model = DocURLDesc
-        exclude = ['docurl']
-
+class LanguageDescModelForm(DynamicModelForm):
+    """
+    A DynamicModelForm for classes with a language and a description fields
+    """
     def __init__(self, *args, **kwargs):
         http_accept_language = kwargs.pop('http_accept_language', '')
-        super(DocURLDescForm, self).__init__(*args, **kwargs)
-        self.fields['description'].widget.attrs.update({'rows': 2, 'cols': 20})
+        super(LanguageDescModelForm, self).__init__(*args, **kwargs)
+        self.fields['description'].widget.attrs.update({'rows': 1, 'cols': 20})
         choices = []
         # add HTTP_ACCEPTED_LANG first
         if http_accept_language:
-            codes = re.split(';|,', http_accept_language)
-            for code in codes:
+            for code, q in parse_accept_lang_header(http_accept_language):
                 try:
                     li = get_language_info(code)
                 except:
@@ -341,17 +359,11 @@ class DocURLDescForm(DynamicModelForm):
             choices.append((code, lang + ' - ' + li['name_local']))
         self.fields['language'].choices = choices
 
-    def save(self, commit=True):
-        super(DocURLDescForm, self).save(commit=False)
-        if commit:
-            # delete if exists
-            if self.cleaned_data and self.cleaned_data['DELETE']:
-                if self.instance.pk:
-                    return self.instance.delete()
-                else:
-                    return None
-            super(DocURLDescForm, self).save()
-        return self.instance
+
+class DocURLDescForm(LanguageDescModelForm):
+    class Meta:
+        model = DocURLDesc
+        exclude = ['docurl']
 
 
 class BaseDocURLDescFormSet(DynamicBaseModelFormSet):
@@ -479,46 +491,10 @@ class BaseDocURLFormSet(DynamicBaseModelFormSet):
             form.instance.delete()
 
 
-class EnableURLInstForm(DynamicModelForm):
+class EnableURLInstForm(LanguageDescModelForm):
     class Meta:
         model = EnableURLInst
         exclude = ['enableurl']
-
-    def __init__(self, *args, **kwargs):
-        http_accept_language = kwargs.pop('http_accept_language', '')
-        super(EnableURLInstForm, self).__init__(*args, **kwargs)
-        self.fields['instruction'].widget.attrs.update({'rows': 2, 'cols': 20})
-        choices = []
-        # add HTTP_ACCEPTED_LANG first
-        if http_accept_language:
-            codes = re.split(';|,', http_accept_language)
-            for code in codes:
-                try:
-                    li = get_language_info(code)
-                except:
-                    continue
-                choices.append((code, li['name'] + ' - ' + li['name_local']))
-        # Redefine our choices, so we can add the translated language names and
-        # sort the list by language name
-        choices.append(self.fields['language'].choices[0])
-        langs = self.fields['language'].choices[1:]
-        langs.sort(key=lambda l: l[1].lower())
-        for code, lang in langs:
-            li = get_language_info(code)
-            choices.append((code, lang + ' - ' + li['name_local']))
-        self.fields['language'].choices = choices
-
-    def save(self, commit=True):
-        super(EnableURLInstForm, self).save(commit=False)
-        if commit:
-            # delete if exists
-            if self.cleaned_data and self.cleaned_data['DELETE']:
-                if self.instance.pk:
-                    return self.instance.delete()
-                else:
-                    return None
-            super(EnableURLInstForm, self).save()
-        return self.instance
 
 
 class BaseEnableURLInstFormSet(DynamicBaseModelFormSet):
@@ -612,12 +588,12 @@ class BaseEnableURLFormSet(DynamicBaseModelFormSet):
                                                           prefix=prefix,
                                                           delete=delete,
                                                           queryset=qs)
-        # create a empty_inst_form
+        # create a empty_desc_form
         if self.forms:
-            self.empty_inst_form = self.forms[0].inst_formset.empty_form
+            self.empty_desc_form = self.forms[0].inst_formset.empty_form
         else:
             formset = self.EnableURLInstFormSet()
-            self.empty_inst_form = formset.empty_form
+            self.empty_desc_form = formset.empty_form
 
     def clean(self, **kwargs):
         super(BaseEnableURLFormSet, self).clean(**kwargs)

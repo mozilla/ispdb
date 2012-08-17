@@ -41,7 +41,7 @@ def asking_domain_form():
             "inst_0-0-id": "",
             "inst_0-0-DELETE": "False",
             "inst_0-0-language": "en",
-            "inst_0-0-instruction": "test"
+            "inst_0-0-description": "test"
            }
 
 
@@ -92,5 +92,5 @@ def adding_domain_form():
             "inst_0-0-id": "",
             "inst_0-0-DELETE": "False",
             "inst_0-0-language": "en",
-            "inst_0-0-instruction": "test"
+            "inst_0-0-description": "test"
            }

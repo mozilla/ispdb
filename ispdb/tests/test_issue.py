@@ -39,7 +39,7 @@ class IssueTest(TestCase):
         form["enableurl-0-url"] = "http://test1.com/"
         form["inst_0-INITIAL_FORMS"] = "1"
         form["inst_0-0-id"] = "1"
-        form["inst_0-0-instruction"] = "test1"
+        form["inst_0-0-description"] = "test1"
         if updated_config:
             form['show_form'] = 'True'
         res = self.client.post(reverse("ispdb_report", args=[config_id]), form)
@@ -120,4 +120,4 @@ class IssueTest(TestCase):
         assert_equal(enableurl.url, 'http://test1.com/')
         assert_equal(len(enableurl.instructions.all()), 1)
         inst = enableurl.instructions.all()[0]
-        assert_equal(inst.instruction, 'test1')
+        assert_equal(inst.description, 'test1')

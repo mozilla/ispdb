@@ -1,0 +1,6 @@
+{% load custom_filters %}
+<table class="tab_desc">
+  <tr>
+    <td>{{ desc_form.description.label }}:</td><td>{{ desc_form.description.value }}</td><td> {{ desc_form.language|data_verbose_field }}</td>
+  </tr>
+</table>

@@ -63,7 +63,7 @@ def make_config(value):
             "inst_0-0-id": "",
             "inst_0-0-DELETE": "False",
             "inst_0-0-language": "en",
-            "inst_0-0-instruction": "test%s" % value
+            "inst_0-0-description": "test%s" % value
            }
 
 
