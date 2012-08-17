@@ -1,0 +1,14 @@
+{{ desc_form.id }}
+<tr>
+  <th>{{ desc_form.description.label_tag }}:</th>
+  <td>{{ desc_form.description.errors }}{{ desc_form.description }}</td>
+  <td>
+    {{ desc_form.language.errors }}{{ desc_form.language }}
+    {{ desc_form.DELETE }}
+    {% if desc_form.DELETE.value == "True" %}
+    <a class="link delete desc" value="{{desc_form.prefix}}">Undo</a>
+    {% else %}
+    <a class="link delete desc" value="{{desc_form.prefix}}">Remove</a>
+    {% endif %}
+  </td>
+</tr>

@@ -6,11 +6,6 @@
 #domain_list table {
   max-width: 40em;
 }
-#add_domain {
-  position: absolute;
-  bottom: 1em;
-  right: 1em;
-}
 input[readonly=readonly] {
   color: grey;
   background-color:#F0F0F0;
@@ -33,15 +28,7 @@ input[readonly=readonly] {
 }
 
 table.tab_descs td, table.tab_descs th,
+table.tab_insts td, table.tab_insts th,
 td.noborder, th.noborder {
   border-bottom: 0px;
-}
-
-.add_desc {
-  font-size: 12px;
-}
-
-#add_docurl {
-  padding-top: 10px;
-  padding-bottom: 10px;
 }

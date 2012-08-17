@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import httplib
 from urllib import quote_plus
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from nose.tools import *
 from ispdb.config import models
-
-# Redirect to /add/ on success
-success_code = httplib.FOUND
-# Return with form errors if form is invalid
-fail_code = httplib.OK
+from ispdb.tests.common import adding_domain_form
+from ispdb.tests.common import success_code, fail_code
 
 class EditTest(TestCase):
     fixtures = ['login_testdata.json']
@@ -60,6 +56,12 @@ class EditTest(TestCase):
         form["desc_0-INITIAL_FORMS"] = "1"
         form["desc_0-0-id"] = "1"
         form["desc_0-0-description"] = "test1"
+        form["enableurl-INITIAL_FORMS"] = "1"
+        form["enableurl-0-id"] = "1"
+        form["enableurl-0-url"] = "http://test1.com/"
+        form["inst_0-INITIAL_FORMS"] = "1"
+        form["inst_0-0-id"] = "1"
+        form["inst_0-0-description"] = "test1"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -75,6 +77,10 @@ class EditTest(TestCase):
         assert_equal(docurl.url, 'http://test1.com/')
         desc = models.DocURLDesc.objects.get(pk=1)
         assert_equal(desc.description, 'test1')
+        enableurl = models.EnableURL.objects.get(pk=1)
+        assert_equal(enableurl.url, 'http://test1.com/')
+        inst = models.EnableURLInst.objects.get(pk=1)
+        assert_equal(inst.description, 'test1')
 
     def test_edit_staff_user(self):
         self.add_domain()
@@ -90,6 +96,12 @@ class EditTest(TestCase):
         form["desc_0-INITIAL_FORMS"] = "1"
         form["desc_0-0-id"] = "1"
         form["desc_0-0-description"] = "test1"
+        form["enableurl-INITIAL_FORMS"] = "1"
+        form["enableurl-0-id"] = "1"
+        form["enableurl-0-url"] = "http://test1.com/"
+        form["inst_0-INITIAL_FORMS"] = "1"
+        form["inst_0-0-id"] = "1"
+        form["inst_0-0-description"] = "test1"
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
@@ -105,6 +117,10 @@ class EditTest(TestCase):
         assert_equal(docurl.url, 'http://test1.com/')
         desc = models.DocURLDesc.objects.get(pk=1)
         assert_equal(desc.description, 'test1')
+        enableurl = models.EnableURL.objects.get(pk=1)
+        assert_equal(enableurl.url, 'http://test1.com/')
+        inst = models.EnableURLInst.objects.get(pk=1)
+        assert_equal(inst.description, 'test1')
 
     def test_edit_duplicated_names(self):
         self.add_domain()
@@ -149,39 +165,3 @@ class EditTest(TestCase):
                                follow=True)
         goodRedirect = "/login/"
         self.assertRedirects(res, goodRedirect)
-
-def adding_domain_form():
-    return {"asking_or_adding":"adding",
-            "domain-TOTAL_FORMS":"1",
-            "domain-INITIAL_FORMS":"0",
-            "domain-MAX_NUM_FORMS": "10",
-            "domain-0-id":"",
-            "domain-0-name":"test.com",
-            "domain-0-DELETE":"False",
-            "display_name":"test",
-            "display_short_name":"test",
-            "incoming_type":"imap",
-            "incoming_hostname":"foo",
-            "incoming_port":"333",
-            "incoming_socket_type":"plain",
-            "incoming_authentication":"password-cleartext",
-            "incoming_username_form":"%25EMAILLOCALPART%25",
-            "outgoing_hostname":"bar",
-            "outgoing_port":"334",
-            "outgoing_socket_type":"STARTTLS",
-            "outgoing_username_form":"%25EMAILLOCALPART%25",
-            "outgoing_authentication":"password-cleartext",
-            "docurl-INITIAL_FORMS": "0",
-            "docurl-TOTAL_FORMS": "1",
-            "docurl-MAX_NUM_FORMS": "",
-            "docurl-0-id": "",
-            "docurl-0-DELETE": "False",
-            "docurl-0-url": "http://test.com/",
-            "desc_0-INITIAL_FORMS": "0",
-            "desc_0-TOTAL_FORMS": "1",
-            "desc_0-MAX_NUM_FORMS": "",
-            "desc_0-0-id": "",
-            "desc_0-0-DELETE": "False",
-            "desc_0-0-language": "en",
-            "desc_0-0-description": "test"}
-

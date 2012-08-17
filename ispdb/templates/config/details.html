@@ -248,8 +248,31 @@ $(document).ready(function() {
     </td>
     </tr>
   </table>
-
 </div>
+
+{% if docurls %}
+<div id="docurl">
+  <h4>Documentation</h4>
+  {% for form in docurls %}
+    {% include "config/urls/url_list.html" %}
+    {% for desc_form in form.desc_formset %}
+      {% include "config/urls/desc_list.html" %}
+    {% endfor %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if enableurls %}
+<div id="enableurl">
+  <h4>Enable Instructions</h4>
+  {% for form in enableurls %}
+    {% include "config/urls/url_list.html" %}
+    {% for desc_form in form.inst_formset %}
+      {% include "config/urls/desc_list.html" %}
+    {% endfor %}
+  {% endfor %}
+</div>
+{% endif %}
 
 <div id="other_data">
   <h4>Other Fields</h4>
@@ -260,20 +283,6 @@ $(document).ready(function() {
     </tr>
     {% endfor %}
   </table>
-  {% for docurl in docurls %}
-   <table>
-    <tr>
-      <td>{{ docurl.url.label}}:</td><td>{{ docurl.url.value}}</td>
-    </tr>
-   </table>
-    {% for desc in docurl.desc_formset %}
-      <table class="tab_desc">
-        <tr>
-          <td>{{ desc.description.label }}:</td><td>{{ desc.description.value }}</td><td> {{ desc.language|data_verbose_field }}</td>
-        </tr>
-      </table>
-    {% endfor %}
-  {% endfor %}
 </div>
 </td>
 <td>
