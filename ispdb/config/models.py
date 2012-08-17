@@ -358,6 +358,7 @@ class LanguageDescModelForm(DynamicModelForm):
             li = get_language_info(code)
             choices.append((code, lang + ' - ' + li['name_local']))
         self.fields['language'].choices = choices
+        self.fields['language'].initial = choices[0]
 
 
 class DocURLDescForm(LanguageDescModelForm):
