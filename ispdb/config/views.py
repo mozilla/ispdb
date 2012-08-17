@@ -143,6 +143,10 @@ def edit(request, config_id):
             (config.status == 'requested' or config.status == 'suggested')
              and config.owner == request.user)):
         return HttpResponseRedirect(reverse('ispdb_login'))
+    if config.locked:
+        error = ("This configuration is locked. Only admins can unlock "
+                 "it.")
+        return details(request, config.id, error=error)
     # Get initial data
     if config.domains.all():
         model = Domain
@@ -290,6 +294,10 @@ def policy(request):
 @permission_required("config.can_approve")
 def approve(request, id):
     config = get_object_or_404(Config, pk=id)
+    if config.locked:
+        error = ("This configuration is locked. Only admins can unlock "
+                 "it.")
+        return details(request, config.id, error=error)
     old_status = config.status
     message = ''
     if request.method == 'POST': # If the form has been submitted...
@@ -362,6 +370,10 @@ def delete(request, id):
             (config.status == 'requested' or config.last_status == 'requested')
             and config.owner == request.user)):
         return HttpResponseRedirect(reverse('ispdb_login'))
+    if config.locked:
+        error = ("This configuration is locked. Only admins can unlock "
+                 "it.")
+        return details(request, id, error=error)
     if request.method == 'POST':
         data = request.POST
         if data.has_key('delete') and data['delete'] == "delete":
@@ -561,6 +573,9 @@ def show_issue(request, id):
         elif data['action'] == 'merge':
             if not issue.config.status == "approved":
                 error = "Can't merge into non approved configurations."
+            if issue.config.locked:
+                error = ("This configuration is locked. Only admins can unlock "
+                         "it.")
             elif issue.updated_config:
                 # check if any of the added domains are already bound to some
                 # approved configuration

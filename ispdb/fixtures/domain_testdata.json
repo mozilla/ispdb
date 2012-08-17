@@ -60,7 +60,8 @@
             "outgoing_hostname": "test.com", 
             "incoming_type": "imap",
             "deleted_datetime": null,
-            "last_status": ""
+            "last_status": "",
+            "locked": "False"
         }
     }, 
     {
@@ -90,7 +91,8 @@
             "outgoing_hostname": "Valid Domain", 
             "incoming_type": "imap",
             "deleted_datetime": null,
-            "last_status": ""
+            "last_status": "",
+            "locked": "False"
         }
     }, 
     {
@@ -120,7 +122,8 @@
             "outgoing_hostname": "test.com", 
             "incoming_type": "imap",
             "last_status": "",
-            "deleted_datetime": null
+            "deleted_datetime": null,
+            "locked": "False"
         }
     },
     {
@@ -150,7 +153,8 @@
             "outgoing_hostname": "test.com", 
             "incoming_type": "imap",
             "last_status": "",
-            "deleted_datetime": null
+            "deleted_datetime": null,
+            "locked": "False"
         }
     },
     {
