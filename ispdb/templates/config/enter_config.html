@@ -378,7 +378,7 @@ function AutoFillOutgoing() {
 
     <table id="tab_enableurl">
     {{ config_form.enableurl_formset.management_form }}
-    <tr><tdclass="noborder">{{ config_form.enableurl_formset.non_form_errors }}</td></tr>
+    <tr><td class="noborder">{{ config_form.enableurl_formset.non_form_errors }}</td></tr>
     {% for form in config_form.enableurl_formset %}
       {% include "config/urls/url_form.html" %}
       <tr><td class="noborder"><td class="noborder"><div id="{{form.inst_formset.prefix}}"><table class="tab_insts">
