@@ -54,6 +54,8 @@ class DeleteTest(TestCase):
         self.client.logout()
         config = models.Config.objects.get(pk=1)
         assert_true(config.status != 'deleted')
+        assert_true("This configuration is locked. Only admins can unlock it."
+            in res.content)
 
     def test_delete_domainrequest(self):
         self.delete_domain(1)

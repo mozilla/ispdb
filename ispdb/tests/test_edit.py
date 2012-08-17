@@ -55,6 +55,8 @@ class EditTest(TestCase):
                                follow=True)
         config = models.Config.objects.get(pk=1)
         assert_true(config.display_name != "testing2")
+        assert_true("This configuration is locked. Only admins can unlock it."
+            in res.content)
 
     def test_edit_same_user(self):
         self.add_domain()

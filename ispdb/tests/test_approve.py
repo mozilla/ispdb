@@ -23,6 +23,8 @@ class ApproveTest(TestCase):
         self.assertRedirects(result, goodRedirect)
 
     def test_locked_config(self):
+        user_info = {"username": "test_admin", "password": "test"}
+        self.client.login(**user_info)
         config = Config.objects.get(id=1)
         config.locked = True
         config.save()
@@ -32,6 +34,8 @@ class ApproveTest(TestCase):
         config = Config.objects.get(id=1)
         # Should not have changed the config
         assert_equal(config.status, 'requested')
+        assert_true("This configuration is locked. Only admins can unlock it."
+            in result.content)
 
     def test_authenticated_user(self):
         user_info = {"username": "test_admin", "password": "test"}

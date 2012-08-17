@@ -108,6 +108,8 @@ class IssueTest(TestCase):
         issue = models.Issue.objects.get(title='Test')
         assert_equal(issue.status, "open")
         assert_true(issue.config.display_name != "testing2")
+        assert_true("This configuration is locked. Only admins can unlock it."
+            in res.content)
 
     def test_merge_issue_superuser(self):
         self.add_issue(updated_config=True)
