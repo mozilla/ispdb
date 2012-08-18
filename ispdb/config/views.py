@@ -277,6 +277,7 @@ def add(request, domain=None):
         'has_errors': has_errors
     }, context_instance=RequestContext(request))
 
+@permission_required("config.can_approve")
 def queue(request):
     domains = DomainRequest.objects.filter(config=None).order_by('-votes')
     pending_configs = Config.objects.filter(status='requested')
