@@ -11,12 +11,15 @@ from django.contrib.comments.models import Comment
 from django.contrib.comments.views.comments import post_comment
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.forms.models import modelformset_factory
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils import simplejson, timezone
+from django.utils.cache import patch_cache_control
+from django.views.decorators.cache import cache_control
+from django.views.decorators.http import last_modified
 
 from ispdb.config import serializers
 from ispdb.config.configChecks import do_config_checks, do_domain_checks
@@ -63,6 +66,17 @@ def intro(request):
                               context_instance=RequestContext(request))
 
 
+def last_modified_list_xml(request, format="html"):
+    if format == "html":
+        return None  # don't need to return last_update to html responses
+    res = Config.objects.filter(status='approved').aggregate(
+        Max('last_update_datetime'))
+    if res:
+        return res['last_update_datetime__max']
+    return None
+
+
+@last_modified(last_modified_list_xml)
 def list(request, format="html"):
     if format == "xml":
         providers = ET.Element("providers")
@@ -80,6 +94,8 @@ def list(request, format="html"):
         response = HttpResponse(mimetype="text/xml")
         response.write(output.getvalue())
         output.close()
+        # set cache settings
+        patch_cache_control(response, no_cache=True)
         return response
     configs = Config.objects.all()
     return render_to_response("config/list.html", {'configs': configs},
@@ -126,10 +142,23 @@ def details(request, id, error=None):
         context_instance=RequestContext(request))
 
 
+def last_modified_export_xml(request, version=None, id=None, domain=None):
+    config = None
+    if id is not None:
+        config = get_object_or_404(Config, pk=int(id))
+    elif domain is not None:
+        config = Domain.objects.filter(name=domain)[0].config
+    if not config:
+        return None
+    return config.last_update_datetime
+
+
+@cache_control(no_cache=True)
+@last_modified(last_modified_export_xml)
 def export_xml(request, version=None, id=None, domain=None):
     config = None
     if id is not None:
-        config = Config.objects.filter(id=int(id))[0]
+        config = get_object_or_404(Config, pk=int(id))
     elif domain is not None:
         config = Domain.objects.filter(name=domain)[0].config
     serialize = serializers.get(version)
