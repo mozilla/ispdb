@@ -45,15 +45,6 @@ class DomainRequest(models.Model):
     def __str__(self): return str(self.name)
     def __unicode__(self): return self.name
 
-def constructXMLTag(name):
-    if '_' in name:
-        firstword, others = name.split('_', 1)
-        words = others.split('_')
-        xmlfield = firstword + ''.join([word.capitalize() for word in words])
-    else:
-        xmlfield = name
-    return xmlfield
-
 class Config(models.Model):
     """
     A Config object contains all of the metadata about a configuration.
@@ -170,8 +161,6 @@ class Config(models.Model):
     outgoing_use_global_preferred_server = models.BooleanField(
         verbose_name="Use global server instead")
 
-    flagged_as_incorrect = models.BooleanField()
-    flagged_by_email = models.EmailField(blank=True)
     locked = models.BooleanField()
 
     history = audit.AuditTrail()
@@ -736,8 +725,6 @@ class ConfigForm(ModelForm):
                    'last_status',
                    'deleted_datetime',
                    'email_provider_id',
-                   'flagged_as_incorrect',
-                   'flagged_by_email',
                    'outgoing_add_this_server',
                    'outgoing_use_global_preferred_server',
                    'owner',

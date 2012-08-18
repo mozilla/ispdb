@@ -22,8 +22,6 @@
             "outgoing_username_form": "%EMAILLOCALPART%", 
             "incoming_socket_type": "SSL", 
             "outgoing_port": 465, 
-            "flagged_by_email": "", 
-            "flagged_as_incorrect": false, 
             "incoming_authentication": "password-cleartext", 
             "email_provider_id": "", 
             "owner": 2, 
