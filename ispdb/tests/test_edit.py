@@ -42,6 +42,22 @@ class EditTest(TestCase):
         goodRedirect = "/login/"
         self.assertRedirects(res, goodRedirect)
 
+    def test_edit_locked_config(self):
+        self.add_domain()
+        config = models.Config.objects.get(pk=1)
+        config.locked = True
+        config.save()
+        form = adding_domain_form()
+        form["display_name"] = "testing2"
+        self.client.login(username='test', password='test')
+        res = self.client.post(reverse("ispdb_edit",args=[1]),
+                               form,
+                               follow=True)
+        config = models.Config.objects.get(pk=1)
+        assert_true(config.display_name != "testing2")
+        assert_true("This configuration is locked. Only admins can unlock it."
+            in res.content)
+
     def test_edit_same_user(self):
         self.add_domain()
         self.client.login(username='test', password='test')

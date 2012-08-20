@@ -31,7 +31,8 @@
             "last_update_datetime": "2012-05-31T21:08:11.305Z",
             "incoming_username_form":"",
             "outgoing_hostname":"hostname_out",
-            "incoming_type":"imap"
+            "incoming_type":"imap",
+            "locked": "False"
         }
     },
     {

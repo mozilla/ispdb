@@ -96,6 +96,21 @@ class IssueTest(TestCase):
         goodRedirect = "/login/"
         self.assertRedirects(res, goodRedirect)
 
+    def test_merge_locked_config(self):
+        self.add_issue(updated_config=True)
+        issue = models.Issue.objects.get(title='Test')
+        issue.config.locked = True
+        issue.config.save()
+        self.client.login(username='test_admin', password='test')
+        res = self.client.post(reverse("ispdb_show_issue",args=[1]),
+                               {"action":"merge"},
+                               follow=True)
+        issue = models.Issue.objects.get(title='Test')
+        assert_equal(issue.status, "open")
+        assert_true(issue.config.display_name != "testing2")
+        assert_true("This configuration is locked. Only admins can unlock it."
+            in res.content)
+
     def test_merge_issue_superuser(self):
         self.add_issue(updated_config=True)
         self.client.login(username='test_admin', password='test')
