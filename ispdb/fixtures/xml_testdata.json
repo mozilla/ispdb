@@ -8,6 +8,14 @@
         }
     },
     {
+        "pk":2,
+        "model":"config.domain",
+        "fields": {
+            "config": 2,
+            "name": "test2.com"
+        }
+    },
+    {
         "pk":1,
         "model":"config.config",
         "fields": {
@@ -24,9 +32,37 @@
             "incoming_hostname":"hostname_in",
             "outgoing_username_form":"%EMAILLOCALPART%",
             "display_short_name":"netzero",
-            "status":"requested",
+            "status":"approved",
             "incoming_port":143,
             "last_update_datetime": "2012-05-31T21:08:11.305Z",
+            "incoming_username_form":"",
+            "outgoing_hostname":"hostname_out",
+            "incoming_type":"imap",
+            "locked": "False"
+        }
+    },
+    {
+        "pk":2,
+        "model":"config.config",
+        "fields": {
+            "outgoing_use_global_preferred_server":false,
+            "incoming_socket_type":"SSL",
+            "outgoing_port":25,
+            "flagged_by_email":"",
+            "flagged_as_incorrect":false,
+            "email_provider_id":"test.com",
+            "incoming_authentication":"password-cleartext",
+            "display_name":"NetZero Email",
+            "outgoing_add_this_server":false,
+            "outgoing_socket_type":"SSL",
+            "created_datetime": "2012-05-31T21:08:09.314Z",
+            "outgoing_authentication":"password-cleartext",
+            "incoming_hostname":"hostname_in",
+            "outgoing_username_form":"%EMAILLOCALPART%",
+            "display_short_name":"netzero",
+            "status":"approved",
+            "incoming_port":143,
+            "last_update_datetime": "2012-04-30T21:08:11.305Z",
             "incoming_username_form":"",
             "outgoing_hostname":"hostname_out",
             "incoming_type":"imap",
