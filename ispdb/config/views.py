@@ -23,10 +23,11 @@ from django.contrib.comments.views.moderation import delete as delete_comment
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 
-from ispdb.config.models import (Config, ConfigForm, Domain, DomainForm,
-    DomainRequest, BaseDomainFormSet, Issue, IssueForm, DocURL, DocURLDesc,
-    BaseDocURLFormSet, DocURLForm, DocURLDescForm, BaseDocURLDescFormSet,
-    EnableURL, EnableURLForm, BaseEnableURLFormSet)
+from ispdb.config.models import (Config, Domain, DomainRequest, Issue, DocURL,
+    DocURLDesc, EnableURL)
+from ispdb.config.forms import (ConfigForm, DomainForm, BaseDomainFormSet,
+    IssueForm, BaseDocURLFormSet, DocURLForm, DocURLDescForm,
+    BaseDocURLDescFormSet, EnableURLForm, BaseEnableURLFormSet)
 from ispdb.config import serializers
 from ispdb.config.configChecks import do_domain_checks
 from ispdb.config.configChecks import do_config_checks
@@ -276,6 +277,7 @@ def add(request, domain=None):
         'has_errors': has_errors
     }, context_instance=RequestContext(request))
 
+@permission_required("config.can_approve")
 def queue(request):
     domains = DomainRequest.objects.filter(config=None).order_by('-votes')
     pending_configs = Config.objects.filter(status='requested')

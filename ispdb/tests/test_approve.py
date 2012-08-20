@@ -11,7 +11,7 @@ class ApproveTest(TestCase):
     fixtures = ['xml_testdata', 'login_testdata']
 
     def test_unauthenticated_user(self):
-        result = self.client.post("/approve/1", {
+        result = self.client.post("/approve/1/", {
                                 "approved": True,
                             }, follow=True)
         config = Config.objects.get(id=1)
@@ -19,7 +19,7 @@ class ApproveTest(TestCase):
         assert_equal(config.status, 'requested')
         # Make sure it redirects to login page
         redirect = result.redirect_chain[0][0]
-        goodRedirect = "/login/?next=%s" % (quote_plus("/approve/1"))
+        goodRedirect = "/login/?next=%s" % (quote_plus("/approve/1/"))
         self.assertRedirects(result, goodRedirect)
 
     def test_locked_config(self):
@@ -28,7 +28,7 @@ class ApproveTest(TestCase):
         config = Config.objects.get(id=1)
         config.locked = True
         config.save()
-        result = self.client.post("/approve/1", {
+        result = self.client.post("/approve/1/", {
                                 "approved": True,
                             }, follow=True)
         config = Config.objects.get(id=1)
@@ -40,7 +40,7 @@ class ApproveTest(TestCase):
     def test_authenticated_user(self):
         user_info = {"username": "test_admin", "password": "test"}
         self.client.login(**user_info)
-        result = self.client.post("/approve/1", {
+        result = self.client.post("/approve/1/", {
                                 "approved": True,
                                 "comment": "Test",
                             }, follow=True)
@@ -49,7 +49,7 @@ class ApproveTest(TestCase):
         assert_equal(config.status, 'approved')
         # Make sure it redirects to details page
         redirect = result.redirect_chain[0][0]
-        goodRedirect = "/details/1"
+        goodRedirect = "/details/1/"
         self.assertRedirects(result, goodRedirect)
         comment = Comment.objects.get(pk=1)
         assert_equal(int(comment.object_pk), config.pk)
@@ -57,7 +57,7 @@ class ApproveTest(TestCase):
     def test_authenticated_user_deny_no_comment(self):
         user_info = {"username": "test_admin", "password": "test"}
         self.client.login(**user_info)
-        result = self.client.post("/approve/1", {
+        result = self.client.post("/approve/1/", {
                                       "denied": True,
                                       "comment": 'Other - invalid',
                                       "commenttext": "",
@@ -71,7 +71,7 @@ class ApproveTest(TestCase):
     def test_authenticated_user_deny_comment(self):
         user_info = {"username": "test_admin", "password": "test"}
         self.client.login(**user_info)
-        result = self.client.post("/approve/1", {
+        result = self.client.post("/approve/1/", {
                                       "denied": True,
                                       "comment": 'Other - invalid',
                                       "commenttext": "Test",

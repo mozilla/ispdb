@@ -43,7 +43,7 @@ $(document).ready(function() {
         }
         if (isFilterValid(filter)) {
           if (count == 0) {
-            $("#submit").attr('href', 'add/' + filter);
+            $("#submit").find('a:first').attr('href', 'add/' + filter);
             $("#submit").show();
           } else {
             $("#submit").hide();
@@ -78,18 +78,18 @@ Thunderbird 3 to facilitate account configuration.
   <ul>
     {% for domain in domains %}
     <li class="domain filtered hidden">
-      <a href="details/{{domain.config.id}}">{{domain}}</a> ({{domain.config.display_name}})
+      <a href="{% url 'ispdb_details' domain.config.id %}">{{domain}}</a> ({{domain.config.display_name}})
     </li>
     {% endfor %}
   </ul>
 </div>
 
 <div id="submit" class="hidden">
-<em>Your domain can't be found - <a href="add">submit it!</a></em>
+<em>Your domain can't be found - <a href="{% url 'ispdb_add'%}">submit it!</a></em>
 </div>
 
 <h3>Browse our database</h3>
 
-<p><a href="list">Show all configurations</a></p>
+<p><a href="{% url 'ispdb_list' %}">Show all configurations</a></p>
 
 {% endblock %}

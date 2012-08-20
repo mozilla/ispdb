@@ -29,7 +29,7 @@ class EditTest(TestCase):
                                adding_domain_form(),
                                follow=True)
         # Make sure it redirects to login page
-        goodRedirect = "/login/?next=%s" % (quote_plus("/edit/1"))
+        goodRedirect = "/login/?next=%s" % (quote_plus("/edit/1/"))
         self.assertRedirects(res, goodRedirect)
 
     def test_edit_invalid_user(self):
@@ -78,10 +78,10 @@ class EditTest(TestCase):
         form["inst_0-INITIAL_FORMS"] = "1"
         form["inst_0-0-id"] = "1"
         form["inst_0-0-description"] = "test1"
-        res = self.client.post(reverse("ispdb_edit",args=[1]),
+        res = self.client.post(reverse("ispdb_edit", args=[1]),
                                form,
                                follow=True)
-        goodRedirect = "/details/1"
+        goodRedirect = "/details/1/"
         self.assertRedirects(res, goodRedirect)
         assert_true(len(models.Config.objects.all()), 1)
         domain = models.DomainRequest.objects.get(pk=1)
@@ -121,7 +121,7 @@ class EditTest(TestCase):
         res = self.client.post(reverse("ispdb_edit",args=[1]),
                                form,
                                follow=True)
-        goodRedirect = "/details/1"
+        goodRedirect = "/details/1/"
         self.assertRedirects(res, goodRedirect)
         assert_true(len(models.Config.objects.all()), 1)
         domain = models.DomainRequest.objects.get(pk=1)
@@ -153,8 +153,8 @@ class EditTest(TestCase):
         self.add_domain(name='approved.com')
         self.add_domain()
         self.client.login(username='test_admin', password='test')
-        result = self.client.post("/approve/1", {
-                                  "approved": True,})
+        result = self.client.post("/approve/1/", {
+                                  "approved": True, })
         config = models.Config.objects.get(id=1)
         assert_equal(config.status, 'approved')
         form = adding_domain_form()
@@ -168,8 +168,8 @@ class EditTest(TestCase):
     def test_owner_edit_approved_domain(self):
         self.add_domain(name='approved.com')
         self.client.login(username='test_admin', password='test')
-        result = self.client.post("/approve/1", {
-                                  "approved": True,})
+        result = self.client.post("/approve/1/", {
+                                  "approved": True, })
         config = models.Config.objects.get(id=1)
         assert_equal(config.status, 'approved')
         self.client.logout()
