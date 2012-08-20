@@ -1,8 +1,10 @@
-#ispdb/templatetags/data_verbose.py
+# -*- coding: utf-8 -*-
+
 from django import template
 from django.utils import timezone
 
 register = template.Library()
+
 
 @register.filter
 def data_verbose(boundField, attr_name="value"):
@@ -18,9 +20,10 @@ def data_verbose(boundField, attr_name="value"):
     data = boundField[attr_name]
     field = boundField
     rv = data
-    if field.has_key("choices") and dict(field['choices']).get(data, ''):
+    if 'choices' in field and dict(field['choices']).get(data, ''):
         rv = dict(field["choices"]).get(data, "")
     return rv
+
 
 @register.filter
 def data_verbose_field(boundField, attr_name="value"):
@@ -34,8 +37,9 @@ def data_verbose_field(boundField, attr_name="value"):
     """
     data = boundField.value()
     field = boundField.field
-    return hasattr(field, 'choices') and dict(field.choices).get(data,'') or \
+    return hasattr(field, 'choices') and dict(field.choices).get(data, '') or \
             data
+
 
 @register.filter
 def is_undo_available(self):

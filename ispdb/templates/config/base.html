@@ -7,21 +7,8 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/ispdb.css" />
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
-<script type="text/javascript" src="https://browserid.org/include.js"></script>
-<script type="text/javascript">
-$(document).ready(function() {
-    $('#browserid').bind('click', function(e) {
-        e.preventDefault();
-        navigator.id.getVerifiedEmail(function(assertion) {
-            if (assertion) {
-                var $e = $('#id_assertion');
-                $e.val(assertion.toString());
-                $e.parent().submit();
-            }
-        });
-    });
-});
-</script>
+{{ browserid_form.media }}
+
 {% block scripts %}
 {% endblock %}
 <meta name="robots" content="NONE,NOARCHIVE" />

@@ -1,13 +1,16 @@
-from ispdb.config.models import Config, Domain, DomainRequest
 from django.contrib import admin
+from ispdb.config.models import Config, Domain, DomainRequest
+
 
 class DomainInline(admin.TabularInline):
     model = Domain
     extra = 0
 
+
 class DomainRequestInline(admin.TabularInline):
     model = DomainRequest
     extra = 0
+
 
 class ConfigAdmin(admin.ModelAdmin):
     inlines = [
@@ -21,7 +24,7 @@ class ConfigAdmin(admin.ModelAdmin):
     def change_view(self, request, obj_id):
         c = self.model.objects.get(pk=obj_id)
         if not c.domainrequests.all():
-            self.inlines=[DomainInline,]
+            self.inlines = [DomainInline, ]
         return super(ConfigAdmin, self).change_view(request, obj_id)
 
     def list_domains(self, obj):
