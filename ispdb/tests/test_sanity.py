@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 
-import re
-import socket
 import dns.resolver
-import mox
-import smtplib
 import imaplib
+import mox
 import poplib
+import smtplib
 
-from django.utils import simplejson
-from django.test import TestCase
 from django.core.urlresolvers import reverse
-from nose.tools import *
-from ispdb.config.configChecks import *
+from django.test import TestCase
+from django.utils import simplejson
+from nose.tools import assert_equal
+
+from ispdb.config.configChecks import (do_domain_checks, do_config_checks,
+    get_nameservers, get_mxservers, imap_check_plain, imap_check_ssl,
+    imap_check_starttls, pop3_check_plain, pop3_check_ssl, pop3_check_starttls,
+    smtp_check_plain, smtp_check_ssl, smtp_check_starttls, TIMEOUT)
 from ispdb.config.models import Config
 
 
@@ -67,11 +69,13 @@ class SanityTest(TestCase):
     def test_dns_methods(self):
         # Set up our mock expectations.
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(ns_message_text('test.org','test.org'))
+        message = dns.message.from_text(ns_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'NS').AndReturn(answer)
-        message = dns.message.from_text(mx_message_text('test.org','test.org'))
+        message = dns.message.from_text(mx_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'MX').AndReturn(answer)
@@ -94,7 +98,7 @@ class SanityTest(TestCase):
         # Set up our mock expectations.
         #plain
         server = smtplib.SMTP('smtp.test.org', 465, timeout=TIMEOUT)
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN PLAIN'
             '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
@@ -103,14 +107,14 @@ class SanityTest(TestCase):
         server = smtplib.SMTP('smtp.test.org', 465, timeout=TIMEOUT)
         server.ehlo()
         server.starttls().AndReturn((220, ''))
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN'
             'PLAIN\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
         server.quit()
         #SSL
         server = smtplib.SMTP_SSL('smtp.test.org', 465, timeout=TIMEOUT)
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN PLAIN NTLM CRAM-MD5 GSSAPI UNSUPPORTED'
             '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
@@ -207,20 +211,20 @@ class SanityTest(TestCase):
         # Set up our mock expectations.
         #plain
         server = poplib.POP3('pop3.test.org', 465, timeout=TIMEOUT)
-        res = server._longcmd('CAPA').AndReturn(('+OK', ['CAPA', 'TOP',
+        server._longcmd('CAPA').AndReturn(('+OK', ['CAPA', 'TOP',
             'LOGIN-DELAY 180', 'UIDL', 'RESP-CODES', 'PIPELINING', 'USER',
             'SASL PLAIN LOGIN'], 82))
         server.quit()
         #STARTTLS
         server = poplib.POP3('pop3.test.org', 465, timeout=TIMEOUT)
         server.stls()
-        res = server._longcmd('CAPA').AndReturn(('+OK', ['CAPA', 'TOP',
+        server._longcmd('CAPA').AndReturn(('+OK', ['CAPA', 'TOP',
             'LOGIN-DELAY 180', 'UIDL', 'RESP-CODES', 'PIPELINING', 'USER',
             'SASL PLAIN LOGIN CRAM-MD5 UNSUPPORTED NTLM GSSAPI'], 82))
         server.quit()
         #SSL
         server = poplib.POP3_SSL('pop3.test.org', 465)
-        res = server._longcmd('CAPA').AndReturn(('+OK', ['CAPA', 'TOP',
+        server._longcmd('CAPA').AndReturn(('+OK', ['CAPA', 'TOP',
             'LOGIN-DELAY 180', 'UIDL', 'RESP-CODES', 'PIPELINING', 'USER',
             'SASL PLAIN LOGIN'], 82))
         server.quit()
@@ -259,22 +263,26 @@ class SanityTest(TestCase):
         # Set up our mock expectations.
         # _do_domain_checks for test.org and test.com
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(ns_message_text('test.org','test.org'))
+        message = dns.message.from_text(ns_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'NS').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(ns_message_text('test.com','test.org'))
+        message = dns.message.from_text(ns_message_text('test.com',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'NS').AndReturn(answer)
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(mx_message_text('test.org','test.org'))
+        message = dns.message.from_text(mx_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'MX').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(mx_message_text('test.com','test.org'))
+        message = dns.message.from_text(mx_message_text('test.com',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'MX').AndReturn(answer)
@@ -286,7 +294,7 @@ class SanityTest(TestCase):
                 'LOGIN-REFERRALS', 'QUOTA', 'AUTH=PLAIN', 'AUTH=LOGIN')
         server.shutdown()
         server = smtplib.SMTP_SSL('mail.test.com', 465, timeout=TIMEOUT)
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN PLAIN'
             '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
@@ -313,12 +321,14 @@ class SanityTest(TestCase):
         # with name servers of other domains. It will create a warning if we
         # return different name servers
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(ns_message_text('test.org','test.org'))
+        message = dns.message.from_text(ns_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'NS').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(ns_message_text('test.com','test.com'))
+        message = dns.message.from_text(ns_message_text('test.com',
+                                                        'test.com'))
         answer = dns.resolver.Answer(name, dns.rdatatype.NS,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'NS').AndReturn(answer)
@@ -327,16 +337,17 @@ class SanityTest(TestCase):
         # and outgoing server. If they are different it will create an error
         # for each server
         name = dns.name.from_text('test.org.')
-        message = dns.message.from_text(mx_message_text('test.org','test.org'))
+        message = dns.message.from_text(mx_message_text('test.org',
+                                                        'test.org'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.org', 'MX').AndReturn(answer)
         name = dns.name.from_text('test.com.')
-        message = dns.message.from_text(mx_message_text('test.com','test.com'))
+        message = dns.message.from_text(mx_message_text('test.com',
+                                                        'test.com'))
         answer = dns.resolver.Answer(name, dns.rdatatype.MX,
                                      dns.rdataclass.IN, message)
         dns.resolver.query('test.com', 'MX').AndReturn(answer)
-
 
         self.mox.ReplayAll()
 
@@ -357,7 +368,7 @@ class SanityTest(TestCase):
         # Set up our mock expectations.
         #plain
         server = smtplib.SMTP('smtp.test.org', 465, timeout=TIMEOUT)
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN PLAIN'
             '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
@@ -366,14 +377,14 @@ class SanityTest(TestCase):
         server = smtplib.SMTP('smtp.test.org', 465, timeout=TIMEOUT)
         server.ehlo()
         server.starttls().AndReturn((220, ''))
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN'
             'PLAIN\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
         server.quit()
         #SSL
         server = smtplib.SMTP_SSL('smtp.test.org', 465, timeout=TIMEOUT)
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN PLAIN NTLM CRAM-MD5 GSSAPI UNSUPPORTED'
             '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
@@ -428,7 +439,7 @@ class SanityTest(TestCase):
         server.shutdown()
         # SMTP SSL
         server = smtplib.SMTP_SSL('mail.test.com', 465, timeout=TIMEOUT)
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN PLAIN NTLM CRAM-MD5 GSSAPI UNSUPPORTED'
             '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
@@ -469,7 +480,7 @@ class SanityTest(TestCase):
         server.shutdown()
         # SMTP SSL
         server = smtplib.SMTP_SSL('mail.test.com', 465, timeout=TIMEOUT)
-        res = server.ehlo().AndReturn((250,
+        server.ehlo().AndReturn((250,
             'mx2.mail.corp.phx1.test.com\nPIPELINING\nSIZE '
             '31457280\nETRN\nAUTH LOGIN PLAIN NTLM GSSAPI UNSUPPORTED'
             '\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'))
@@ -487,5 +498,3 @@ class SanityTest(TestCase):
         self.mox.VerifyAll()
         assert_equal(len(errors), 2)
         assert_equal(len(warnings), 2)
-
-

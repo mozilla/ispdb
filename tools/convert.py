@@ -33,6 +33,7 @@ import stat
 import sys
 import lxml.etree as ET
 
+
 def read_config(file, convertTime):
     return (ET.parse(file), max(os.stat(file).st_mtime, convertTime))
 
@@ -105,8 +106,8 @@ def main():
 
     for f in args.file:
         if is_dir(os.stat(f).st_mode):
-            continue 
-        
+            continue
+
         if f == "README":
             continue
 
