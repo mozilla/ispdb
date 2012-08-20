@@ -298,7 +298,7 @@ function AutoFillOutgoing() {
 {% else %}{% if action == 'edit' %}
   <h1>Edit configuration</h1>
 {% else %}{% if action == 'report' %}
-  <h1>Reporting problem for <a href="{% url 'ispdb_details' config_form.instance.id %}">{{ config_form.instance.display_name }}</a></h1>
+  <h1>Reporting a problem for <a href="{% url 'ispdb_details' config_form.instance.id %}">{{ config_form.instance.display_name }}</a></h1>
   {{ issue_form.non_field_errors }}
   <div class="fieldWrapper">
     {{ issue_form.title.errors }}
