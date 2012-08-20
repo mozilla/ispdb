@@ -54,7 +54,7 @@ class IssueTest(TestCase):
                                adding_issue_form(),
                                follow=True)
         # Make sure it redirects to login page
-        goodRedirect = "/login/?next=%s" % (quote_plus("/report/2"))
+        goodRedirect = "/login/?next=%s" % (quote_plus("/report/2/"))
         self.assertRedirects(res, goodRedirect)
 
     def test_add_issue(self):

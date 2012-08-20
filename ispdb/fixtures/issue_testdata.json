@@ -14,8 +14,6 @@
             "outgoing_username_form": "%EMAILLOCALPART%", 
             "incoming_socket_type": "plain", 
             "outgoing_port": 587, 
-            "flagged_by_email": "", 
-            "flagged_as_incorrect": false, 
             "incoming_authentication": "password-encrypted", 
             "email_provider_id": "", 
             "owner": 1, 

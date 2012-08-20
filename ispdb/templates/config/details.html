@@ -130,7 +130,7 @@ $(document).ready(function() {
     </p></div>
       {% if perms.config.can_approve %}
         <div><p>Is there a reason it shouldn't be?</p></div>
-      	<form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
+        <form action="{% url 'ispdb_approve' id=config.id %}" method="POST">{% csrf_token %}
           <div class="float">
             <input type="submit" value="mark valid" name="approved"></input>
           </div>
@@ -150,7 +150,7 @@ $(document).ready(function() {
       {% if config.status == 'deleted' %}
         <div><p>This configuration has been DELETED.</p></div>
         {% if config|is_undo_available %}
-	  {% if perms.config.can_approve or config.owner == user and config.last_status == 'requested' %}
+          {% if perms.config.can_approve or config.owner == user and config.last_status == 'requested' %}
             <form action="{% url 'ispdb_delete' id=config.id %}" method="POST">{% csrf_token %}
               <div>
                 <input id="delete" type="submit" value="undo" name="delete"></input>

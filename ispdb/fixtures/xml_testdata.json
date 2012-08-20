@@ -14,8 +14,6 @@
             "outgoing_use_global_preferred_server":false,
             "incoming_socket_type":"SSL",
             "outgoing_port":25,
-            "flagged_by_email":"",
-            "flagged_as_incorrect":false,
             "email_provider_id":"test.com",
             "incoming_authentication":"password-cleartext",
             "display_name":"NetZero Email",
