@@ -27,10 +27,10 @@ and optionally to an user suggested configuration.
 
 ### Forms
 
-The forms complexity in in the forms classes. For example, ConfigForm class has
-domain_formset, docurl_formset and enableurl_formset attributes. So we can do
-things like the save_all method which save all of the forms (Domain, Config,
-DocURL, EnableURL), simplifying the views.
+The complexity of the forms is in the form's classes. For example, ConfigForm
+class has domain_formset, docurl_formset and enableurl_formset attributes. So we
+can do things like the save_all method which save all of the forms (Domain,
+Config, DocURL, EnableURL), simplifying the views.
 
 Also there are two nested forms (for DocURL and EnableURL models). So each
 DocURLForm has a DocURLDesc formset and each EnableURLForm has a EnableURLInst
