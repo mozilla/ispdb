@@ -1,4 +1,4 @@
-Django==1.4
+Django==1.11.28
 django-browserid>=0.5
 django-nose==1.0
 lxml==2.3.4
