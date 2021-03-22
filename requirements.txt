@@ -1,7 +1,7 @@
 Django==1.4
 django-browserid>=0.5
 django-nose==1.0
-lxml==2.3.4
+lxml==4.6.3
 nose==1.1.2
 pytz
 dnspython==1.7.1
