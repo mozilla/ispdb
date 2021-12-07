@@ -1,3 +1,5 @@
+This repository is no longer active, current ISPDB is available at: https://github.com/thundernest/autoconfig
+
 experimental django front-end to figure out workflow of ISP database info
 for the Thunderbird autoconfig database
 
